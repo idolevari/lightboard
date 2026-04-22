@@ -2,7 +2,9 @@
 #! oxygen_storefront_id: 1000130179
 
 name: Deploy to Oxygen
-on: [push]
+on:
+  push:
+    branches: [main]
 
 permissions:
   contents: read
