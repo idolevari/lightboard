@@ -26,14 +26,12 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('hydrogen-quickstart/package-lock.json') }}
+          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-
 
       - name: Install dependencies
-        working-directory: hydrogen-quickstart
         run: npm ci
 
       - name: Build and deploy to Oxygen
-        working-directory: hydrogen-quickstart
         run: npx shopify hydrogen deploy --token "${{ secrets.OXYGEN_DEPLOYMENT_TOKEN_1000130179 }}"
