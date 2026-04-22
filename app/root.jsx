@@ -14,6 +14,7 @@ import {FOOTER_QUERY, HEADER_QUERY} from '~/lib/fragments';
 import resetStyles from '~/styles/reset.css?url';
 import appStyles from '~/styles/app.css?url';
 import {PageLayout} from './components/PageLayout';
+import {ComingSoon} from './components/ComingSoon';
 
 /**
  * This is important to avoid re-fetching root queries on sub-navigations
@@ -75,6 +76,15 @@ export function links() {
  * @param {Route.LoaderArgs} args
  */
 export async function loader(args) {
+  const url = new URL(args.request.url);
+  const cookie = args.request.headers.get('cookie') || '';
+  const hostname = url.hostname;
+  const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+  const hasPreviewCookie = cookie.includes('lb_preview=true');
+  const forceComingSoon = url.searchParams.get('comingsoon') === '1';
+
+  const showComingSoon = forceComingSoon || (!isLocalhost && !hasPreviewCookie);
+
   // Start fetching non-critical data without blocking time to first byte
   const deferredData = loadDeferredData(args);
 
@@ -86,6 +96,7 @@ export async function loader(args) {
   return {
     ...deferredData,
     ...criticalData,
+    showComingSoon,
     publicStoreDomain: env.PUBLIC_STORE_DOMAIN,
     shop: getShopAnalytics({
       storefront,
@@ -183,6 +194,10 @@ export default function App() {
 
   if (!data) {
     return <Outlet />;
+  }
+
+  if (data.showComingSoon) {
+    return <ComingSoon />;
   }
 
   return (
