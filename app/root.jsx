@@ -9,7 +9,6 @@ import {
   ScrollRestoration,
   useRouteLoaderData,
 } from 'react-router';
-import favicon from '~/assets/favicon.svg';
 import {FOOTER_QUERY, HEADER_QUERY} from '~/lib/fragments';
 import resetStyles from '~/styles/reset.css?url';
 import appStyles from '~/styles/app.css?url';
@@ -68,7 +67,7 @@ export function links() {
       rel: 'stylesheet',
       href: 'https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&family=Rubik:wght@500;700;900&family=DM+Serif+Display&display=swap',
     },
-    {rel: 'icon', type: 'image/svg+xml', href: favicon},
+    {rel: 'icon', type: 'image/png', href: '/favicon.png'},
   ];
 }
 

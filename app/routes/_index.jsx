@@ -8,7 +8,7 @@ import {MockShopNotice} from '~/components/MockShopNotice';
  * @type {Route.MetaFunction}
  */
 export const meta = () => {
-  return [{title: 'Hydrogen | Home'}];
+  return [{title: 'Lightboard | Home'}];
 };
 
 /**
