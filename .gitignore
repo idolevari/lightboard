@@ -9,3 +9,5 @@ node_modules
 .react-router
 .claude/
 .idea/
+.cursor/
+scripts/
