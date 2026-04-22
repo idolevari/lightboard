@@ -10,8 +10,9 @@ export function Header({header, isLoggedIn, cart, publicStoreDomain}) {
   const {shop, menu} = header;
   return (
     <header className="header">
-      <NavLink prefetch="intent" to="/" style={activeLinkStyle} end>
-        <strong>{shop.name} ✦</strong>
+      <NavLink prefetch="intent" to="/" style={activeLinkStyle} className="brand" end>
+        <span className="brand-mark">lightboard</span>
+        <span className="brand-tagline">living · design · surfing</span>
       </NavLink>
       <HeaderMenu
         menu={menu}
