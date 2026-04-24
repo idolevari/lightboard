@@ -75,14 +75,8 @@ export function links() {
  * @param {Route.LoaderArgs} args
  */
 export async function loader(args) {
-  const url = new URL(args.request.url);
-  const cookie = args.request.headers.get('cookie') || '';
-  const hostname = url.hostname;
-  const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
-  const hasPreviewCookie = cookie.includes('lb_preview=true');
-  const forceComingSoon = url.searchParams.get('comingsoon') === '1';
-
-  const showComingSoon = forceComingSoon || (!isLocalhost && !hasPreviewCookie);
+  const {storefront, env} = args.context;
+  const showComingSoon = env.COMING_SOON === 'true';
 
   // Start fetching non-critical data without blocking time to first byte
   const deferredData = loadDeferredData(args);
@@ -90,15 +84,13 @@ export async function loader(args) {
   // Await the critical data required to render initial state of the page
   const criticalData = await loadCriticalData(args);
 
-  const {storefront, env} = args.context;
-
   return {
     ...deferredData,
     ...criticalData,
     showComingSoon,
     publicStoreDomain: env.PUBLIC_STORE_DOMAIN,
     shop: getShopAnalytics({
-      storefront,
+      storefront: args.context.storefront,
       publicStorefrontId: env.PUBLIC_STOREFRONT_ID,
     }),
     consent: {
