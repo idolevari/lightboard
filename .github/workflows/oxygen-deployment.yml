@@ -5,6 +5,8 @@ name: Deploy to Oxygen
 on:
   push:
     branches: [main, dev]
+  pull_request:
+    branches: [dev]
 
 permissions:
   contents: read
