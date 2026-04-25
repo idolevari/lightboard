@@ -139,17 +139,27 @@ h1, h2, h3, h4, h5, h6 {
 }
 .lb-nav-right {
   justify-content: flex-end;
-  /* Reserve room for the absolutely-positioned .lb-lang-toggle pinned to
-     physical right. Only matters in LTR (EN), where this column is also
-     on physical right; harmless no-op in RTL (HE) where the column sits
-     on physical left and items cluster opposite this padding. */
-  padding-right: 64px;
+  /* Desktop: lang toggle is pinned to physical right (so it doesn't
+     jump screen position on locale switch). LTR cluster sits on physical
+     right too, so reserve 80px to clear the toggle. RTL cluster sits on
+     physical left — no reservation needed. */
+  padding-right: 80px;
 }
+[dir="rtl"] .lb-nav-right { padding-right: 0; }
 @media (max-width: 720px) {
-  /* Toggle is still pinned right; reduce reserved space since the
-     column on this side has fewer items at narrow widths. */
-  .lb-nav-right { padding-right: 56px; gap: 12px; }
-  .lb-nav-left { gap: 12px; }
+  /* Compact mobile header: hamburger | logo | cart-only cluster + lang
+     toggle on the inline-end side. Lang toggle follows reading direction
+     on mobile so it doesn't collide with the hamburger (which lands on
+     physical right in RTL via the grid order). Search + account icons
+     move to the burger menu to keep the right cluster within 375px. */
+  .lb-nav-inner { gap: 8px; }
+  .lb-nav-right {
+    padding-right: 0;
+    padding-inline-end: 80px;
+    gap: 8px;
+  }
+  .lb-nav-left { gap: 8px; }
+  .lb-nav-right .lb-icon-btn { display: none; }
 }
 .lb-nav a.lb-nav-link {
   position: relative;
@@ -226,10 +236,10 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .lb-lang-toggle {
-  /* Pinned to physical right of .lb-nav-inner so the toggle stays in the
-     same screen position across HE (RTL) and EN (LTR). `right` is physical
-     and does not flip with dir; .lb-nav-inner provides the positioning
-     context and respects the container's max-width on wide viewports. */
+  /* Desktop: pinned to physical right of .lb-nav-inner so the toggle
+     stays in the same screen position on locale switch. On mobile (<720)
+     it switches to inset-inline-end so it doesn't collide with the
+     hamburger, which lands on physical right in RTL via the grid flip. */
   position: absolute;
   top: 50%;
   right: 0;
@@ -268,6 +278,15 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--color-wood, #2D2419);
   opacity: 1;
 }
+@media (max-width: 720px) {
+  /* On mobile, toggle follows parent reading direction so it doesn't
+     collide with the hamburger (which lands on physical right in RTL via
+     the grid flip). The toggle's own children stay LTR-ordered for HE/EN
+     stability, so we set physical sides explicitly here rather than rely
+     on `inset-inline-*`, which resolves against the toggle's own
+     direction (forced to ltr above). */
+  [dir="rtl"] .lb-lang-toggle { right: auto; left: 0; }
+}
 .header.lb-nav.scrolled .lb-lang-toggle .lb-lang-btn.active {
   background: var(--color-wood, #2D2419);
   color: var(--color-sand, #FDF8F0);
@@ -290,7 +309,8 @@ h1, h2, h3, h4, h5, h6 {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 14px;
+  padding: 11px 14px;
+  min-height: var(--tap-min);
   border: 1px solid currentColor;
   border-radius: 999px;
   font-size: 12px;
@@ -299,6 +319,23 @@ h1, h2, h3, h4, h5, h6 {
   text-transform: uppercase;
   color: inherit;
   background: transparent;
+}
+@media (max-width: 720px) {
+  /* Icon-only round cart on phones — saves ~50px in the right cluster
+     so logo + hamburger + cart + lang toggle all fit at 375px. */
+  .lb-cart-btn {
+    padding: 0;
+    width: var(--tap-min);
+    height: var(--tap-min);
+    border-radius: 50%;
+    gap: 0;
+  }
+  .lb-cart-btn > span:not(.lb-cart-count) { display: none; }
+  .lb-cart-count {
+    position: absolute;
+    top: -4px;
+    inset-inline-end: -4px;
+  }
 }
 .lb-cart-count {
   display: inline-flex;
@@ -451,9 +488,10 @@ h1, h2, h3, h4, h5, h6 {
   position: relative;
 }
 .hero-dots button {
-  /* Visible bar 2px tall, but the button itself is tall + padded so
-     the touch target is comfortable on phones (was an unusable 2px). */
-  height: 24px;
+  /* Tap target 44×44 (WCAG); the visible 2px bar is centered inside via
+     ::before. Width still animates between idle and active for the
+     visual indicator. */
+  height: var(--tap-min);
   display: inline-flex;
   align-items: center;
   background: transparent;
@@ -473,7 +511,7 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: 2px;
   transition: background 0.3s;
 }
-.hero-dots button.on { width: 36px; }
+.hero-dots button.on { width: 44px; }
 .hero-dots button.on::before { background: var(--white); }
 .hero-dots .count {
   margin-inline-start: 16px;
@@ -848,8 +886,8 @@ section { position: relative; }
   .feat3-tick:nth-child(-n+2) { border-bottom: 1px solid var(--rule); }
 }
 .feat3-tick .k {
-  font-size: 9px;
-  letter-spacing: 0.18em;
+  font-size: 11px;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--ink-soft);
   font-family: var(--mono);
@@ -884,7 +922,8 @@ section { position: relative; }
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 14px 8px 10px;
+  padding: 12px 14px 12px 10px;
+  min-height: var(--tap-min);
   border: 1px solid var(--rule);
   border-radius: 999px;
   background: var(--white);
@@ -1030,16 +1069,31 @@ section { position: relative; }
 }
 .testify-nav-btn:hover { background: var(--ink); color: var(--white); border-color: var(--ink); }
 [dir="rtl"] .testify-nav-btn { transform: scaleX(-1); }
-.testify-dots { display: flex; gap: 8px; }
+.testify-dots { display: flex; gap: 8px; align-items: center; }
 .testify-dots button {
-  width: 8px; height: 8px; border-radius: 8px;
-  background: var(--rule-strong);
-  transition: all 0.3s;
+  /* Tap target 8×44 (visual is 8×8 dot, drawn via ::before so the
+     surrounding hit area is finger-friendly without growing the dot). */
+  width: 8px; height: var(--tap-min);
+  background: transparent;
   cursor: pointer;
   padding: 0;
   border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: width 0.3s;
 }
-.testify-dots button.on { width: 24px; background: var(--orange); }
+.testify-dots button::before {
+  content: "";
+  display: block;
+  width: 100%;
+  height: 8px;
+  border-radius: 8px;
+  background: var(--rule-strong);
+  transition: background 0.3s;
+}
+.testify-dots button.on { width: 24px; }
+.testify-dots button.on::before { background: var(--orange); }
 
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(12px); }
