@@ -3,6 +3,25 @@
    Sun-bleached cream · deep ocean · warm sunset
    ============================================== */
 
+/* Ploni — Hebrew display face from the original WordPress site.
+   font-display:swap so we don't block render on the woff2 fetch. */
+@font-face {
+  font-family: "Ploni";
+  src: url("/fonts/ploni-light-aaa.woff2") format("woff2"),
+       url("/fonts/ploni-light-aaa.woff") format("woff");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Ploni";
+  src: url("/fonts/ploni-ultrabold-aaa.woff2") format("woff2"),
+       url("/fonts/ploni-ultrabold-aaa.woff") format("woff");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   /* Editorial palette */
   --cream: #f4ede0;
@@ -32,9 +51,11 @@
   --color-dark: var(--ink);
   --color-light: var(--cream);
 
-  /* Type stacks — Hebrew-first with Latin fallbacks */
+  /* Type stacks — Hebrew-first with Latin fallbacks. Ploni leads the
+     sans stack so Hebrew copy gets the brand face from the WP era;
+     Heebo is the safe Google fallback if Ploni fails to load. */
   --serif: "Fraunces", "Frank Ruhl Libre", Georgia, serif;
-  --sans: "Heebo", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  --sans: "Ploni", "Heebo", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
   --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --script: "Caveat", "Gloria Hallelujah", cursive;
 
