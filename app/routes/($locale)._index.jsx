@@ -99,7 +99,7 @@ function Hero() {
     >
       {HERO_SLIDES.map((s, j) => (
         <div
-          key={j}
+          key={s.img}
           className="hero-media"
           style={{
             backgroundImage: `url(${s.img})`,
@@ -133,9 +133,9 @@ function Hero() {
           </Link>
         </div>
         <div className="hero-dots" role="tablist" aria-label={h.cta}>
-          {HERO_SLIDES.map((_, j) => (
+          {HERO_SLIDES.map((s, j) => (
             <button
-              key={j}
+              key={s.img}
               onClick={() => setI(j)}
               aria-label={`${h.slideAria} ${j + 1}`}
               aria-selected={j === i}
@@ -157,6 +157,9 @@ function Hero() {
         <div className="hero-tape-track">
           <span>
             {[...h.tape, ...h.tape, ...h.tape].map((s, k) => (
+              // The tape is intentionally tripled for seamless scroll; index
+              // is the only stable key since each string repeats three times.
+              // eslint-disable-next-line react/no-array-index-key
               <span key={k} style={{display: 'inline-flex', alignItems: 'center', gap: 48}}>
                 <span>{s}</span>
                 <span className="dot-sep" />
@@ -211,8 +214,8 @@ function FeaturedLightboard({featuredProduct}) {
           </div>
 
           <div className="feat3-ticker">
-            {f.specs.map((s, i) => (
-              <div className="feat3-tick" key={i}>
+            {f.specs.map((s) => (
+              <div className="feat3-tick" key={s.k}>
                 <span className="k">{s.k}</span>
                 <span className="v">{s.v}</span>
               </div>
@@ -345,8 +348,8 @@ function Story() {
             <p>{s.p2}</p>
             <div className="sig">{s.sig}</div>
             <div className="story-stats">
-              {s.stats.map((st, i) => (
-                <div className="stat" key={i}>
+              {s.stats.map((st) => (
+                <div className="stat" key={`${st.n}-${st.k}`}>
                   <b>{st.n}</b>
                   {st.k}
                 </div>
@@ -399,9 +402,9 @@ function Testimonials() {
             ←
           </button>
           <div className="testify-dots">
-            {quotes.map((_, j) => (
+            {quotes.map((q, j) => (
               <button
-                key={j}
+                key={q.who}
                 onClick={() => setI(j)}
                 aria-label={`${t.eyebrow.trim()} ${j + 1}`}
                 className={j === i ? 'on' : ''}

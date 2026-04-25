@@ -17,7 +17,6 @@ import {useI18n} from '~/lib/useI18n';
 export function PageLayout({
   cart,
   children = null,
-  footer,
   header,
   isLoggedIn,
   publicStoreDomain,

@@ -32,6 +32,9 @@ export default [
       '**/*.generated.d.ts',
       '**/.react-router/',
       '**/packages/hydrogen/dist/',
+      // env.d.ts is a TS-style ambient declaration for editor intellisense;
+      // skip it from lint since this project ships no tsconfig.json.
+      'env.d.ts',
     ],
   },
   ...fixupConfigRules(

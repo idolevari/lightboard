@@ -91,7 +91,7 @@ export function links() {
  * @param {Route.LoaderArgs} args
  */
 export async function loader(args) {
-  const {storefront, env} = args.context;
+  const {env} = args.context;
   const showComingSoon = env.COMING_SOON === 'true';
 
   const locale = detectLocaleFromRequest(args.request);

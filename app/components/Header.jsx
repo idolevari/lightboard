@@ -1,5 +1,5 @@
 import {Suspense, useEffect, useState} from 'react';
-import {Await, NavLink, useAsyncValue, useLocation} from 'react-router';
+import {Await, Link, NavLink, useAsyncValue, useLocation} from 'react-router';
 import {useAnalytics, useOptimisticCart} from '@shopify/hydrogen';
 import {useAside} from '~/components/Aside';
 import {useI18n} from '~/lib/useI18n';
@@ -9,7 +9,7 @@ import {
   swapLocaleInPath,
 } from '~/lib/i18n';
 
-export function Header({header, isLoggedIn, cart}) {
+export function Header({isLoggedIn, cart}) {
   const {dict, to} = useI18n();
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
@@ -89,17 +89,16 @@ function LangToggle() {
         );
         const isActive = code === locale;
         return (
-          <NavLink
+          <Link
             key={code}
             to={href}
             prefetch="intent"
-            reloadDocument={false}
             className={`lb-lang-btn${isActive ? ' active' : ''}`}
             aria-current={isActive ? 'true' : undefined}
             aria-label={cfg.label}
           >
             {cfg.shortLabel}
-          </NavLink>
+          </Link>
         );
       })}
     </div>

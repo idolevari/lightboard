@@ -1,4 +1,3 @@
-import * as React from 'react';
 import {Pagination} from '@shopify/hydrogen';
 import {useI18n} from '~/lib/useI18n';
 
