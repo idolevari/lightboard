@@ -419,6 +419,15 @@ h1, h2, h3, h4, h5, h6 {
   display: block;
   user-select: none;
 }
+@media (max-width: 720px) {
+  /* Hero photos are landscape; on a portrait phone they get cropped
+     hard. Each slide can opt into a horizontal crop point via
+     `--hero-pos-mobile` (set inline) so the van/surfer/etc stays in
+     frame instead of getting sliced. */
+  .hero-media img {
+    object-position: var(--hero-pos-mobile, 50%) center;
+  }
+}
 .hero-media::after {
   content: "";
   position: absolute;

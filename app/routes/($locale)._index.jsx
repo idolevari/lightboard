@@ -140,6 +140,9 @@ const HERO_SLIDES = [
   {
     img: 'https://cdn.shopify.com/s/files/1/0982/9325/2392/files/mikail-mcverry-6WRjFofNhPs-unsplash.jpg?v=1777136172',
     label: 'VAN LIFE · BEACH PARK',
+    // Van sits in the left ~60% of the frame; pull the mobile crop left
+    // so the van stays visible instead of getting cut by a center crop.
+    mobilePos: '30%',
   },
   {
     img: 'https://cdn.shopify.com/s/files/1/0982/9325/2392/files/tim-marshall-hIHh4E4_OGA-unsplash.jpg?v=1777138490',
@@ -150,16 +153,17 @@ const HERO_SLIDES = [
     label: 'WAKE UP · OCEAN VIEW',
   },
   {
-    img: 'https://cdn.shopify.com/s/files/1/0982/9325/2392/files/sean-stratton-iQsa35lj2iE-unsplash.jpg?v=1777138490',
-    label: 'SKATE · BOWL DAY',
-  },
-  {
     img: 'https://cdn.shopify.com/s/files/1/0982/9325/2392/files/mads-schmidt-rasmussen-tSp5_w9h5TQ-unsplash.jpg?v=1777136172',
     label: 'SNOW · GOLDEN HOUR',
+    // Snowboarder is on the left third — keep them in the mobile crop.
+    mobilePos: '30%',
   },
   {
     img: 'https://cdn.shopify.com/s/files/1/0982/9325/2392/files/john-o-nelio-czM5xBzedXA-unsplash.jpg?v=1777136171',
     label: 'COAST · SUNSET ROAD',
+    // Van anchors the right side of this frame; bias the mobile crop
+    // right so we don't lose the van to a centered crop.
+    mobilePos: '65%',
   },
 ];
 
@@ -202,6 +206,9 @@ function Hero() {
             transitionProperty: 'opacity, transform',
             transitionDuration: '1.2s, 6s',
             transitionTimingFunction: 'ease',
+            // Per-slide horizontal crop point used by the mobile media
+            // query in app.css. Desktop stays centered.
+            '--hero-pos-mobile': s.mobilePos ?? '50%',
           }}
         >
           <img
