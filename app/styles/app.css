@@ -198,7 +198,10 @@ h1, h2, h3, h4, h5, h6 {
   .lb-nav-inner { gap: 8px; direction: rtl; }
   .lb-nav-right {
     padding-right: 0;
-    padding-inline-end: 80px;
+    /* Reserve room for the absolutely-positioned lang toggle (~80px
+       wide) plus the toggle's own inset from the screen edge, so the
+       cart cluster doesn't slide under it. */
+    padding-inline-end: calc(var(--container-px) + 80px);
     gap: 8px;
   }
   .lb-nav-left { gap: 8px; }
@@ -322,11 +325,13 @@ h1, h2, h3, h4, h5, h6 {
 }
 @media (max-width: 720px) {
   /* Lang toggle pinned to physical left in both locales on mobile, so
-     it stays beside the cart cluster instead of jumping sides. Placed
-     after the base rule (which sets `right: 0`) so the override sticks
-     in the cascade — otherwise the toggle gets both left:0 and right:0
-     and stretches to fill the header width. */
-  .lb-lang-toggle { right: auto; left: 0; }
+     it stays beside the cart cluster instead of jumping sides. Inset
+     by --container-px so it lines up with the rest of the header
+     content instead of running into the screen edge. Placed after the
+     base rule (which sets `right: 0`) so the override sticks in the
+     cascade — otherwise the toggle gets both left:0 and right:0 and
+     stretches to fill the header width. */
+  .lb-lang-toggle { right: auto; left: var(--container-px); }
 }
 .header.lb-nav.scrolled .lb-lang-toggle .lb-lang-btn.active {
   background: var(--color-wood, #2D2419);
@@ -1749,8 +1754,11 @@ button[type="submit"]:hover,
 }
 .order-search-buttons { display: flex; gap: 0.75rem; flex-wrap: wrap; }
 
-/* Scaffold routes' generic <main> should not hide under fixed nav */
-main > :not(.hero):first-child {
+/* Scaffold routes' generic <main> should not hide under fixed nav.
+   Skip the ComingSoon gate — it's a fullscreen overlay with no header
+   to clear, and a 120px top pad collides with `box-sizing: border-box`
+   on its first child (the logo img), zeroing out the img's content area. */
+main:not(.coming-soon-content) > :not(.hero):first-child {
   padding-top: 120px;
 }
 
@@ -1759,96 +1767,121 @@ main > :not(.hero):first-child {
 * Coming Soon landing page (unchanged)
 * --------------------------------------------------
 */
+/* ============================================
+   COMING SOON — pre-launch gate
+   Editorial full-bleed photo (sunset van) + brand
+   typography. Mirrors the hero's eyebrow / serif /
+   pill-link rhythm so the gate feels like the real
+   storefront, not a placeholder.
+   ============================================ */
 .coming-soon {
   position: fixed;
   inset: 0;
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: center;
   color: var(--white);
   overflow: hidden;
   direction: rtl;
   text-align: center;
+  font-family: var(--sans);
 }
 .coming-soon-bg {
   position: absolute;
   inset: 0;
-  background-image: url('/coming-soon.jpg');
+  /* VW van at the beach — same Shopify CDN asset as the hero "VAN
+     LIFE · BEACH PARK" slide, so we don't duplicate the file in
+     /public. Mobile crop is biased left to keep the van anchored
+     instead of the people on the right. */
+  background-image: url('https://cdn.shopify.com/s/files/1/0982/9325/2392/files/mikail-mcverry-6WRjFofNhPs-unsplash.jpg?v=1777136172&width=2800');
   background-size: cover;
-  background-position: center;
+  background-position: 30% center;
   z-index: 0;
+}
+@media (min-width: 720px) {
+  .coming-soon-bg { background-position: center; }
 }
 .coming-soon-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    to bottom,
-    rgba(11, 58, 74, 0.3) 0%,
-    rgba(11, 58, 74, 0.5) 50%,
-    rgba(11, 58, 74, 0.78) 100%
-  );
+  /* Deep ink wash so the brand-coloured wordmark and copy stay
+     readable across the whole frame; centred vignette pulls extra
+     contrast into the middle where the title lives. */
+  background:
+    linear-gradient(
+      180deg,
+      rgba(11, 58, 74, 0.55) 0%,
+      rgba(11, 58, 74, 0.62) 50%,
+      rgba(11, 58, 74, 0.82) 100%
+    ),
+    radial-gradient(
+      ellipse at 50% 55%,
+      rgba(11, 58, 74, 0.35) 0%,
+      rgba(11, 58, 74, 0) 60%
+    );
   z-index: 1;
 }
 .coming-soon-content {
   position: relative;
   z-index: 2;
-  padding: 2rem 1.5rem;
-  max-width: 560px;
+  padding: clamp(48px, 8vw, 80px) var(--container-px);
+  width: 100%;
+  max-width: 640px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
-.coming-soon-mark {
-  font-family: var(--mono);
-  font-weight: 500;
-  font-size: 1.6rem;
-  letter-spacing: 0.25em;
-  color: var(--white);
-  line-height: 1;
-  margin-bottom: 0.5rem;
-  text-transform: uppercase;
-}
-.coming-soon-tagline {
-  font-size: 0.7rem;
-  font-weight: 500;
-  letter-spacing: 0.35em;
-  text-transform: uppercase;
-  color: var(--orange);
-  margin-bottom: 3.5rem;
+.coming-soon-logo {
+  height: clamp(40px, 6vw, 60px);
+  width: auto;
+  /* Soft ink shadow so the lime "BOARD" half doesn't disappear into
+     the bright sky in the photo's upper portion. */
+  filter: drop-shadow(0 2px 18px rgba(11, 58, 74, 0.55));
 }
 .coming-soon-title {
   font-family: var(--serif);
-  font-size: clamp(3rem, 8vw, 5.5rem);
+  font-size: clamp(40px, 8vw, 96px);
   font-weight: 300;
   line-height: 0.98;
   color: var(--white);
-  margin: 0 0 1.25rem;
+  /* Auto top margin + matching auto bottom margin on the contact
+     pills splits the slack equally above the title and below the
+     pills, so the title + pills cluster sits centred together while
+     the logo stays pinned at the top. */
+  margin: auto 0 clamp(36px, 6vw, 56px);
   letter-spacing: -0.03em;
   font-variation-settings: "SOFT" 30, "WONK" 1;
 }
-.coming-soon-text {
-  font-size: 1.05rem;
-  color: var(--cream-2);
-  margin: 0 0 2.5rem;
-  line-height: 1.55;
+.coming-soon-title em {
+  /* Same shape as the rest of the title — only the colour shifts.
+     Brand-lime echoes the lime "BOARD" half of the wordmark above. */
+  font-style: normal;
+  color: var(--brand-lime);
 }
 .coming-soon-contact {
-  display: flex;
-  gap: 0.75rem;
-  justify-content: center;
-  align-items: center;
-  font-size: 0.9rem;
-  color: var(--orange);
+  display: inline-flex;
   flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  /* Pairs with the title's `margin-top: auto` to centre the title +
+     pills cluster vertically while the logo stays pinned to the top. */
+  margin-bottom: auto;
 }
-.coming-soon-contact a {
+.coming-soon-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
   color: var(--white);
-  border-bottom: 1px solid transparent;
-  padding-bottom: 2px;
-  transition: border-color 0.2s ease, color 0.2s ease;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
-.coming-soon-contact a:hover {
-  color: var(--orange);
-  border-bottom-color: var(--orange);
-}
-.coming-soon-contact span {
-  color: var(--orange);
-  opacity: 0.6;
+.coming-soon-link:hover {
+  background: var(--brand-lime);
+  color: var(--ink);
+  border-color: var(--brand-lime);
 }
