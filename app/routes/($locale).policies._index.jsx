@@ -1,4 +1,12 @@
 import {useLoaderData, Link} from 'react-router';
+import {useI18n} from '~/lib/useI18n';
+import {getDictionary} from '~/lib/i18n';
+
+export const meta = ({matches}) => {
+  const root = matches?.find?.((m) => m.id === 'root');
+  const dict = root?.data?.dict ?? getDictionary('he');
+  return [{title: dict.policies.indexMeta}];
+};
 
 /**
  * @param {Route.LoaderArgs}
@@ -25,14 +33,15 @@ export async function loader({context}) {
 export default function Policies() {
   /** @type {LoaderReturnData} */
   const {policies} = useLoaderData();
+  const {dict, to} = useI18n();
 
   return (
     <div className="policies">
-      <h1>Policies</h1>
+      <h1>{dict.policies.indexTitle}</h1>
       <div>
         {policies.map((policy) => (
           <fieldset key={policy.id}>
-            <Link to={`/policies/${policy.handle}`}>{policy.title}</Link>
+            <Link to={to(`/policies/${policy.handle}`)}>{policy.title}</Link>
           </fieldset>
         ))}
       </div>

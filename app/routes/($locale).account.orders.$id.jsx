@@ -1,6 +1,7 @@
 import {redirect, useLoaderData} from 'react-router';
 import {Money, Image} from '@shopify/hydrogen';
 import {CUSTOMER_ORDER_QUERY} from '~/graphql/customer-account/CustomerOrderQuery';
+import {useI18n} from '~/lib/useI18n';
 
 /**
  * @type {Route.MetaFunction}
@@ -72,22 +73,28 @@ export default function OrderRoute() {
     discountPercentage,
     fulfillmentStatus,
   } = useLoaderData();
+  const {dict, locale} = useI18n();
+  const t = dict.account.orderTable;
+  const dateString = new Date(order.processedAt).toLocaleDateString(
+    locale === 'he' ? 'he-IL' : 'en-US',
+    {year: 'numeric', month: 'long', day: 'numeric'},
+  );
   return (
     <div className="account-order">
-      <h2>Order {order.name}</h2>
-      <p>Placed on {new Date(order.processedAt).toDateString()}</p>
+      <h2>{dict.account.orders} {order.name}</h2>
+      <p>{dateString}</p>
       {order.confirmationNumber && (
-        <p>Confirmation: {order.confirmationNumber}</p>
+        <p>{dict.account.confirmationNumber}: {order.confirmationNumber}</p>
       )}
       <br />
       <div>
         <table>
           <thead>
             <tr>
-              <th scope="col">Product</th>
-              <th scope="col">Price</th>
-              <th scope="col">Quantity</th>
-              <th scope="col">Total</th>
+              <th scope="col">{t.product}</th>
+              <th scope="col">{t.price}</th>
+              <th scope="col">{t.quantity}</th>
+              <th scope="col">{t.total}</th>
             </tr>
           </thead>
           <tbody>
@@ -101,14 +108,14 @@ export default function OrderRoute() {
               discountPercentage) && (
               <tr>
                 <th scope="row" colSpan={3}>
-                  <p>Discounts</p>
+                  <p>{t.discounts}</p>
                 </th>
                 <th scope="row">
-                  <p>Discounts</p>
+                  <p>{t.discounts}</p>
                 </th>
                 <td>
                   {discountPercentage ? (
-                    <span>-{discountPercentage}% OFF</span>
+                    <span>-{discountPercentage}%</span>
                   ) : (
                     discountValue && <Money data={discountValue} />
                   )}
@@ -117,10 +124,10 @@ export default function OrderRoute() {
             )}
             <tr>
               <th scope="row" colSpan={3}>
-                <p>Subtotal</p>
+                <p>{t.subtotal}</p>
               </th>
               <th scope="row">
-                <p>Subtotal</p>
+                <p>{t.subtotal}</p>
               </th>
               <td>
                 <Money data={order.subtotal} />
@@ -128,10 +135,10 @@ export default function OrderRoute() {
             </tr>
             <tr>
               <th scope="row" colSpan={3}>
-                Tax
+                {t.tax}
               </th>
               <th scope="row">
-                <p>Tax</p>
+                <p>{t.tax}</p>
               </th>
               <td>
                 <Money data={order.totalTax} />
@@ -139,10 +146,10 @@ export default function OrderRoute() {
             </tr>
             <tr>
               <th scope="row" colSpan={3}>
-                Total
+                {t.totalRow}
               </th>
               <th scope="row">
-                <p>Total</p>
+                <p>{t.totalRow}</p>
               </th>
               <td>
                 <Money data={order.totalPrice} />
@@ -151,7 +158,7 @@ export default function OrderRoute() {
           </tfoot>
         </table>
         <div>
-          <h3>Shipping Address</h3>
+          <h3>{dict.account.shippingAddress}</h3>
           {order?.shippingAddress ? (
             <address>
               <p>{order.shippingAddress.name}</p>
@@ -167,9 +174,9 @@ export default function OrderRoute() {
               )}
             </address>
           ) : (
-            <p>No shipping address defined</p>
+            <p>{dict.account.noShippingAddress}</p>
           )}
-          <h3>Status</h3>
+          <h3>{dict.account.status}</h3>
           <div>
             <p>{fulfillmentStatus}</p>
           </div>
@@ -178,7 +185,7 @@ export default function OrderRoute() {
       <br />
       <p>
         <a target="_blank" href={order.statusPageUrl} rel="noreferrer">
-          View Order Status →
+          {dict.account.status} →
         </a>
       </p>
     </div>

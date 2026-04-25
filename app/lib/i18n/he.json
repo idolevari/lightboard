@@ -1,0 +1,292 @@
+{
+  "meta": {
+    "title": "Lightboard · עיצובי קיר לגולשים",
+    "description": "עיצובי קיר בעבודת יד מסטודיו בתל אביב — מתלי תמונות בצורת גלשן, הדפסי גלישה, ועבודות מתכת. השראה קליפורנית, ביצוע ים תיכוני."
+  },
+  "nav": {
+    "home": "בית",
+    "shop": "חנות",
+    "about": "הסיפור",
+    "journal": "יומן",
+    "contact": "צרו קשר",
+    "cart": "סל",
+    "search": "חיפוש",
+    "account": "חשבון"
+  },
+  "common": {
+    "loading": "טוען…",
+    "loadMore": "עוד",
+    "loadPrevious": "הקודם",
+    "close": "סגור",
+    "open": "פתח",
+    "remove": "הסרה",
+    "apply": "החלה",
+    "submit": "שליחה",
+    "save": "שמירה",
+    "cancel": "ביטול",
+    "edit": "עריכה",
+    "delete": "מחיקה",
+    "back": "חזרה",
+    "next": "הבא",
+    "previous": "הקודם",
+    "yes": "כן",
+    "no": "לא",
+    "or": "או",
+    "and": "ו"
+  },
+  "aside": {
+    "cart": "סל הקניות",
+    "search": "חיפוש",
+    "menu": "תפריט"
+  },
+  "hero": {
+    "eyebrow": "נוסד 2019",
+    "titleLine1": "אור של שמש,",
+    "titleLine2": "ממוסגר.",
+    "kicker": "עיצובי קיר שנבנים בדיוק כמו שאנחנו גולשים — לאט, בכוונה, עם טיפה של מלח על הקצוות. מתלי גלשן, הדפסי ים, ועבודות מתכת מסטודיו בתל אביב.",
+    "cta": "כניסה לחנות",
+    "slideAria": "שקופית",
+    "tape": [
+      "משלוח חינם מעל ₪299",
+      "עבודת יד · תל אביב",
+      "הזמנות מיוחדות",
+      "קולקציה חדשה בכל עונה",
+      "לאט ובאהבה · חיי חוף"
+    ]
+  },
+  "featured": {
+    "marker": "001 / מוצר דגל",
+    "eyebrow": "— מוצר הדגל · 001",
+    "titlePrefix": "ה",
+    "titleName": "ליטבורד.",
+    "desc": "מתלה בצורת גלשן, מגולף מאורן מלא ומחומם בנורות לד חמות ומגנטים לתמונות. חברו שלוש תמונות אהובות — מהליינאפ, מיום הפאודר, מהסשן — ותנו לאור לעשות את שלו. בשלושה גוונים: טורקיז, חול, ושחור מט.",
+    "tagMadeToOrder": "בהזמנה אישית",
+    "tagDimensions": "50 × 20 CM",
+    "specs": [
+      {"k": "מידות", "v": "50 × 20 ס״מ"},
+      {"k": "חומר", "v": "אורן מלא"},
+      {"k": "תאורה", "v": "20 לד חם"},
+      {"k": "תמונות", "v": "3 מגנטיות"}
+    ],
+    "finishLabel": "גימור",
+    "finishes": [
+      {"id": "turquoise", "label": "טורקיז"},
+      {"id": "sand", "label": "חול"},
+      {"id": "black", "label": "שחור מט"}
+    ],
+    "shipNote": "משלוח 3–5 ימים",
+    "ctaPrimary": "הוספה לסל",
+    "ctaSecondary": "לפרטים נוספים"
+  },
+  "story": {
+    "tag": "SINCE 2019",
+    "eyebrow": "— הסיפור שלנו",
+    "titleLine1": "לא רק עיצוב.",
+    "titleLine2": "מכתב אהבה למי מלוחים.",
+    "p1": "הכל התחיל במוסך שני רחובות מהחוף. גלשן, שרשרת נורות קטנות, ושלוש תמונות מיום גלישה מוצלח — החתיכה הראשונה עדיין תלויה בסטודיו שלנו.",
+    "p2": "היום אנחנו שולחים את העבודות לכל הארץ ומעבר, אבל המתכון לא השתנה: עץ גולמי, ידיים זהירות, וקצת אוקיינוס בכל חריץ.",
+    "sig": "— צוות ליטבורד",
+    "stats": [
+      {"n": "6 שנים", "k": "של יצירה"},
+      {"n": "+2,400", "k": "קירות שעיצבנו"},
+      {"n": "100%", "k": "עבודת יד"}
+    ]
+  },
+  "testify": {
+    "eyebrowNum": "03",
+    "eyebrow": "· מה אומרים",
+    "prev": "קודם",
+    "next": "הבא",
+    "items": [
+      {"a": "זה מרגיש כמו ", "b": "גלויה משבת מושלמת", "c": ", תלוי לי על הקיר לנצח.", "who": "נועה מ. · תל אביב · 2024"},
+      {"a": "כל פעם שהלדים נדלקים זה כמו ", "b": "לחזור הביתה מיום פאודר", "c": " — עייף, חמים, מחייך.", "who": "דן ש. · גולש בחרמון · 2025"},
+      {"a": "עבודה רצינית. ", "b": "העץ מריח את הסדנה", "c": " שבוע אחרי שהגיע.", "who": "יעל ק. · חיפה · 2024"},
+      {"a": "הזמנתי אחד. ", "b": "שלושה חברים הזמינו באותו שבוע", "c": ". זה אומר הכל.", "who": "אלי ר. · סקייטר · 2025"}
+    ]
+  },
+  "newsletter": {
+    "titleLine1": "הרשמו.",
+    "titleLine2": " אל תפספסו גל.",
+    "kicker": "עדכונים על קולקציות חדשות, סיפורים מהסטודיו, ופה ושם בדיחה גרועה על גלישה. בלי ספאם — או שגולשים יחד או שנשארים בבית.",
+    "emailPlaceholder": "שלכם@אימייל.com",
+    "cta": "הרשמה",
+    "emailLabel": "אימייל"
+  },
+  "product": {
+    "metaSuffix": "מוצר",
+    "description": "תיאור",
+    "addToCart": "הוספה לסל",
+    "soldOut": "אזל מהמלאי"
+  },
+  "cart": {
+    "metaTitle": "Lightboard | סל",
+    "pageTitle": "הסל שלי",
+    "asidePage": "דף סל",
+    "asideDrawer": "מגירת סל",
+    "lineItems": "פריטים",
+    "lineItemsWith": "פריטים עם",
+    "empty": "נראה שעוד לא הוספת כלום, בואו נתחיל!",
+    "continueShopping": "המשך קניות →",
+    "totals": "סיכום",
+    "subtotal": "סכום ביניים",
+    "checkout": "מעבר לתשלום ←",
+    "discounts": "קופונים",
+    "discountsLabel": "קופונים",
+    "discountCode": "קוד קופון",
+    "discountApply": "החלה",
+    "discountRemove": "הסרת קופון",
+    "discountRemoveBtn": "הסרה",
+    "discountApplyAria": "החלת קוד קופון",
+    "giftCards": "כרטיסי מתנה",
+    "giftCardsLabel": "כרטיסי מתנה",
+    "giftCardCode": "קוד כרטיס מתנה",
+    "giftCardCodeAria": "החלת קוד כרטיס מתנה",
+    "giftCardsApplied": "כרטיסי מתנה פעילים",
+    "giftCardRemove": "הסרת כרטיס מתנה",
+    "removeBtn": "הסרה",
+    "applyBtn": "החלה",
+    "quantity": "כמות",
+    "decreaseQuantity": "הפחתת כמות",
+    "increaseQuantity": "הגדלת כמות",
+    "loading": "טוען סל…"
+  },
+  "search": {
+    "metaTitle": "Lightboard | חיפוש",
+    "pageTitle": "חיפוש",
+    "placeholder": "מה אתם מחפשים?",
+    "submit": "חיפוש",
+    "noResults": "לא נמצאו תוצאות, נסו חיפוש אחר.",
+    "noResultsFor": "לא נמצאו תוצאות עבור",
+    "viewAll": "הצג את כל התוצאות עבור",
+    "products": "מוצרים",
+    "pages": "דפים",
+    "articles": "מאמרים",
+    "collections": "קטגוריות"
+  },
+  "pagination": {
+    "loadMore": "עוד",
+    "loadPrevious": "הקודם",
+    "loading": "טוען…"
+  },
+  "collections": {
+    "indexTitle": "קולקציות",
+    "indexMeta": "Lightboard | קולקציות",
+    "allTitle": "כל המוצרים",
+    "allMeta": "Lightboard | כל המוצרים",
+    "collectionMetaSuffix": "קולקציה"
+  },
+  "blogs": {
+    "indexTitle": "יומן",
+    "indexMeta": "Lightboard | יומן",
+    "allArticles": "כל הפוסטים",
+    "readMore": "להמשך קריאה →",
+    "publishedOn": "פורסם ב",
+    "by": "על ידי"
+  },
+  "pages": {
+    "metaSuffix": ""
+  },
+  "policies": {
+    "indexTitle": "מדיניות",
+    "indexMeta": "Lightboard | מדיניות",
+    "back": "← חזרה למדיניות"
+  },
+  "account": {
+    "metaSuffix": "חשבון",
+    "myAccount": "החשבון שלי",
+    "welcome": "ברוכים הבאים",
+    "signOut": "התנתקות",
+    "signIn": "התחברות",
+    "ordersTitle": "ההזמנות שלי",
+    "orders": "הזמנות",
+    "profile": "פרופיל",
+    "addresses": "כתובות",
+    "ordersFilter": "סינון הזמנות",
+    "orderNumber": "מספר הזמנה",
+    "orderNumberPlaceholder": "הזמנה #",
+    "confirmationNumber": "מספר אישור",
+    "confirmationNumberPlaceholder": "אישור #",
+    "searchOrders": "חיפוש הזמנות",
+    "searchBtn": "חיפוש",
+    "clearBtn": "ניקוי",
+    "active": "פעיל",
+    "clearFilters": "ניקוי סינונים →",
+    "startShopping": "התחילו לקנות →",
+    "noOrders": "עוד אין הזמנות.",
+    "orderTable": {
+      "product": "מוצר",
+      "price": "מחיר",
+      "quantity": "כמות",
+      "total": "סה״כ",
+      "discounts": "הנחות",
+      "subtotal": "סכום ביניים",
+      "tax": "מע״מ",
+      "totalRow": "סה״כ"
+    },
+    "shippingAddress": "כתובת למשלוח",
+    "noShippingAddress": "אין כתובת משלוח מוגדרת",
+    "status": "סטטוס",
+    "myProfile": "הפרופיל שלי",
+    "personalInfo": "פרטים אישיים",
+    "firstName": "שם פרטי",
+    "lastName": "שם משפחה",
+    "phone": "טלפון",
+    "email": "אימייל",
+    "addressesTitle": "כתובות",
+    "createAddress": "הוספת כתובת",
+    "existingAddresses": "כתובות קיימות",
+    "company": "חברה",
+    "addressLine1": "כתובת 1",
+    "addressLine1Required": "כתובת 1*",
+    "addressLine2": "כתובת 2",
+    "city": "עיר",
+    "stateProvince": "מחוז / מדינה",
+    "zip": "מיקוד",
+    "zipPlaceholder": "מיקוד / קוד דואר",
+    "country": "מדינה",
+    "countryCode": "קוד מדינה",
+    "phoneNumber": "מספר טלפון",
+    "setAsDefault": "הגדרה ככתובת ברירת מחדל"
+  },
+  "notFound": {
+    "title": "הדף לא נמצא",
+    "kicker": "אולי הקישור הזה נשטף החוצה. אפשר לחזור הביתה ולבחור קצה אחר.",
+    "cta": "חזרה לבית"
+  },
+  "discount": {
+    "applied": "הקופון הוחל!",
+    "applyError": "לא הצלחנו להחיל את הקוד."
+  },
+  "footer": {
+    "brandDesc": "נשמה קליפורנית, מלאכת ים תיכון. עיצובי קיר בהשראת גלישה, עבודת יד מתל אביב — נשלחים עם טיפה של מלח וחיוך.",
+    "shopHeading": "חנות",
+    "shop": [
+      {"label": "מתלי תמונות", "to": "/collections/photo-hangers"},
+      {"label": "עיצובי מתכת", "to": "/collections/metal"},
+      {"label": "הדפסי גלישה", "to": "/collections/prints"},
+      {"label": "כרטיסי מתנה", "to": "/products/gift-card"},
+      {"label": "כל המוצרים", "to": "/collections"}
+    ],
+    "helpHeading": "עזרה",
+    "help": [
+      {"label": "משלוחים", "to": "/policies/shipping-policy"},
+      {"label": "החזרות", "to": "/policies/refund-policy"},
+      {"label": "הזמנות מיוחדות", "to": "/pages/custom-orders"},
+      {"label": "מדריך טיפול", "to": "/pages/care-guide"},
+      {"label": "צרו קשר", "to": "/pages/contact"}
+    ],
+    "companyHeading": "החברה",
+    "company": [
+      {"label": "הסיפור שלנו", "to": "/pages/about"},
+      {"label": "יומן", "to": "/blogs/journal"},
+      {"label": "סדנאות", "to": "/pages/workshops"},
+      {"label": "סיטונאי", "to": "/pages/wholesale"}
+    ],
+    "rights": "LIGHTBOARD · כל הזכויות שמורות",
+    "legal": [
+      {"label": "פרטיות", "to": "/policies/privacy-policy"},
+      {"label": "תקנון", "to": "/policies/terms-of-service"},
+      {"label": "עוגיות", "to": "/policies/privacy-policy"}
+    ]
+  }
+}

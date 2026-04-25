@@ -32,12 +32,19 @@ export function getVariantUrl({
   searchParams,
   selectedOptions,
 }) {
-  const match = /(\/[a-zA-Z]{2}-[a-zA-Z]{2}\/)/g.exec(pathname);
-  const isLocalePathname = match && match.length > 0;
+  // Preserve a Shopify market-style locale (e.g. /en-us/) if present, OR the
+  // app's own locale prefix (e.g. /en/) so deep links don't lose locale.
+  const marketMatch = /(\/[a-zA-Z]{2}-[a-zA-Z]{2}\/)/g.exec(pathname);
+  const localeMatch =
+    !marketMatch && /^\/(en|he)(?=\/|$)/.exec(pathname || '');
 
-  const path = isLocalePathname
-    ? `${match[0]}products/${handle}`
-    : `/products/${handle}`;
+  const prefix = marketMatch
+    ? marketMatch[0]
+    : localeMatch
+      ? `/${localeMatch[1]}/`
+      : '/';
+
+  const path = `${prefix}products/${handle}`.replace(/\/+/g, '/');
 
   selectedOptions?.forEach((option) => {
     searchParams.set(option.name, option.value);
@@ -45,7 +52,7 @@ export function getVariantUrl({
 
   const searchString = searchParams.toString();
 
-  return path + (searchString ? '?' + searchParams.toString() : '');
+  return path + (searchString ? '?' + searchString : '');
 }
 
 /** @typedef {import('@shopify/hydrogen/storefront-api-types').SelectedOption} SelectedOption */

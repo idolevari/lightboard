@@ -1,5 +1,6 @@
 import {createContext, useContext, useEffect, useState} from 'react';
 import {useId} from 'react';
+import {useI18n} from '~/lib/useI18n';
 
 /**
  * A side bar component with Overlay
@@ -18,6 +19,7 @@ import {useId} from 'react';
  */
 export function Aside({children, heading, type}) {
   const {type: activeType, close} = useAside();
+  const {dict} = useI18n();
   const expanded = type === activeType;
   const id = useId();
   useEffect(() => {
@@ -48,7 +50,7 @@ export function Aside({children, heading, type}) {
       <aside>
         <header>
           <h3 id={id}>{heading}</h3>
-          <button className="close reset" onClick={close} aria-label="Close">
+          <button className="close reset" onClick={close} aria-label={dict.common.close}>
             &times;
           </button>
         </header>

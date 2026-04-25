@@ -1,6 +1,11 @@
 import {useLoaderData, Link} from 'react-router';
 import {getPaginationVariables, Image} from '@shopify/hydrogen';
 import {PaginatedResourceSection} from '~/components/PaginatedResourceSection';
+import {useI18n} from '~/lib/useI18n';
+
+export const meta = () => {
+  return [{title: 'Lightboard | Collections'}];
+};
 
 /**
  * @param {Route.LoaderArgs} args
@@ -41,17 +46,18 @@ async function loadCriticalData({context, request}) {
  * Make sure to not throw any errors here, as it will cause the page to 500.
  * @param {Route.LoaderArgs}
  */
-function loadDeferredData({context}) {
+function loadDeferredData() {
   return {};
 }
 
 export default function Collections() {
   /** @type {LoaderReturnData} */
   const {collections} = useLoaderData();
+  const {dict} = useI18n();
 
   return (
     <div className="collections">
-      <h1>Collections</h1>
+      <h1>{dict.collections.indexTitle}</h1>
       <PaginatedResourceSection
         connection={collections}
         resourcesClassName="collections-grid"
@@ -75,11 +81,12 @@ export default function Collections() {
  * }}
  */
 function CollectionItem({collection, index}) {
+  const {to} = useI18n();
   return (
     <Link
       className="collection-item"
       key={collection.id}
-      to={`/collections/${collection.handle}`}
+      to={to(`/collections/${collection.handle}`)}
       prefetch="intent"
     >
       {collection?.image && (

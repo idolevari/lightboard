@@ -1,12 +1,16 @@
 import {Link, useLoaderData} from 'react-router';
 import {getPaginationVariables} from '@shopify/hydrogen';
 import {PaginatedResourceSection} from '~/components/PaginatedResourceSection';
+import {useI18n} from '~/lib/useI18n';
+import {getDictionary} from '~/lib/i18n';
 
 /**
  * @type {Route.MetaFunction}
  */
-export const meta = () => {
-  return [{title: `Lightboard | Blogs`}];
+export const meta = ({matches}) => {
+  const root = matches?.find?.((m) => m.id === 'root');
+  const dict = root?.data?.dict ?? getDictionary('he');
+  return [{title: dict.blogs.indexMeta}];
 };
 
 /**
@@ -50,17 +54,18 @@ async function loadCriticalData({context, request}) {
  * Make sure to not throw any errors here, as it will cause the page to 500.
  * @param {Route.LoaderArgs}
  */
-function loadDeferredData({context}) {
+function loadDeferredData() {
   return {};
 }
 
 export default function Blogs() {
   /** @type {LoaderReturnData} */
   const {blogs} = useLoaderData();
+  const {dict, to} = useI18n();
 
   return (
     <div className="blogs">
-      <h1>Blogs</h1>
+      <h1>{dict.blogs.indexTitle}</h1>
       <div className="blogs-grid">
         <PaginatedResourceSection connection={blogs}>
           {({node: blog}) => (
@@ -68,7 +73,7 @@ export default function Blogs() {
               className="blog"
               key={blog.handle}
               prefetch="intent"
-              to={`/blogs/${blog.handle}`}
+              to={to(`/blogs/${blog.handle}`)}
             >
               <h2>{blog.title}</h2>
             </Link>

@@ -1,0 +1,292 @@
+{
+  "meta": {
+    "title": "Lightboard · Wall pieces for sideways living",
+    "description": "Handcrafted wall pieces from a Tel Aviv workshop — surfboard-shaped photo hangers, ocean prints, metal designs. California soul, Mediterranean craft."
+  },
+  "nav": {
+    "home": "Home",
+    "shop": "Shop",
+    "about": "Story",
+    "journal": "Journal",
+    "contact": "Contact",
+    "cart": "Cart",
+    "search": "Search",
+    "account": "Account"
+  },
+  "common": {
+    "loading": "Loading…",
+    "loadMore": "Load more",
+    "loadPrevious": "Load previous",
+    "close": "Close",
+    "open": "Open",
+    "remove": "Remove",
+    "apply": "Apply",
+    "submit": "Submit",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "yes": "Yes",
+    "no": "No",
+    "or": "or",
+    "and": "and"
+  },
+  "aside": {
+    "cart": "Cart",
+    "search": "Search",
+    "menu": "Menu"
+  },
+  "hero": {
+    "eyebrow": "EST. 2019",
+    "titleLine1": "Sunlight,",
+    "titleLine2": "framed.",
+    "kicker": "Wall pieces for people who live sideways — surf, snow, skate. Slow-built in our Tel Aviv workshop, shipped with a little salt and a little smile.",
+    "cta": "Enter the shop",
+    "slideAria": "slide",
+    "tape": [
+      "Free shipping over ₪299",
+      "Handmade in Tel Aviv",
+      "Custom orders welcome",
+      "New drops every season",
+      "Slow & loving · beach life"
+    ]
+  },
+  "featured": {
+    "marker": "001 / SIGNATURE",
+    "eyebrow": "— SIGNATURE PIECE · 001",
+    "titlePrefix": "The ",
+    "titleName": "Lightboard.",
+    "desc": "A surfboard-shaped wood canvas strung with warm LED fairy lights and magnetic frames. Clip in three of your favorite shots — from the lineup, the pow day, the session — and let the light do the rest. Comes in turquoise, sand, and matte black.",
+    "tagMadeToOrder": "MADE TO ORDER",
+    "tagDimensions": "50 × 20 CM",
+    "specs": [
+      {"k": "Dimensions", "v": "50 × 20 CM"},
+      {"k": "Material", "v": "Solid pine"},
+      {"k": "Lights", "v": "20 warm LED"},
+      {"k": "Photos", "v": "3 magnetic"}
+    ],
+    "finishLabel": "Finish",
+    "finishes": [
+      {"id": "turquoise", "label": "Turquoise"},
+      {"id": "sand", "label": "Sand"},
+      {"id": "black", "label": "Matte black"}
+    ],
+    "shipNote": "Ships in 3–5 days",
+    "ctaPrimary": "Add to cart",
+    "ctaSecondary": "View details"
+  },
+  "story": {
+    "tag": "SINCE 2019",
+    "eyebrow": "— OUR STORY",
+    "titleLine1": "Not just décor.",
+    "titleLine2": "A love letter to saltwater.",
+    "p1": "Lightboard started in a garage two blocks from the beach. A surfboard, a string of fairy lights, three photos from a good day out — that first piece still hangs in our studio.",
+    "p2": "Today we ship wall pieces for every kind of ride across Israel and beyond. The recipe hasn't changed: raw wood, careful hands, and a little bit of adventure in every grain.",
+    "sig": "— the Lightboard crew",
+    "stats": [
+      {"n": "6 YRS", "k": "crafting"},
+      {"n": "2,400+", "k": "walls dressed"},
+      {"n": "100%", "k": "handmade"}
+    ]
+  },
+  "testify": {
+    "eyebrowNum": "03",
+    "eyebrow": "· WHAT PEOPLE SAY",
+    "prev": "previous",
+    "next": "next",
+    "items": [
+      {"a": "It feels like a ", "b": "postcard from a perfect Saturday", "c": ", hung on my wall forever.", "who": "NOA M. · TEL AVIV · 2024"},
+      {"a": "Every time the LEDs come on it's like ", "b": "coming home from a powder day", "c": " — tired, warm, smiling.", "who": "DAN S. · HERMON REGULAR · 2025"},
+      {"a": "Serious craft. ", "b": "The wood smells like the workshop", "c": " for a week after it arrives.", "who": "YAEL K. · HAIFA · 2024"},
+      {"a": "I ordered one. ", "b": "Three friends ordered the same week", "c": ". That says enough.", "who": "ELI R. · SKATE PARK REGULAR · 2025"}
+    ]
+  },
+  "newsletter": {
+    "titleLine1": "Sign up.",
+    "titleLine2": " Never miss a wave.",
+    "kicker": "New drops, studio notes, and the occasional bad surf joke. No spam — paddle out or paddle home.",
+    "emailPlaceholder": "your@email.com",
+    "cta": "Join",
+    "emailLabel": "email"
+  },
+  "product": {
+    "metaSuffix": "Product",
+    "description": "Description",
+    "addToCart": "Add to cart",
+    "soldOut": "Sold out"
+  },
+  "cart": {
+    "metaTitle": "Lightboard | Cart",
+    "pageTitle": "Cart",
+    "asidePage": "Cart page",
+    "asideDrawer": "Cart drawer",
+    "lineItems": "Line items",
+    "lineItemsWith": "Line items with",
+    "empty": "Looks like you haven't added anything yet, let's get you started!",
+    "continueShopping": "Continue shopping →",
+    "totals": "Totals",
+    "subtotal": "Subtotal",
+    "checkout": "Continue to Checkout →",
+    "discounts": "Discounts",
+    "discountsLabel": "Discounts",
+    "discountCode": "Discount code",
+    "discountApply": "Apply",
+    "discountRemove": "Remove discount",
+    "discountRemoveBtn": "Remove",
+    "discountApplyAria": "Apply discount code",
+    "giftCards": "Gift cards",
+    "giftCardsLabel": "Gift cards",
+    "giftCardCode": "Gift card code",
+    "giftCardCodeAria": "Apply gift card code",
+    "giftCardsApplied": "Applied Gift Card(s)",
+    "giftCardRemove": "Remove gift card",
+    "removeBtn": "Remove",
+    "applyBtn": "Apply",
+    "quantity": "Quantity",
+    "decreaseQuantity": "Decrease quantity",
+    "increaseQuantity": "Increase quantity",
+    "loading": "Loading cart…"
+  },
+  "search": {
+    "metaTitle": "Lightboard | Search",
+    "pageTitle": "Search",
+    "placeholder": "Search…",
+    "submit": "Search",
+    "noResults": "No results, try a different search.",
+    "noResultsFor": "No results found for",
+    "viewAll": "View all results for",
+    "products": "Products",
+    "pages": "Pages",
+    "articles": "Articles",
+    "collections": "Collections"
+  },
+  "pagination": {
+    "loadMore": "Load more",
+    "loadPrevious": "Load previous",
+    "loading": "Loading…"
+  },
+  "collections": {
+    "indexTitle": "Collections",
+    "indexMeta": "Lightboard | Collections",
+    "allTitle": "All products",
+    "allMeta": "Lightboard | All products",
+    "collectionMetaSuffix": "Collection"
+  },
+  "blogs": {
+    "indexTitle": "Journal",
+    "indexMeta": "Lightboard | Journal",
+    "allArticles": "All posts",
+    "readMore": "Read more →",
+    "publishedOn": "Published on",
+    "by": "by"
+  },
+  "pages": {
+    "metaSuffix": ""
+  },
+  "policies": {
+    "indexTitle": "Policies",
+    "indexMeta": "Lightboard | Policies",
+    "back": "← Back to policies"
+  },
+  "account": {
+    "metaSuffix": "Account",
+    "myAccount": "My account",
+    "welcome": "Welcome",
+    "signOut": "Sign out",
+    "signIn": "Sign in",
+    "ordersTitle": "My orders",
+    "orders": "Orders",
+    "profile": "Profile",
+    "addresses": "Addresses",
+    "ordersFilter": "Filter orders",
+    "orderNumber": "Order number",
+    "orderNumberPlaceholder": "Order #",
+    "confirmationNumber": "Confirmation number",
+    "confirmationNumberPlaceholder": "Confirmation #",
+    "searchOrders": "Search orders",
+    "searchBtn": "Search",
+    "clearBtn": "Clear",
+    "active": "active",
+    "clearFilters": "Clear filters →",
+    "startShopping": "Start shopping →",
+    "noOrders": "No orders yet.",
+    "orderTable": {
+      "product": "Product",
+      "price": "Price",
+      "quantity": "Quantity",
+      "total": "Total",
+      "discounts": "Discounts",
+      "subtotal": "Subtotal",
+      "tax": "Tax",
+      "totalRow": "Total"
+    },
+    "shippingAddress": "Shipping address",
+    "noShippingAddress": "No shipping address defined",
+    "status": "Status",
+    "myProfile": "My profile",
+    "personalInfo": "Personal information",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "phone": "Phone",
+    "email": "Email",
+    "addressesTitle": "Addresses",
+    "createAddress": "Create address",
+    "existingAddresses": "Existing addresses",
+    "company": "Company",
+    "addressLine1": "Address line 1",
+    "addressLine1Required": "Address line 1*",
+    "addressLine2": "Address line 2",
+    "city": "City",
+    "stateProvince": "State / Province",
+    "zip": "Zip",
+    "zipPlaceholder": "Zip / Postal code",
+    "country": "Country",
+    "countryCode": "Country code",
+    "phoneNumber": "Phone number",
+    "setAsDefault": "Set as default address"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "kicker": "Maybe this link washed out. Head back home and pick a different break.",
+    "cta": "Back to home"
+  },
+  "discount": {
+    "applied": "Discount applied!",
+    "applyError": "We couldn't apply this code."
+  },
+  "footer": {
+    "brandDesc": "California soul, Mediterranean craft. Handmade wall pieces for the surf, snow, and skate obsessed. Shipped from Tel Aviv with aloha.",
+    "shopHeading": "Shop",
+    "shop": [
+      {"label": "Photo hangers", "to": "/collections/photo-hangers"},
+      {"label": "Metal designs", "to": "/collections/metal"},
+      {"label": "Action prints", "to": "/collections/prints"},
+      {"label": "Gift cards", "to": "/products/gift-card"},
+      {"label": "All products", "to": "/collections"}
+    ],
+    "helpHeading": "Help",
+    "help": [
+      {"label": "Shipping", "to": "/policies/shipping-policy"},
+      {"label": "Returns", "to": "/policies/refund-policy"},
+      {"label": "Custom orders", "to": "/pages/custom-orders"},
+      {"label": "Care guide", "to": "/pages/care-guide"},
+      {"label": "Contact", "to": "/pages/contact"}
+    ],
+    "companyHeading": "Company",
+    "company": [
+      {"label": "Our story", "to": "/pages/about"},
+      {"label": "Journal", "to": "/blogs/journal"},
+      {"label": "Workshops", "to": "/pages/workshops"},
+      {"label": "Wholesale", "to": "/pages/wholesale"}
+    ],
+    "rights": "LIGHTBOARD · ALL RIGHTS RESERVED",
+    "legal": [
+      {"label": "Privacy", "to": "/policies/privacy-policy"},
+      {"label": "Terms", "to": "/policies/terms-of-service"},
+      {"label": "Cookies", "to": "/policies/privacy-policy"}
+    ]
+  }
+}

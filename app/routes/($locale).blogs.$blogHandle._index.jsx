@@ -2,6 +2,7 @@ import {Link, useLoaderData} from 'react-router';
 import {Image, getPaginationVariables} from '@shopify/hydrogen';
 import {PaginatedResourceSection} from '~/components/PaginatedResourceSection';
 import {redirectIfHandleIsLocalized} from '~/lib/redirect';
+import {useI18n} from '~/lib/useI18n';
 
 /**
  * @type {Route.MetaFunction}
@@ -62,7 +63,7 @@ async function loadCriticalData({context, request, params}) {
  * Make sure to not throw any errors here, as it will cause the page to 500.
  * @param {Route.LoaderArgs}
  */
-function loadDeferredData({context}) {
+function loadDeferredData() {
   return {};
 }
 
@@ -96,14 +97,14 @@ export default function Blog() {
  * }}
  */
 function ArticleItem({article, loading}) {
-  const publishedAt = new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  }).format(new Date(article.publishedAt));
+  const {locale, to} = useI18n();
+  const publishedAt = new Intl.DateTimeFormat(
+    locale === 'he' ? 'he-IL' : 'en-US',
+    {year: 'numeric', month: 'long', day: 'numeric'},
+  ).format(new Date(article.publishedAt));
   return (
     <div className="blog-article" key={article.id}>
-      <Link to={`/blogs/${article.blog.handle}/${article.handle}`}>
+      <Link to={to(`/blogs/${article.blog.handle}/${article.handle}`)}>
         {article.image && (
           <div className="blog-article-image">
             <Image
