@@ -214,25 +214,23 @@ h1, h2, h3, h4, h5, h6 {
   .lb-nav-burger { display: inline-flex; }
 }
 
-.lb-logo {
+.lb-logo-link {
   display: inline-flex;
-  align-items: baseline;
-  gap: 3px;
-  font-family: var(--mono);
-  font-weight: 500;
-  font-size: 14px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  line-height: 1;
-  color: inherit;
+  align-items: center;
+  /* Match the previous text logo's tap height so layout proportions
+     stay consistent with the rest of the nav row. */
+  min-height: var(--tap-min);
 }
-.lb-logo .dot {
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: var(--orange);
-  display: inline-block;
-  align-self: flex-end;
-  margin-bottom: 1px;
+.lb-logo-img {
+  display: block;
+  height: 22px;
+  width: auto;
+  max-width: 100%;
+}
+@media (max-width: 720px) {
+  /* Slightly smaller on phones so the wordmark + cart icon + lang
+     toggle all sit comfortably in the 375px row. */
+  .lb-logo-img { height: 18px; }
 }
 
 .lb-lang-toggle {
@@ -1209,17 +1207,13 @@ section { position: relative; }
 }
 .footer-col a { font-size: 14px; opacity: 0.8; transition: opacity 0.15s; }
 .footer-col a:hover { opacity: 1; }
-.footer-brand .wordmark {
-  font-family: var(--serif);
-  font-size: 40px;
-  line-height: 1;
-  letter-spacing: -0.03em;
-  margin: 0 0 16px;
-  font-weight: 300;
-  font-variation-settings: "SOFT" 30;
-  color: var(--white);
+.footer-brand .footer-wordmark {
+  display: block;
+  height: 32px;
+  width: auto;
+  max-width: 100%;
+  margin: 0 0 20px;
 }
-.footer-brand .wordmark em { font-style: italic; font-variation-settings: "SOFT" 90, "WONK" 1; color: var(--orange); }
 .footer-brand p {
   font-size: 14px;
   line-height: 1.7;
