@@ -60,22 +60,28 @@ export default function Homepage() {
 
 const HERO_SLIDES = [
   {
-    img: 'https://images.unsplash.com/photo-1533873984035-25970ab07461?w=2400&q=80',
-    label: 'VAN LIFE · SURF TRIP',
+    img: 'https://cdn.shopify.com/s/files/1/0982/9325/2392/files/mikail-mcverry-6WRjFofNhPs-unsplash.jpg?v=1777136172',
+    label: 'VAN LIFE · BEACH PARK',
   },
   {
-    img: 'https://images.unsplash.com/photo-1502680390469-be75c86b636f?w=2400&q=80',
-    label: 'SURF · LINEUP',
+    img: 'https://cdn.shopify.com/s/files/1/0982/9325/2392/files/leo_visions-SzJo8G7BP8E-unsplash.jpg?v=1777136172',
+    label: 'WAKE UP · OCEAN VIEW',
   },
   {
-    img: 'https://images.unsplash.com/photo-1551698618-5d2878904ae2?w=2400&q=80',
-    label: 'SNOW · POW DAY',
+    img: 'https://cdn.shopify.com/s/files/1/0982/9325/2392/files/mads-schmidt-rasmussen-tSp5_w9h5TQ-unsplash.jpg?v=1777136172',
+    label: 'SNOW · GOLDEN HOUR',
   },
   {
-    img: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=2400&q=80',
-    label: 'CALI · BEACH',
+    img: 'https://cdn.shopify.com/s/files/1/0982/9325/2392/files/john-o-nelio-czM5xBzedXA-unsplash.jpg?v=1777136171',
+    label: 'COAST · SUNSET ROAD',
   },
 ];
+
+const HERO_SRCSET_WIDTHS = [900, 1400, 2000, 2800];
+
+function heroSrcSet(url) {
+  return HERO_SRCSET_WIDTHS.map((w) => `${url}&width=${w} ${w}w`).join(', ');
+}
 
 function Hero() {
   const {dict, to} = useI18n();
@@ -102,14 +108,23 @@ function Hero() {
           key={s.img}
           className="hero-media"
           style={{
-            backgroundImage: `url(${s.img})`,
             opacity: j === i ? 1 : 0,
             transform: j === i ? 'scale(1.02)' : 'scale(1)',
             transitionProperty: 'opacity, transform',
             transitionDuration: '1.2s, 6s',
             transitionTimingFunction: 'ease',
           }}
-        />
+        >
+          <img
+            src={`${s.img}&width=2000`}
+            srcSet={heroSrcSet(s.img)}
+            sizes="100vw"
+            alt=""
+            loading={j === 0 ? 'eager' : 'lazy'}
+            fetchPriority={j === 0 ? 'high' : 'low'}
+            draggable={false}
+          />
+        </div>
       ))}
       <div className="container hero-inner">
         <div className="hero-eyebrow">
