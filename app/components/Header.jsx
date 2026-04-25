@@ -31,6 +31,7 @@ export function Header({isLoggedIn, cart}) {
     <header className={`header lb-nav ${scrolled ? 'scrolled' : ''}`}>
       <div className="container lb-nav-inner">
         <nav className="lb-nav-left" role="navigation">
+          <MenuToggle label={dict.nav.menu} />
           {menu.map((item) => (
             <NavLink
               key={item.to}
@@ -38,7 +39,7 @@ export function Header({isLoggedIn, cart}) {
               end={item.end}
               prefetch="intent"
               className={({isActive}) =>
-                `lb-nav-link${isActive ? ' active' : ''}`
+                `lb-nav-link lb-nav-link--desktop${isActive ? ' active' : ''}`
               }
             >
               {item.label}
@@ -60,7 +61,7 @@ export function Header({isLoggedIn, cart}) {
               to={item.to}
               prefetch="intent"
               className={({isActive}) =>
-                `lb-nav-link${isActive ? ' active' : ''}`
+                `lb-nav-link lb-nav-link--desktop${isActive ? ' active' : ''}`
               }
             >
               {item.label}
@@ -140,6 +141,24 @@ export function HeaderMenu({menu, primaryDomainUrl, viewport, publicStoreDomain}
         );
       })}
     </nav>
+  );
+}
+
+function MenuToggle({label}) {
+  const {open} = useAside();
+  return (
+    <button
+      type="button"
+      className="lb-nav-burger"
+      aria-label={label}
+      onClick={() => open('mobile')}
+    >
+      <span aria-hidden="true">
+        <span />
+        <span />
+        <span />
+      </span>
+    </button>
   );
 }
 
