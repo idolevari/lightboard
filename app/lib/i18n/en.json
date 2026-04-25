@@ -11,7 +11,8 @@
     "contact": "Contact",
     "cart": "Cart",
     "search": "Search",
-    "account": "Account"
+    "account": "Account",
+    "menu": "Menu"
   },
   "common": {
     "loading": "Loading…",
