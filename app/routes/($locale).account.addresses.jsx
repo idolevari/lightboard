@@ -10,6 +10,7 @@ import {
   DELETE_ADDRESS_MUTATION,
   CREATE_ADDRESS_MUTATION,
 } from '~/graphql/customer-account/CustomerAddressMutations';
+import {useI18n} from '~/lib/useI18n';
 
 /**
  * @type {Route.MetaFunction}
@@ -252,21 +253,22 @@ export async function action({request, context}) {
 export default function Addresses() {
   const {customer} = useOutletContext();
   const {defaultAddress, addresses} = customer;
+  const {dict} = useI18n();
 
   return (
     <div className="account-addresses">
-      <h2>Addresses</h2>
+      <h2>{dict.account.addressesTitle}</h2>
       <br />
       <div>
         <div>
-          <legend>Create address</legend>
+          <legend>{dict.account.createAddress}</legend>
           <NewAddressForm key={addresses.nodes.length} />
         </div>
         <br />
         <hr />
         <br />
         {!addresses.nodes.length ? (
-          <p>You have no addresses saved.</p>
+          <p>{dict.common.no}.</p>
         ) : (
           <ExistingAddresses
             addresses={addresses}
@@ -279,6 +281,7 @@ export default function Addresses() {
 }
 
 function NewAddressForm() {
+  const {dict} = useI18n();
   const newAddress = {
     address1: '',
     address2: '',
@@ -306,7 +309,7 @@ function NewAddressForm() {
             formMethod="POST"
             type="submit"
           >
-            {stateForMethod('POST') !== 'idle' ? 'Creating' : 'Create'}
+            {stateForMethod('POST') !== 'idle' ? dict.common.loading : dict.common.save}
           </button>
         </div>
       )}
@@ -318,9 +321,10 @@ function NewAddressForm() {
  * @param {Pick<CustomerFragment, 'addresses' | 'defaultAddress'>}
  */
 function ExistingAddresses({addresses, defaultAddress}) {
+  const {dict} = useI18n();
   return (
     <div>
-      <legend>Existing addresses</legend>
+      <legend>{dict.account.existingAddresses}</legend>
       {addresses.nodes.map((address) => (
         <AddressForm
           key={address.id}
@@ -335,14 +339,14 @@ function ExistingAddresses({addresses, defaultAddress}) {
                 formMethod="PUT"
                 type="submit"
               >
-                {stateForMethod('PUT') !== 'idle' ? 'Saving' : 'Save'}
+                {stateForMethod('PUT') !== 'idle' ? dict.common.loading : dict.common.save}
               </button>
               <button
                 disabled={stateForMethod('DELETE') !== 'idle'}
                 formMethod="DELETE"
                 type="submit"
               >
-                {stateForMethod('DELETE') !== 'idle' ? 'Deleting' : 'Delete'}
+                {stateForMethod('DELETE') !== 'idle' ? dict.common.loading : dict.common.delete}
               </button>
             </div>
           )}
@@ -368,116 +372,118 @@ export function AddressForm({addressId, address, defaultAddress, children}) {
   const action = useActionData();
   const error = action?.error?.[addressId];
   const isDefaultAddress = defaultAddress?.id === addressId;
+  const {dict} = useI18n();
+  const a = dict.account;
   return (
     <Form id={addressId}>
       <fieldset>
         <input type="hidden" name="addressId" defaultValue={addressId} />
-        <label htmlFor="firstName">First name*</label>
+        <label htmlFor="firstName">{a.firstName}*</label>
         <input
-          aria-label="First name"
+          aria-label={a.firstName}
           autoComplete="given-name"
           defaultValue={address?.firstName ?? ''}
           id="firstName"
           name="firstName"
-          placeholder="First name"
+          placeholder={a.firstName}
           required
           type="text"
         />
-        <label htmlFor="lastName">Last name*</label>
+        <label htmlFor="lastName">{a.lastName}*</label>
         <input
-          aria-label="Last name"
+          aria-label={a.lastName}
           autoComplete="family-name"
           defaultValue={address?.lastName ?? ''}
           id="lastName"
           name="lastName"
-          placeholder="Last name"
+          placeholder={a.lastName}
           required
           type="text"
         />
-        <label htmlFor="company">Company</label>
+        <label htmlFor="company">{a.company}</label>
         <input
-          aria-label="Company"
+          aria-label={a.company}
           autoComplete="organization"
           defaultValue={address?.company ?? ''}
           id="company"
           name="company"
-          placeholder="Company"
+          placeholder={a.company}
           type="text"
         />
-        <label htmlFor="address1">Address line*</label>
+        <label htmlFor="address1">{a.addressLine1}*</label>
         <input
-          aria-label="Address line 1"
+          aria-label={a.addressLine1}
           autoComplete="address-line1"
           defaultValue={address?.address1 ?? ''}
           id="address1"
           name="address1"
-          placeholder="Address line 1*"
+          placeholder={a.addressLine1Required}
           required
           type="text"
         />
-        <label htmlFor="address2">Address line 2</label>
+        <label htmlFor="address2">{a.addressLine2}</label>
         <input
-          aria-label="Address line 2"
+          aria-label={a.addressLine2}
           autoComplete="address-line2"
           defaultValue={address?.address2 ?? ''}
           id="address2"
           name="address2"
-          placeholder="Address line 2"
+          placeholder={a.addressLine2}
           type="text"
         />
-        <label htmlFor="city">City*</label>
+        <label htmlFor="city">{a.city}*</label>
         <input
-          aria-label="City"
+          aria-label={a.city}
           autoComplete="address-level2"
           defaultValue={address?.city ?? ''}
           id="city"
           name="city"
-          placeholder="City"
+          placeholder={a.city}
           required
           type="text"
         />
-        <label htmlFor="zoneCode">State / Province*</label>
+        <label htmlFor="zoneCode">{a.stateProvince}*</label>
         <input
-          aria-label="State/Province"
+          aria-label={a.stateProvince}
           autoComplete="address-level1"
           defaultValue={address?.zoneCode ?? ''}
           id="zoneCode"
           name="zoneCode"
-          placeholder="State / Province"
+          placeholder={a.stateProvince}
           required
           type="text"
         />
-        <label htmlFor="zip">Zip / Postal Code*</label>
+        <label htmlFor="zip">{a.zipPlaceholder}*</label>
         <input
-          aria-label="Zip"
+          aria-label={a.zip}
           autoComplete="postal-code"
           defaultValue={address?.zip ?? ''}
           id="zip"
           name="zip"
-          placeholder="Zip / Postal Code"
+          placeholder={a.zipPlaceholder}
           required
           type="text"
         />
-        <label htmlFor="territoryCode">Country Code*</label>
+        <label htmlFor="territoryCode">{a.countryCode}*</label>
         <input
-          aria-label="Country code"
+          aria-label={a.countryCode}
           autoComplete="country"
           defaultValue={address?.territoryCode ?? ''}
           id="territoryCode"
           name="territoryCode"
-          placeholder="Country"
+          placeholder={a.country}
           required
           type="text"
           maxLength={2}
         />
-        <label htmlFor="phoneNumber">Phone</label>
+        <label htmlFor="phoneNumber">{a.phone}</label>
         <input
-          aria-label="Phone Number"
+          aria-label={a.phoneNumber}
           autoComplete="tel"
           defaultValue={address?.phoneNumber ?? ''}
           id="phoneNumber"
           name="phoneNumber"
-          placeholder="+16135551111"
+          placeholder="+972000000000"
           pattern="^\+?[1-9]\d{3,14}$"
           type="tel"
         />
@@ -488,7 +494,7 @@ export function AddressForm({addressId, address, defaultAddress, children}) {
             name="defaultAddress"
             type="checkbox"
           />
-          <label htmlFor="defaultAddress">Set as default address</label>
+          <label htmlFor="defaultAddress">{a.setAsDefault}</label>
         </div>
         {error ? (
           <p>

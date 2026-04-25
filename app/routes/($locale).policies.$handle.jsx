@@ -1,4 +1,5 @@
 import {Link, useLoaderData} from 'react-router';
+import {useI18n} from '~/lib/useI18n';
 
 /**
  * @type {Route.MetaFunction}
@@ -42,13 +43,14 @@ export async function loader({params, context}) {
 export default function Policy() {
   /** @type {LoaderReturnData} */
   const {policy} = useLoaderData();
+  const {dict, to} = useI18n();
 
   return (
     <div className="policy">
       <br />
       <br />
       <div>
-        <Link to="/policies">← Back to Policies</Link>
+        <Link to={to('/policies')}>{dict.policies.back}</Link>
       </div>
       <br />
       <h1>{policy.title}</h1>

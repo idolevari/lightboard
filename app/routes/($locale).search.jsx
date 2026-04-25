@@ -3,12 +3,16 @@ import {getPaginationVariables, Analytics} from '@shopify/hydrogen';
 import {SearchForm} from '~/components/SearchForm';
 import {SearchResults} from '~/components/SearchResults';
 import {getEmptyPredictiveSearchResult} from '~/lib/search';
+import {useI18n} from '~/lib/useI18n';
+import {getDictionary} from '~/lib/i18n';
 
 /**
  * @type {Route.MetaFunction}
  */
-export const meta = () => {
-  return [{title: `Lightboard | Search`}];
+export const meta = ({matches}) => {
+  const root = matches?.find?.((m) => m.id === 'root');
+  const dict = root?.data?.dict ?? getDictionary('he');
+  return [{title: dict.search.metaTitle}];
 };
 
 /**
@@ -35,23 +39,25 @@ export async function loader({request, context}) {
 export default function SearchPage() {
   /** @type {LoaderReturnData} */
   const {type, term, result, error} = useLoaderData();
+  const {dict} = useI18n();
   if (type === 'predictive') return null;
 
   return (
     <div className="search">
-      <h1>Search</h1>
+      <h1>{dict.search.pageTitle}</h1>
       <SearchForm>
         {({inputRef}) => (
           <>
             <input
               defaultValue={term}
               name="q"
-              placeholder="Search…"
+              placeholder={dict.search.placeholder}
               ref={inputRef}
               type="search"
+              aria-label={dict.search.pageTitle}
             />
             &nbsp;
-            <button type="submit">Search</button>
+            <button type="submit">{dict.search.submit}</button>
           </>
         )}
       </SearchForm>

@@ -1,4 +1,5 @@
 import {redirect} from 'react-router';
+import {detectLocaleFromRequest, localizedPath} from '~/lib/i18n';
 
 /**
  * Automatically applies a discount found on the url
@@ -18,12 +19,15 @@ export async function loader({request, context, params}) {
 
   const url = new URL(request.url);
   const searchParams = new URLSearchParams(url.search);
+  const locale = detectLocaleFromRequest(request);
   let redirectParam =
-    searchParams.get('redirect') || searchParams.get('return_to') || '/';
+    searchParams.get('redirect') ||
+    searchParams.get('return_to') ||
+    localizedPath('/', locale);
 
   if (redirectParam.includes('//')) {
     // Avoid redirecting to external URLs to prevent phishing attacks
-    redirectParam = '/';
+    redirectParam = localizedPath('/', locale);
   }
 
   searchParams.delete('redirect');

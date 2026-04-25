@@ -9,6 +9,7 @@ import {
   SearchFormPredictive,
 } from '~/components/SearchFormPredictive';
 import {SearchResultsPredictive} from '~/components/SearchResultsPredictive';
+import {useI18n} from '~/lib/useI18n';
 
 /**
  * @param {PageLayoutProps}
@@ -35,26 +36,18 @@ export function PageLayout({
         />
       )}
       <main>{children}</main>
-      <Footer
-        footer={footer}
-        header={header}
-        publicStoreDomain={publicStoreDomain}
-      />
+      <Footer />
     </Aside.Provider>
   );
 }
 
-/**
- * @param {{cart: PageLayoutProps['cart']}}
- */
 function CartAside({cart}) {
+  const {dict} = useI18n();
   return (
-    <Aside type="cart" heading="CART">
-      <Suspense fallback={<p>Loading cart ...</p>}>
+    <Aside type="cart" heading={dict.aside.cart}>
+      <Suspense fallback={<p>{dict.cart.loading}</p>}>
         <Await resolve={cart}>
-          {(cart) => {
-            return <CartMain cart={cart} layout="aside" />;
-          }}
+          {(resolved) => <CartMain cart={resolved} layout="aside" />}
         </Await>
       </Suspense>
     </Aside>
@@ -62,9 +55,10 @@ function CartAside({cart}) {
 }
 
 function SearchAside() {
+  const {dict, to} = useI18n();
   const queriesDatalistId = useId();
   return (
-    <Aside type="search" heading="SEARCH">
+    <Aside type="search" heading={dict.aside.search}>
       <div className="predictive-search">
         <br />
         <SearchFormPredictive>
@@ -74,13 +68,14 @@ function SearchAside() {
                 name="q"
                 onChange={fetchResults}
                 onFocus={fetchResults}
-                placeholder="Search"
+                placeholder={dict.search.placeholder}
                 ref={inputRef}
                 type="search"
                 list={queriesDatalistId}
+                aria-label={dict.search.pageTitle}
               />
               &nbsp;
-              <button onClick={goToSearch}>Search</button>
+              <button onClick={goToSearch}>{dict.search.submit}</button>
             </>
           )}
         </SearchFormPredictive>
@@ -90,7 +85,7 @@ function SearchAside() {
             const {articles, collections, pages, products, queries} = items;
 
             if (state === 'loading' && term.current) {
-              return <div>Loading...</div>;
+              return <div>{dict.common.loading}</div>;
             }
 
             if (!total) {
@@ -126,11 +121,10 @@ function SearchAside() {
                 {term.current && total ? (
                   <Link
                     onClick={closeSearch}
-                    to={`${SEARCH_ENDPOINT}?q=${term.current}`}
+                    to={`${to(SEARCH_ENDPOINT)}?q=${term.current}`}
                   >
                     <p>
-                      View all results for <q>{term.current}</q>
-                      &nbsp; →
+                      {dict.search.viewAll} <q>{term.current}</q>&nbsp;→
                     </p>
                   </Link>
                 ) : null}
@@ -143,17 +137,12 @@ function SearchAside() {
   );
 }
 
-/**
- * @param {{
- *   header: PageLayoutProps['header'];
- *   publicStoreDomain: PageLayoutProps['publicStoreDomain'];
- * }}
- */
 function MobileMenuAside({header, publicStoreDomain}) {
+  const {dict} = useI18n();
   return (
     header.menu &&
     header.shop.primaryDomain?.url && (
-      <Aside type="mobile" heading="MENU">
+      <Aside type="mobile" heading={dict.aside.menu}>
         <HeaderMenu
           menu={header.menu}
           viewport="mobile"

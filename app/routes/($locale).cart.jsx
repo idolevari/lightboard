@@ -1,12 +1,16 @@
 import {useLoaderData, data} from 'react-router';
 import {CartForm} from '@shopify/hydrogen';
 import {CartMain} from '~/components/CartMain';
+import {useI18n} from '~/lib/useI18n';
+import {getDictionary} from '~/lib/i18n';
 
 /**
  * @type {Route.MetaFunction}
  */
-export const meta = () => {
-  return [{title: `Lightboard | Cart`}];
+export const meta = ({matches}) => {
+  const root = matches?.find?.((m) => m.id === 'root');
+  const dict = root?.data?.dict ?? getDictionary('he');
+  return [{title: dict.cart.metaTitle}];
 };
 
 /**
@@ -110,10 +114,11 @@ export async function loader({context}) {
 export default function Cart() {
   /** @type {LoaderReturnData} */
   const cart = useLoaderData();
+  const {dict} = useI18n();
 
   return (
     <div className="cart">
-      <h1>Cart</h1>
+      <h1>{dict.cart.pageTitle}</h1>
       <CartMain layout="page" cart={cart} />
     </div>
   );

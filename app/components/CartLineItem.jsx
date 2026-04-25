@@ -3,6 +3,7 @@ import {useVariantUrl} from '~/lib/variants';
 import {Link} from 'react-router';
 import {ProductPrice} from './ProductPrice';
 import {useAside} from './Aside';
+import {useI18n} from '~/lib/useI18n';
 
 /**
  * A single line item in the cart. It displays the product image, title, price.
@@ -20,6 +21,7 @@ export function CartLineItem({layout, line, childrenMap}) {
   const {product, title, image, selectedOptions} = merchandise;
   const lineItemUrl = useVariantUrl(product.handle, selectedOptions);
   const {close} = useAside();
+  const {dict} = useI18n();
   const lineItemChildren = childrenMap[id];
   const childrenLabelId = `cart-line-children-${id}`;
 
@@ -68,7 +70,7 @@ export function CartLineItem({layout, line, childrenMap}) {
       {lineItemChildren ? (
         <div>
           <p id={childrenLabelId} className="sr-only">
-            Line items with {product.title}
+            {dict.cart.lineItemsWith} {product.title}
           </p>
           <ul aria-labelledby={childrenLabelId} className="cart-line-children">
             {lineItemChildren.map((childLine) => (
@@ -93,6 +95,7 @@ export function CartLineItem({layout, line, childrenMap}) {
  * @param {{line: CartLine}}
  */
 function CartLineQuantity({line}) {
+  const {dict} = useI18n();
   if (!line || typeof line?.quantity === 'undefined') return null;
   const {id: lineId, quantity, isOptimistic} = line;
   const prevQuantity = Number(Math.max(0, quantity - 1).toFixed(0));
@@ -100,10 +103,10 @@ function CartLineQuantity({line}) {
 
   return (
     <div className="cart-line-quantity">
-      <small>Quantity: {quantity} &nbsp;&nbsp;</small>
+      <small>{dict.cart.quantity}: {quantity} &nbsp;&nbsp;</small>
       <CartLineUpdateButton lines={[{id: lineId, quantity: prevQuantity}]}>
         <button
-          aria-label="Decrease quantity"
+          aria-label={dict.cart.decreaseQuantity}
           disabled={quantity <= 1 || !!isOptimistic}
           name="decrease-quantity"
           value={prevQuantity}
@@ -114,7 +117,7 @@ function CartLineQuantity({line}) {
       &nbsp;
       <CartLineUpdateButton lines={[{id: lineId, quantity: nextQuantity}]}>
         <button
-          aria-label="Increase quantity"
+          aria-label={dict.cart.increaseQuantity}
           name="increase-quantity"
           value={nextQuantity}
           disabled={!!isOptimistic}
@@ -138,6 +141,7 @@ function CartLineQuantity({line}) {
  * }}
  */
 function CartLineRemoveButton({lineIds, disabled}) {
+  const {dict} = useI18n();
   return (
     <CartForm
       fetcherKey={getUpdateKey(lineIds)}
@@ -146,7 +150,7 @@ function CartLineRemoveButton({lineIds, disabled}) {
       inputs={{lineIds}}
     >
       <button disabled={disabled} type="submit">
-        Remove
+        {dict.cart.removeBtn}
       </button>
     </CartForm>
   );

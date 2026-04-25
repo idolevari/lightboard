@@ -1,6 +1,7 @@
 import {CartForm, Money} from '@shopify/hydrogen';
 import {useEffect, useId, useRef, useState} from 'react';
 import {useFetcher} from 'react-router';
+import {useI18n} from '~/lib/useI18n';
 
 /**
  * @param {CartSummaryProps}
@@ -13,12 +14,13 @@ export function CartSummary({cart, layout}) {
   const discountCodeInputId = useId();
   const giftCardHeadingId = useId();
   const giftCardInputId = useId();
+  const {dict} = useI18n();
 
   return (
     <div aria-labelledby={summaryId} className={className}>
-      <h4 id={summaryId}>Totals</h4>
+      <h4 id={summaryId}>{dict.cart.totals}</h4>
       <dl role="group" className="cart-subtotal">
-        <dt>Subtotal</dt>
+        <dt>{dict.cart.subtotal}</dt>
         <dd>
           {cart?.cost?.subtotalAmount?.amount ? (
             <Money data={cart?.cost?.subtotalAmount} />
@@ -42,45 +44,35 @@ export function CartSummary({cart, layout}) {
   );
 }
 
-/**
- * @param {{checkoutUrl?: string}}
- */
 function CartCheckoutActions({checkoutUrl}) {
+  const {dict} = useI18n();
   if (!checkoutUrl) return null;
-
   return (
     <div>
       <a href={checkoutUrl} target="_self">
-        <p>Continue to Checkout &rarr;</p>
+        <p>{dict.cart.checkout}</p>
       </a>
       <br />
     </div>
   );
 }
 
-/**
- * @param {{
- *   discountCodes?: CartApiQueryFragment['discountCodes'];
- *   discountsHeadingId: string;
- *   discountCodeInputId: string;
- * }}
- */
 function CartDiscounts({
   discountCodes,
   discountsHeadingId,
   discountCodeInputId,
 }) {
+  const {dict} = useI18n();
   const codes =
     discountCodes
       ?.filter((discount) => discount.applicable)
       ?.map(({code}) => code) || [];
 
   return (
-    <section aria-label="Discounts">
-      {/* Have existing discount, display it with a remove option */}
+    <section aria-label={dict.cart.discountsLabel}>
       <dl hidden={!codes.length}>
         <div>
-          <dt id={discountsHeadingId}>Discounts</dt>
+          <dt id={discountsHeadingId}>{dict.cart.discounts}</dt>
           <UpdateDiscountForm>
             <div
               className="cart-discount"
@@ -89,29 +81,28 @@ function CartDiscounts({
             >
               <code>{codes?.join(', ')}</code>
               &nbsp;
-              <button type="submit" aria-label="Remove discount">
-                Remove
+              <button type="submit" aria-label={dict.cart.discountRemove}>
+                {dict.cart.removeBtn}
               </button>
             </div>
           </UpdateDiscountForm>
         </div>
       </dl>
 
-      {/* Show an input to apply a discount */}
       <UpdateDiscountForm discountCodes={codes}>
         <div>
           <label htmlFor={discountCodeInputId} className="sr-only">
-            Discount code
+            {dict.cart.discountCode}
           </label>
           <input
             id={discountCodeInputId}
             type="text"
             name="discountCode"
-            placeholder="Discount code"
+            placeholder={dict.cart.discountCode}
           />
           &nbsp;
-          <button type="submit" aria-label="Apply discount code">
-            Apply
+          <button type="submit" aria-label={dict.cart.discountApplyAria}>
+            {dict.cart.applyBtn}
           </button>
         </div>
       </UpdateDiscountForm>
@@ -119,12 +110,6 @@ function CartDiscounts({
   );
 }
 
-/**
- * @param {{
- *   discountCodes?: string[];
- *   children: React.ReactNode;
- * }}
- */
 function UpdateDiscountForm({discountCodes, children}) {
   return (
     <CartForm
@@ -139,19 +124,13 @@ function UpdateDiscountForm({discountCodes, children}) {
   );
 }
 
-/**
- * @param {{
- *   giftCardCodes: CartApiQueryFragment['appliedGiftCards'] | undefined;
- *   giftCardHeadingId: string;
- *   giftCardInputId: string;
- * }}
- */
 function CartGiftCard({giftCardCodes, giftCardHeadingId, giftCardInputId}) {
   const giftCardCodeInput = useRef(null);
   const removeButtonRefs = useRef(new Map());
   const previousCardIdsRef = useRef([]);
   const giftCardAddFetcher = useFetcher({key: 'gift-card-add'});
   const [removedCardIndex, setRemovedCardIndex] = useState(null);
+  const {dict} = useI18n();
 
   useEffect(() => {
     if (giftCardAddFetcher.data) {
@@ -194,10 +173,10 @@ function CartGiftCard({giftCardCodes, giftCardHeadingId, giftCardInputId}) {
   };
 
   return (
-    <section aria-label="Gift cards">
+    <section aria-label={dict.cart.giftCardsLabel}>
       {giftCardCodes && giftCardCodes.length > 0 && (
         <dl>
-          <dt id={giftCardHeadingId}>Applied Gift Card(s)</dt>
+          <dt id={giftCardHeadingId}>{dict.cart.giftCardsApplied}</dt>
           {giftCardCodes.map((giftCard) => (
             <dd key={giftCard.id} className="cart-discount">
               <RemoveGiftCardForm
@@ -224,22 +203,22 @@ function CartGiftCard({giftCardCodes, giftCardHeadingId, giftCardInputId}) {
       <AddGiftCardForm fetcherKey="gift-card-add">
         <div>
           <label htmlFor={giftCardInputId} className="sr-only">
-            Gift card code
+            {dict.cart.giftCardCode}
           </label>
           <input
             id={giftCardInputId}
             type="text"
             name="giftCardCode"
-            placeholder="Gift card code"
+            placeholder={dict.cart.giftCardCode}
             ref={giftCardCodeInput}
           />
           &nbsp;
           <button
             type="submit"
             disabled={giftCardAddFetcher.state !== 'idle'}
-            aria-label="Apply gift card code"
+            aria-label={dict.cart.giftCardCodeAria}
           >
-            Apply
+            {dict.cart.applyBtn}
           </button>
         </div>
       </AddGiftCardForm>
@@ -247,12 +226,6 @@ function CartGiftCard({giftCardCodes, giftCardHeadingId, giftCardInputId}) {
   );
 }
 
-/**
- * @param {{
- *   fetcherKey?: string;
- *   children: React.ReactNode;
- * }}
- */
 function AddGiftCardForm({fetcherKey, children}) {
   return (
     <CartForm
@@ -265,15 +238,6 @@ function AddGiftCardForm({fetcherKey, children}) {
   );
 }
 
-/**
- * @param {{
- *   giftCardId: string;
- *   lastCharacters: string;
- *   children: React.ReactNode;
- *   onRemoveClick?: () => void;
- *   buttonRef?: (el: HTMLButtonElement | null) => void;
- * }}
- */
 function RemoveGiftCardForm({
   giftCardId,
   lastCharacters,
@@ -281,6 +245,7 @@ function RemoveGiftCardForm({
   onRemoveClick,
   buttonRef,
 }) {
+  const {dict} = useI18n();
   return (
     <CartForm
       route="/cart"
@@ -293,11 +258,11 @@ function RemoveGiftCardForm({
       &nbsp;
       <button
         type="submit"
-        aria-label={`Remove gift card ending in ${lastCharacters}`}
+        aria-label={`${dict.cart.giftCardRemove} ${lastCharacters}`}
         onClick={onRemoveClick}
         ref={buttonRef}
       >
-        Remove
+        {dict.cart.removeBtn}
       </button>
     </CartForm>
   );
@@ -309,7 +274,6 @@ function RemoveGiftCardForm({
  *   layout: CartLayout;
  * }} CartSummaryProps
  */
-
 /** @typedef {import('storefrontapi.generated').CartApiQueryFragment} CartApiQueryFragment */
 /** @typedef {import('~/components/CartMain').CartLayout} CartLayout */
 /** @typedef {import('@shopify/hydrogen').OptimisticCart} OptimisticCart */

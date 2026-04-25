@@ -6,12 +6,16 @@ import {
   useNavigation,
   useOutletContext,
 } from 'react-router';
+import {useI18n} from '~/lib/useI18n';
+import {getDictionary} from '~/lib/i18n';
 
 /**
  * @type {Route.MetaFunction}
  */
-export const meta = () => {
-  return [{title: 'Profile'}];
+export const meta = ({matches}) => {
+  const root = matches?.find?.((m) => m.id === 'root');
+  const dict = root?.data?.dict ?? getDictionary('he');
+  return [{title: dict.account.profile}];
 };
 
 /**
@@ -86,33 +90,34 @@ export default function AccountProfile() {
   /** @type {ActionReturnData} */
   const action = useActionData();
   const customer = action?.customer ?? account?.customer;
+  const {dict} = useI18n();
 
   return (
     <div className="account-profile">
-      <h2>My profile</h2>
+      <h2>{dict.account.myProfile}</h2>
       <br />
       <Form method="PUT">
-        <legend>Personal information</legend>
+        <legend>{dict.account.personalInfo}</legend>
         <fieldset>
-          <label htmlFor="firstName">First name</label>
+          <label htmlFor="firstName">{dict.account.firstName}</label>
           <input
             id="firstName"
             name="firstName"
             type="text"
             autoComplete="given-name"
-            placeholder="First name"
-            aria-label="First name"
+            placeholder={dict.account.firstName}
+            aria-label={dict.account.firstName}
             defaultValue={customer.firstName ?? ''}
             minLength={2}
           />
-          <label htmlFor="lastName">Last name</label>
+          <label htmlFor="lastName">{dict.account.lastName}</label>
           <input
             id="lastName"
             name="lastName"
             type="text"
             autoComplete="family-name"
-            placeholder="Last name"
-            aria-label="Last name"
+            placeholder={dict.account.lastName}
+            aria-label={dict.account.lastName}
             defaultValue={customer.lastName ?? ''}
             minLength={2}
           />
@@ -127,7 +132,7 @@ export default function AccountProfile() {
           <br />
         )}
         <button type="submit" disabled={state !== 'idle'}>
-          {state !== 'idle' ? 'Updating' : 'Update'}
+          {state !== 'idle' ? dict.common.loading : dict.common.save}
         </button>
       </Form>
     </div>

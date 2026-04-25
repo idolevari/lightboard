@@ -1,6 +1,7 @@
 import {useLoaderData} from 'react-router';
 import {Image} from '@shopify/hydrogen';
 import {redirectIfHandleIsLocalized} from '~/lib/redirect';
+import {useI18n} from '~/lib/useI18n';
 
 /**
  * @type {Route.MetaFunction}
@@ -76,12 +77,12 @@ export default function Article() {
   /** @type {LoaderReturnData} */
   const {article} = useLoaderData();
   const {title, image, contentHtml, author} = article;
+  const {locale} = useI18n();
 
-  const publishedDate = new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  }).format(new Date(article.publishedAt));
+  const publishedDate = new Intl.DateTimeFormat(
+    locale === 'he' ? 'he-IL' : 'en-US',
+    {year: 'numeric', month: 'long', day: 'numeric'},
+  ).format(new Date(article.publishedAt));
 
   return (
     <div className="article">

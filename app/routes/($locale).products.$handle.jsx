@@ -11,6 +11,7 @@ import {ProductPrice} from '~/components/ProductPrice';
 import {ProductImage} from '~/components/ProductImage';
 import {ProductForm} from '~/components/ProductForm';
 import {redirectIfHandleIsLocalized} from '~/lib/redirect';
+import {useI18n} from '~/lib/useI18n';
 
 /**
  * @type {Route.MetaFunction}
@@ -86,6 +87,7 @@ function loadDeferredData({context, params}) {
 export default function Product() {
   /** @type {LoaderReturnData} */
   const {product} = useLoaderData();
+  const {dict} = useI18n();
 
   // Optimistically selects a variant with given available variant information
   const selectedVariant = useOptimisticVariant(
@@ -122,7 +124,7 @@ export default function Product() {
         <br />
         <br />
         <p>
-          <strong>Description</strong>
+          <strong>{dict.product.description}</strong>
         </p>
         <br />
         <div dangerouslySetInnerHTML={{__html: descriptionHtml}} />

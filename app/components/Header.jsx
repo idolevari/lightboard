@@ -1,70 +1,134 @@
-import {Suspense} from 'react';
-import {Await, NavLink, useAsyncValue} from 'react-router';
+import {Fragment, Suspense, useEffect, useState} from 'react';
+import {Await, NavLink, useAsyncValue, useLocation} from 'react-router';
 import {useAnalytics, useOptimisticCart} from '@shopify/hydrogen';
 import {useAside} from '~/components/Aside';
+import {useI18n} from '~/lib/useI18n';
+import {
+  DEFAULT_LOCALE,
+  SUPPORTED_LOCALES,
+  getLocaleConfig,
+  swapLocaleInPath,
+} from '~/lib/i18n';
 
-/**
- * @param {HeaderProps}
- */
-export function Header({header, isLoggedIn, cart, publicStoreDomain}) {
-  const {shop, menu} = header;
+export function Header({header, isLoggedIn, cart}) {
+  const {dict, to} = useI18n();
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    onScroll();
+    window.addEventListener('scroll', onScroll, {passive: true});
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  const menu = [
+    {to: to('/'), label: dict.nav.home, end: true},
+    {to: to('/collections'), label: dict.nav.shop},
+    {to: to('/pages/about'), label: dict.nav.about},
+    {to: to('/blogs/journal'), label: dict.nav.journal},
+  ];
+  const rightMenu = [{to: to('/pages/contact'), label: dict.nav.contact}];
+
   return (
-    <header className="header">
-      <NavLink prefetch="intent" to="/" style={activeLinkStyle} className="brand" end>
-        <span className="brand-mark">Lightboard</span>
-        <span className="brand-tagline">living · design · surfing</span>
-      </NavLink>
-      <HeaderMenu
-        menu={menu}
-        viewport="desktop"
-        primaryDomainUrl={header.shop.primaryDomain.url}
-        publicStoreDomain={publicStoreDomain}
-      />
-      <HeaderCtas isLoggedIn={isLoggedIn} cart={cart} />
+    <header className={`header lb-nav ${scrolled ? 'scrolled' : ''}`}>
+      <div className="container lb-nav-inner">
+        <nav className="lb-nav-left" role="navigation">
+          {menu.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.end}
+              prefetch="intent"
+              className={({isActive}) =>
+                `lb-nav-link${isActive ? ' active' : ''}`
+              }
+            >
+              {item.label}
+            </NavLink>
+          ))}
+        </nav>
+
+        <NavLink to={to('/')} prefetch="intent" end aria-label="Lightboard">
+          <span className="lb-logo">
+            <span>lightboard</span>
+            <span className="dot" aria-hidden="true" />
+          </span>
+        </NavLink>
+
+        <div className="lb-nav-right">
+          {rightMenu.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              prefetch="intent"
+              className={({isActive}) =>
+                `lb-nav-link${isActive ? ' active' : ''}`
+              }
+            >
+              {item.label}
+            </NavLink>
+          ))}
+          <LangToggle />
+          <SearchToggle label={dict.nav.search} />
+          <AccountLink isLoggedIn={isLoggedIn} label={dict.nav.account} />
+          <CartToggle cart={cart} label={dict.nav.cart} />
+        </div>
+      </div>
     </header>
   );
 }
 
-/**
- * @param {{
- *   menu: HeaderProps['header']['menu'];
- *   primaryDomainUrl: HeaderProps['header']['shop']['primaryDomain']['url'];
- *   viewport: Viewport;
- *   publicStoreDomain: HeaderProps['publicStoreDomain'];
- * }}
- */
-export function HeaderMenu({
-  menu,
-  primaryDomainUrl,
-  viewport,
-  publicStoreDomain,
-}) {
+function LangToggle() {
+  const {locale} = useI18n();
+  const location = useLocation();
+  return (
+    <div className="lb-lang-toggle" role="group" aria-label="Language">
+      {SUPPORTED_LOCALES.map((code, i) => {
+        const cfg = getLocaleConfig(code);
+        const href = swapLocaleInPath(
+          location.pathname + location.search,
+          code,
+        );
+        const isActive = code === locale;
+        return (
+          <Fragment key={code}>
+            {i > 0 && <span className="lb-lang-sep">/</span>}
+            <NavLink
+              to={href}
+              prefetch="intent"
+              reloadDocument={false}
+              className={`lb-lang-btn${isActive ? ' active' : ''}`}
+              aria-current={isActive ? 'true' : undefined}
+            >
+              {cfg.shortLabel}
+            </NavLink>
+          </Fragment>
+        );
+      })}
+    </div>
+  );
+}
+
+export function HeaderMenu({menu, primaryDomainUrl, viewport, publicStoreDomain}) {
   const className = `header-menu-${viewport}`;
   const {close} = useAside();
-
+  const {to, dict} = useI18n();
+  const items = (menu || FALLBACK_HEADER_MENU).items;
   return (
     <nav className={className} role="navigation">
       {viewport === 'mobile' && (
-        <NavLink
-          end
-          onClick={close}
-          prefetch="intent"
-          style={activeLinkStyle}
-          to="/"
-        >
-          Home
+        <NavLink end onClick={close} prefetch="intent" to={to('/')}>
+          {dict.nav.home}
         </NavLink>
       )}
-      {(menu || FALLBACK_HEADER_MENU).items.map((item) => {
+      {items.map((item) => {
         if (!item.url) return null;
-
-        // if the url is internal, we strip the domain
         const url =
           item.url.includes('myshopify.com') ||
-          item.url.includes(publicStoreDomain) ||
-          item.url.includes(primaryDomainUrl)
+          (publicStoreDomain && item.url.includes(publicStoreDomain)) ||
+          (primaryDomainUrl && item.url.includes(primaryDomainUrl))
             ? new URL(item.url).pathname
             : item.url;
+        const href = url.startsWith('/') ? to(url) : url;
         return (
           <NavLink
             className="header-menu-item"
@@ -72,8 +136,7 @@ export function HeaderMenu({
             key={item.id}
             onClick={close}
             prefetch="intent"
-            style={activeLinkStyle}
-            to={url}
+            to={href}
           >
             {item.title}
           </NavLink>
@@ -83,156 +146,102 @@ export function HeaderMenu({
   );
 }
 
-/**
- * @param {Pick<HeaderProps, 'isLoggedIn' | 'cart'>}
- */
-function HeaderCtas({isLoggedIn, cart}) {
-  return (
-    <nav className="header-ctas" role="navigation">
-      <HeaderMenuMobileToggle />
-      <NavLink prefetch="intent" to="/account" style={activeLinkStyle}>
-        <Suspense fallback="Sign in">
-          <Await resolve={isLoggedIn} errorElement="Sign in">
-            {(isLoggedIn) => (isLoggedIn ? 'Account' : 'Sign in')}
-          </Await>
-        </Suspense>
-      </NavLink>
-      <SearchToggle />
-      <CartToggle cart={cart} />
-    </nav>
-  );
-}
-
-function HeaderMenuMobileToggle() {
+function SearchToggle({label}) {
   const {open} = useAside();
   return (
     <button
-      className="header-menu-mobile-toggle reset"
-      onClick={() => open('mobile')}
+      className="lb-icon-btn"
+      onClick={() => open('search')}
+      aria-label={label}
+      type="button"
     >
-      <h3>☰</h3>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+        <circle cx="11" cy="11" r="7" />
+        <path d="m21 21-4.3-4.3" />
+      </svg>
     </button>
   );
 }
 
-function SearchToggle() {
-  const {open} = useAside();
+function AccountLink({isLoggedIn, label}) {
+  const {to} = useI18n();
   return (
-    <button className="reset" onClick={() => open('search')}>
-      Search
-    </button>
+    <NavLink
+      to={to('/account')}
+      prefetch="intent"
+      className="lb-icon-btn"
+      aria-label={label}
+    >
+      <Suspense
+        fallback={
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+            <circle cx="12" cy="8" r="4" />
+            <path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8" />
+          </svg>
+        }
+      >
+        <Await resolve={isLoggedIn} errorElement={null}>
+          {() => (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+              <circle cx="12" cy="8" r="4" />
+              <path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8" />
+            </svg>
+          )}
+        </Await>
+      </Suspense>
+    </NavLink>
   );
 }
 
-/**
- * @param {{count: number}}
- */
-function CartBadge({count}) {
+function CartBadge({count, label}) {
   const {open} = useAside();
   const {publish, shop, cart, prevCart} = useAnalytics();
-
   return (
-    <a
-      href="/cart"
-      onClick={(e) => {
-        e.preventDefault();
+    <button
+      className="lb-cart-btn"
+      onClick={() => {
         open('cart');
         publish('cart_viewed', {
           cart,
           prevCart,
           shop,
-          url: window.location.href || '',
+          url: (typeof window !== 'undefined' && window.location.href) || '',
         });
       }}
+      aria-label={label}
+      type="button"
     >
-      Cart <span aria-label={`(items: ${count})`}>{count}</span>
-    </a>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M6 7h12l-1 14H7L6 7Z" />
+        <path d="M9 7a3 3 0 0 1 6 0" />
+      </svg>
+      <span>{label}</span>
+      <span className="lb-cart-count">{count}</span>
+    </button>
   );
 }
 
-/**
- * @param {Pick<HeaderProps, 'cart'>}
- */
-function CartToggle({cart}) {
+function CartToggle({cart, label}) {
   return (
-    <Suspense fallback={<CartBadge count={0} />}>
+    <Suspense fallback={<CartBadge count={0} label={label} />}>
       <Await resolve={cart}>
-        <CartBanner />
+        <CartBanner label={label} />
       </Await>
     </Suspense>
   );
 }
 
-function CartBanner() {
+function CartBanner({label}) {
   const originalCart = useAsyncValue();
   const cart = useOptimisticCart(originalCart);
-  return <CartBadge count={cart?.totalQuantity ?? 0} />;
+  return <CartBadge count={cart?.totalQuantity ?? 0} label={label} />;
 }
 
 const FALLBACK_HEADER_MENU = {
   id: 'gid://shopify/Menu/199655587896',
   items: [
-    {
-      id: 'gid://shopify/MenuItem/461609500728',
-      resourceId: null,
-      tags: [],
-      title: 'Collections',
-      type: 'HTTP',
-      url: '/collections',
-      items: [],
-    },
-    {
-      id: 'gid://shopify/MenuItem/461609533496',
-      resourceId: null,
-      tags: [],
-      title: 'Blog',
-      type: 'HTTP',
-      url: '/blogs/journal',
-      items: [],
-    },
-    {
-      id: 'gid://shopify/MenuItem/461609566264',
-      resourceId: null,
-      tags: [],
-      title: 'Policies',
-      type: 'HTTP',
-      url: '/policies',
-      items: [],
-    },
-    {
-      id: 'gid://shopify/MenuItem/461609599032',
-      resourceId: 'gid://shopify/Page/92591030328',
-      tags: [],
-      title: 'About',
-      type: 'PAGE',
-      url: '/pages/about',
-      items: [],
-    },
+    {id: '1', resourceId: null, tags: [], title: 'Shop', type: 'HTTP', url: '/collections', items: []},
+    {id: '2', resourceId: null, tags: [], title: 'Journal', type: 'HTTP', url: '/blogs/journal', items: []},
+    {id: '3', resourceId: null, tags: [], title: 'About', type: 'PAGE', url: '/pages/about', items: []},
   ],
 };
-
-/**
- * @param {{
- *   isActive: boolean;
- *   isPending: boolean;
- * }}
- */
-function activeLinkStyle({isActive, isPending}) {
-  return {
-    fontWeight: isActive ? 'bold' : undefined,
-    color: isPending ? 'grey' : 'black',
-  };
-}
-
-/** @typedef {'desktop' | 'mobile'} Viewport */
-/**
- * @typedef {Object} HeaderProps
- * @property {HeaderQuery} header
- * @property {Promise<CartApiQueryFragment|null>} cart
- * @property {Promise<boolean>} isLoggedIn
- * @property {string} publicStoreDomain
- */
-
-/** @typedef {import('@shopify/hydrogen').CartViewPayload} CartViewPayload */
-/** @typedef {import('storefrontapi.generated').HeaderQuery} HeaderQuery */
-/** @typedef {import('storefrontapi.generated').CartApiQueryFragment} CartApiQueryFragment */

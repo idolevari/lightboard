@@ -14,6 +14,15 @@ import resetStyles from '~/styles/reset.css?url';
 import appStyles from '~/styles/app.css?url';
 import {PageLayout} from './components/PageLayout';
 import {ComingSoon} from './components/ComingSoon';
+import {
+  DEFAULT_LOCALE,
+  SUPPORTED_LOCALES,
+  detectLocaleFromRequest,
+  getDictionary,
+  getLocaleConfig,
+  localizedPath,
+  parseLocaleFromPath,
+} from '~/lib/i18n';
 
 /**
  * This is important to avoid re-fetching root queries on sub-navigations
@@ -65,7 +74,7 @@ export function links() {
     },
     {
       rel: 'stylesheet',
-      href: 'https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&family=Rubik:wght@500;700;900&family=DM+Serif+Display&display=swap',
+      href: 'https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..700,0..100,0..1;1,9..144,300..700,0..100,0..1&family=Frank+Ruhl+Libre:wght@300..900&family=Heebo:wght@300;400;500;700;800&family=Inter:wght@300..700&family=JetBrains+Mono:wght@400;500;600&family=Caveat:wght@400..700&display=swap',
     },
     {rel: 'icon', type: 'image/png', href: '/favicon.png'},
   ];
@@ -78,6 +87,12 @@ export async function loader(args) {
   const {storefront, env} = args.context;
   const showComingSoon = env.COMING_SOON === 'true';
 
+  const locale = detectLocaleFromRequest(args.request);
+  const dict = getDictionary(locale);
+  const localeConfig = getLocaleConfig(locale);
+  const url = new URL(args.request.url);
+  const {rest: pathnameNoLocale} = parseLocaleFromPath(url.pathname);
+
   // Start fetching non-critical data without blocking time to first byte
   const deferredData = loadDeferredData(args);
 
@@ -88,6 +103,10 @@ export async function loader(args) {
     ...deferredData,
     ...criticalData,
     showComingSoon,
+    locale,
+    localeConfig,
+    dict,
+    pathnameNoLocale,
     publicStoreDomain: env.PUBLIC_STORE_DOMAIN,
     shop: getShopAnalytics({
       storefront: args.context.storefront,
@@ -159,14 +178,31 @@ function loadDeferredData({context}) {
  */
 export function Layout({children}) {
   const nonce = useNonce();
+  const data = useRouteLoaderData('root');
+  const locale = data?.locale ?? DEFAULT_LOCALE;
+  const config = data?.localeConfig ?? getLocaleConfig(locale);
+  const pathnameNoLocale = data?.pathnameNoLocale ?? '/';
 
   return (
-    <html lang="he" dir="rtl">
+    <html lang={config.htmlLang} dir={config.dir}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
         <link rel="stylesheet" href={resetStyles}></link>
         <link rel="stylesheet" href={appStyles}></link>
+        {SUPPORTED_LOCALES.map((l) => (
+          <link
+            key={l}
+            rel="alternate"
+            hrefLang={getLocaleConfig(l).htmlLang}
+            href={localizedPath(pathnameNoLocale, l)}
+          />
+        ))}
+        <link
+          rel="alternate"
+          hrefLang="x-default"
+          href={localizedPath(pathnameNoLocale, DEFAULT_LOCALE)}
+        />
         <Meta />
         <Links />
       </head>
@@ -206,6 +242,9 @@ export default function App() {
 
 export function ErrorBoundary() {
   const error = useRouteError();
+  const data = useRouteLoaderData('root');
+  const dict = data?.dict ?? getDictionary(DEFAULT_LOCALE);
+  const locale = data?.locale ?? DEFAULT_LOCALE;
   let errorMessage = 'Unknown error';
   let errorStatus = 500;
 
@@ -216,12 +255,46 @@ export function ErrorBoundary() {
     errorMessage = error.message;
   }
 
+  const homeHref = locale === DEFAULT_LOCALE ? '/' : `/${locale}`;
+  const isNotFound = errorStatus === 404;
+
   return (
-    <div className="route-error">
-      <h1>Oops</h1>
-      <h2>{errorStatus}</h2>
-      {errorMessage && (
-        <fieldset>
+    <div className="route-error" style={{padding: '160px 24px 80px', maxWidth: 720, margin: '0 auto', textAlign: 'center'}}>
+      <p
+        style={{
+          fontFamily: 'var(--mono)',
+          fontSize: 11,
+          letterSpacing: '0.18em',
+          textTransform: 'uppercase',
+          color: 'var(--ink-soft)',
+          marginBottom: 24,
+        }}
+      >
+        {errorStatus}
+      </p>
+      <h1
+        style={{
+          fontFamily: 'var(--serif)',
+          fontWeight: 300,
+          fontSize: 'clamp(40px, 6vw, 80px)',
+          lineHeight: 1,
+          letterSpacing: '-0.03em',
+          margin: '0 0 16px',
+        }}
+      >
+        {isNotFound ? dict.notFound.title : 'Oops'}
+      </h1>
+      {isNotFound && <p style={{color: 'var(--ink-soft)', marginBottom: 32}}>{dict.notFound.kicker}</p>}
+      <a
+        href={homeHref}
+        className="hero-cta"
+        style={{display: 'inline-flex', background: 'var(--ink)', color: 'var(--white)'}}
+      >
+        <span>{dict.notFound.cta}</span>
+        <span className="arrow" aria-hidden="true">→</span>
+      </a>
+      {!isNotFound && errorMessage && (
+        <fieldset style={{marginTop: 40, textAlign: 'start'}}>
           <pre>{errorMessage}</pre>
         </fieldset>
       )}

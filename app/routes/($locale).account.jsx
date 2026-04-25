@@ -6,6 +6,7 @@ import {
   useLoaderData,
 } from 'react-router';
 import {CUSTOMER_DETAILS_QUERY} from '~/graphql/customer-account/CustomerDetailsQuery';
+import {useI18n} from '~/lib/useI18n';
 
 export function shouldRevalidate() {
   return true;
@@ -39,12 +40,13 @@ export async function loader({context}) {
 export default function AccountLayout() {
   /** @type {LoaderReturnData} */
   const {customer} = useLoaderData();
+  const {dict} = useI18n();
 
   const heading = customer
     ? customer.firstName
-      ? `Welcome, ${customer.firstName}`
-      : `Welcome to your account.`
-    : 'Account Details';
+      ? `${dict.account.welcome}, ${customer.firstName}`
+      : `${dict.account.welcome}.`
+    : dict.account.myAccount;
 
   return (
     <div className="account">
@@ -59,25 +61,26 @@ export default function AccountLayout() {
 }
 
 function AccountMenu() {
+  const {dict, to} = useI18n();
   function isActiveStyle({isActive, isPending}) {
     return {
       fontWeight: isActive ? 'bold' : undefined,
-      color: isPending ? 'grey' : 'black',
+      color: isPending ? 'grey' : 'inherit',
     };
   }
 
   return (
     <nav role="navigation">
-      <NavLink to="/account/orders" style={isActiveStyle}>
-        Orders &nbsp;
+      <NavLink to={to('/account/orders')} style={isActiveStyle}>
+        {dict.account.orders} &nbsp;
       </NavLink>
       &nbsp;|&nbsp;
-      <NavLink to="/account/profile" style={isActiveStyle}>
-        &nbsp; Profile &nbsp;
+      <NavLink to={to('/account/profile')} style={isActiveStyle}>
+        &nbsp; {dict.account.profile} &nbsp;
       </NavLink>
       &nbsp;|&nbsp;
-      <NavLink to="/account/addresses" style={isActiveStyle}>
-        &nbsp; Addresses &nbsp;
+      <NavLink to={to('/account/addresses')} style={isActiveStyle}>
+        &nbsp; {dict.account.addresses} &nbsp;
       </NavLink>
       &nbsp;|&nbsp;
       <Logout />
@@ -86,9 +89,10 @@ function AccountMenu() {
 }
 
 function Logout() {
+  const {dict, to} = useI18n();
   return (
-    <Form className="account-logout" method="POST" action="/account/logout">
-      &nbsp;<button type="submit">Sign out</button>
+    <Form className="account-logout" method="POST" action={to('/account/logout')}>
+      &nbsp;<button type="submit">{dict.account.signOut}</button>
     </Form>
   );
 }

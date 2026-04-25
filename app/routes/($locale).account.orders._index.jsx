@@ -17,12 +17,16 @@ import {
 } from '~/lib/orderFilters';
 import {CUSTOMER_ORDERS_QUERY} from '~/graphql/customer-account/CustomerOrdersQuery';
 import {PaginatedResourceSection} from '~/components/PaginatedResourceSection';
+import {useI18n} from '~/lib/useI18n';
+import {getDictionary} from '~/lib/i18n';
 
 /**
  * @type {Route.MetaFunction}
  */
-export const meta = () => {
-  return [{title: 'Orders'}];
+export const meta = ({matches}) => {
+  const root = matches?.find?.((m) => m.id === 'root');
+  const dict = root?.data?.dict ?? getDictionary('he');
+  return [{title: dict.account.orders}];
 };
 
 /**
@@ -92,22 +96,23 @@ function OrdersTable({orders, filters}) {
  * @param {{hasFilters?: boolean}}
  */
 function EmptyOrders({hasFilters = false}) {
+  const {dict, to} = useI18n();
   return (
     <div>
       {hasFilters ? (
         <>
-          <p>No orders found matching your search.</p>
+          <p>{dict.account.noOrders}</p>
           <br />
           <p>
-            <Link to="/account/orders">Clear filters →</Link>
+            <Link to={to('/account/orders')}>{dict.account.clearFilters}</Link>
           </p>
         </>
       ) : (
         <>
-          <p>You haven&apos;t placed any orders yet.</p>
+          <p>{dict.account.noOrders}</p>
           <br />
           <p>
-            <Link to="/collections">Start Shopping →</Link>
+            <Link to={to('/collections')}>{dict.account.startShopping}</Link>
           </p>
         </>
       )}
@@ -127,6 +132,7 @@ function OrderSearchForm({currentFilters}) {
     navigation.state !== 'idle' &&
     navigation.location?.pathname?.includes('orders');
   const formRef = useRef(null);
+  const {dict} = useI18n();
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -153,25 +159,25 @@ function OrderSearchForm({currentFilters}) {
       ref={formRef}
       onSubmit={handleSubmit}
       className="order-search-form"
-      aria-label="Search orders"
+      aria-label={dict.account.searchOrders}
     >
       <fieldset className="order-search-fieldset">
-        <legend className="order-search-legend">Filter Orders</legend>
+        <legend className="order-search-legend">{dict.account.ordersFilter}</legend>
 
         <div className="order-search-inputs">
           <input
             type="search"
             name={ORDER_FILTER_FIELDS.NAME}
-            placeholder="Order #"
-            aria-label="Order number"
+            placeholder={dict.account.orderNumberPlaceholder}
+            aria-label={dict.account.orderNumber}
             defaultValue={currentFilters.name || ''}
             className="order-search-input"
           />
           <input
             type="search"
             name={ORDER_FILTER_FIELDS.CONFIRMATION_NUMBER}
-            placeholder="Confirmation #"
-            aria-label="Confirmation number"
+            placeholder={dict.account.confirmationNumberPlaceholder}
+            aria-label={dict.account.confirmationNumber}
             defaultValue={currentFilters.confirmationNumber || ''}
             className="order-search-input"
           />
@@ -179,7 +185,7 @@ function OrderSearchForm({currentFilters}) {
 
         <div className="order-search-buttons">
           <button type="submit" disabled={isSearching}>
-            {isSearching ? 'Searching' : 'Search'}
+            {isSearching ? dict.common.loading : dict.account.searchBtn}
           </button>
           {hasFilters && (
             <button
@@ -190,7 +196,7 @@ function OrderSearchForm({currentFilters}) {
                 formRef.current?.reset();
               }}
             >
-              Clear
+              {dict.account.clearBtn}
             </button>
           )}
         </div>
@@ -204,20 +210,26 @@ function OrderSearchForm({currentFilters}) {
  */
 function OrderItem({order}) {
   const fulfillmentStatus = flattenConnection(order.fulfillments)[0]?.status;
+  const {dict, to, locale} = useI18n();
+  const orderHref = to(`/account/orders/${btoa(order.id)}`);
+  const dateString = new Date(order.processedAt).toLocaleDateString(
+    locale === 'he' ? 'he-IL' : 'en-US',
+    {year: 'numeric', month: 'long', day: 'numeric'},
+  );
   return (
     <>
       <fieldset>
-        <Link to={`/account/orders/${btoa(order.id)}`}>
+        <Link to={orderHref}>
           <strong>#{order.number}</strong>
         </Link>
-        <p>{new Date(order.processedAt).toDateString()}</p>
+        <p>{dateString}</p>
         {order.confirmationNumber && (
-          <p>Confirmation: {order.confirmationNumber}</p>
+          <p>{dict.account.confirmationNumber}: {order.confirmationNumber}</p>
         )}
         <p>{order.financialStatus}</p>
         {fulfillmentStatus && <p>{fulfillmentStatus}</p>}
         <Money data={order.totalPrice} />
-        <Link to={`/account/orders/${btoa(order.id)}`}>View Order →</Link>
+        <Link to={orderHref}>{dict.common.next} →</Link>
       </fieldset>
       <br />
     </>

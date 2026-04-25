@@ -6,6 +6,7 @@ import {
   urlWithTrackingParams,
 } from '~/lib/search';
 import {useAside} from './Aside';
+import {useI18n} from '~/lib/useI18n';
 
 /**
  * Component that renders predictive search results
@@ -55,15 +56,16 @@ SearchResultsPredictive.Empty = SearchResultsPredictiveEmpty;
  * @param {PartialPredictiveSearchResult<'articles'>}
  */
 function SearchResultsPredictiveArticles({term, articles, closeSearch}) {
+  const {dict, to} = useI18n();
   if (!articles.length) return null;
 
   return (
     <div className="predictive-search-result" key="articles">
-      <h5>Articles</h5>
+      <h5>{dict.search.articles}</h5>
       <ul>
         {articles.map((article) => {
           const articleUrl = urlWithTrackingParams({
-            baseUrl: `/blogs/${article.blog.handle}/${article.handle}`,
+            baseUrl: to(`/blogs/${article.blog.handle}/${article.handle}`),
             trackingParams: article.trackingParameters,
             term: term.current ?? '',
           });
@@ -95,15 +97,16 @@ function SearchResultsPredictiveArticles({term, articles, closeSearch}) {
  * @param {PartialPredictiveSearchResult<'collections'>}
  */
 function SearchResultsPredictiveCollections({term, collections, closeSearch}) {
+  const {dict, to} = useI18n();
   if (!collections.length) return null;
 
   return (
     <div className="predictive-search-result" key="collections">
-      <h5>Collections</h5>
+      <h5>{dict.search.collections}</h5>
       <ul>
         {collections.map((collection) => {
           const collectionUrl = urlWithTrackingParams({
-            baseUrl: `/collections/${collection.handle}`,
+            baseUrl: to(`/collections/${collection.handle}`),
             trackingParams: collection.trackingParameters,
             term: term.current,
           });
@@ -135,15 +138,16 @@ function SearchResultsPredictiveCollections({term, collections, closeSearch}) {
  * @param {PartialPredictiveSearchResult<'pages'>}
  */
 function SearchResultsPredictivePages({term, pages, closeSearch}) {
+  const {dict, to} = useI18n();
   if (!pages.length) return null;
 
   return (
     <div className="predictive-search-result" key="pages">
-      <h5>Pages</h5>
+      <h5>{dict.search.pages}</h5>
       <ul>
         {pages.map((page) => {
           const pageUrl = urlWithTrackingParams({
-            baseUrl: `/pages/${page.handle}`,
+            baseUrl: to(`/pages/${page.handle}`),
             trackingParams: page.trackingParameters,
             term: term.current,
           });
@@ -167,15 +171,16 @@ function SearchResultsPredictivePages({term, pages, closeSearch}) {
  * @param {PartialPredictiveSearchResult<'products'>}
  */
 function SearchResultsPredictiveProducts({term, products, closeSearch}) {
+  const {dict, to} = useI18n();
   if (!products.length) return null;
 
   return (
     <div className="predictive-search-result" key="products">
-      <h5>Products</h5>
+      <h5>{dict.search.products}</h5>
       <ul>
         {products.map((product) => {
           const productUrl = urlWithTrackingParams({
-            baseUrl: `/products/${product.handle}`,
+            baseUrl: to(`/products/${product.handle}`),
             trackingParams: product.trackingParameters,
             term: term.current,
           });
@@ -231,13 +236,11 @@ function SearchResultsPredictiveQueries({queries, queriesDatalistId}) {
  * }}
  */
 function SearchResultsPredictiveEmpty({term}) {
-  if (!term.current) {
-    return null;
-  }
-
+  const {dict} = useI18n();
+  if (!term.current) return null;
   return (
     <p>
-      No results found for <q>{term.current}</q>
+      {dict.search.noResultsFor} <q>{term.current}</q>
     </p>
   );
 }
