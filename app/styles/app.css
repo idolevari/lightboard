@@ -536,7 +536,7 @@ section { position: relative; }
 }
 .story-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 5fr 7fr;
   gap: 80px;
   align-items: center;
 }
