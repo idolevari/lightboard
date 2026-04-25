@@ -111,6 +111,7 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--ink);
 }
 .lb-nav-inner {
+  position: relative;
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
@@ -124,7 +125,17 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 500;
   letter-spacing: 0.02em;
 }
-.lb-nav-right { justify-content: flex-end; }
+.lb-nav-right {
+  justify-content: flex-end;
+  /* Reserve room for the absolutely-positioned .lb-lang-toggle pinned to
+     physical right. Only matters in LTR (EN), where this column is also
+     on physical right; harmless no-op in RTL (HE) where the column sits
+     on physical left and items cluster opposite this padding. */
+  padding-right: 64px;
+}
+@media (max-width: 768px) {
+  .lb-nav-right { padding-right: 56px; }
+}
 .lb-nav a.lb-nav-link {
   position: relative;
   padding: 4px 0;
@@ -164,6 +175,16 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .lb-lang-toggle {
+  /* Pinned to physical right of .lb-nav-inner so the toggle stays in the
+     same screen position across HE (RTL) and EN (LTR). `right` is physical
+     and does not flip with dir; .lb-nav-inner provides the positioning
+     context and respects the container's max-width on wide viewports. */
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  z-index: 5;
+  /* Visual */
   display: inline-flex;
   align-items: stretch;
   padding: 2px;
@@ -176,6 +197,8 @@ h1, h2, h3, h4, h5, h6 {
   text-transform: uppercase;
   line-height: 1;
   color: inherit;
+  /* Reset any RTL flow inside the toggle so HE/EN order is stable. */
+  direction: ltr;
 }
 .lb-lang-toggle .lb-lang-btn {
   display: inline-flex;

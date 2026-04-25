@@ -66,11 +66,11 @@ export function Header({isLoggedIn, cart}) {
               {item.label}
             </NavLink>
           ))}
-          <LangToggle />
           <SearchToggle label={dict.nav.search} />
           <AccountLink isLoggedIn={isLoggedIn} label={dict.nav.account} />
           <CartToggle cart={cart} label={dict.nav.cart} />
         </div>
+        <LangToggle />
       </div>
     </header>
   );
