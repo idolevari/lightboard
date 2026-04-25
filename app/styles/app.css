@@ -99,8 +99,8 @@
      (e.g. a multi-column grid that must collapse).
      ============================================ */
   --container-px: clamp(20px, 4vw, 40px);
-  --section-py: clamp(64px, 9vw, 120px);
-  --section-py-lg: clamp(80px, 11vw, 140px);
+  --section-py: clamp(48px, 7vw, 88px);
+  --section-py-lg: clamp(60px, 8vw, 104px);
   --tap-min: 44px;
 }
 
@@ -1095,32 +1095,6 @@ section { position: relative; }
   .story::before,
   .faq::before,
   .testify::before { display: none; }
-}
-
-/* ============================================
-   SECTION HORIZON — small ornament that marks
-   the top of each editorial section. A hairline
-   with a lime sun dot — quietly readable as a
-   surf horizon. Sits above the eyebrow.
-   ============================================ */
-.section-horizon {
-  position: relative;
-  width: clamp(140px, 22vw, 220px);
-  height: 1px;
-  margin: 0 auto clamp(36px, 6vw, 64px);
-  background: var(--rule-strong);
-}
-.section-horizon::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--brand-lime);
-  outline: 1.5px solid var(--ink);
-  transform: translate(-50%, -50%);
 }
 
 /* ============================================

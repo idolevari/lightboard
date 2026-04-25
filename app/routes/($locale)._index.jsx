@@ -426,7 +426,6 @@ function Story() {
   return (
     <section className="story" id="story">
       <div className="container">
-        <div className="section-horizon" aria-hidden="true" />
         <div className="story-grid">
           <div className="story-media">
             <span className="tag">{s.tag}</span>
@@ -482,9 +481,6 @@ function Faq() {
   const [open, setOpen] = useState(0);
   return (
     <section className="faq" id="faq">
-      <div className="container">
-        <div className="section-horizon" aria-hidden="true" />
-      </div>
       <div className="container faq-container">
         <header className="faq-head">
           <Reveal>
@@ -546,7 +542,6 @@ function Testimonials() {
   return (
     <section className="testify">
       <div className="container">
-        <div className="section-horizon" aria-hidden="true" />
         <Reveal>
           <div
             className="section-eyebrow"
