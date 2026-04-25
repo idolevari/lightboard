@@ -2,12 +2,13 @@ import {useLoaderData} from 'react-router';
 import {getPaginationVariables} from '@shopify/hydrogen';
 import {PaginatedResourceSection} from '~/components/PaginatedResourceSection';
 import {ProductItem} from '~/components/ProductItem';
+import {useI18n} from '~/lib/useI18n';
 
 /**
  * @type {Route.MetaFunction}
  */
 export const meta = () => {
-  return [{title: `Lightboard | Products`}];
+  return [{title: 'Lightboard | All products'}];
 };
 
 /**
@@ -49,17 +50,18 @@ async function loadCriticalData({context, request}) {
  * Make sure to not throw any errors here, as it will cause the page to 500.
  * @param {Route.LoaderArgs}
  */
-function loadDeferredData({context}) {
+function loadDeferredData() {
   return {};
 }
 
 export default function Collection() {
   /** @type {LoaderReturnData} */
   const {products} = useLoaderData();
+  const {dict} = useI18n();
 
   return (
     <div className="collection">
-      <h1>Products</h1>
+      <h1>{dict.collections.allTitle}</h1>
       <PaginatedResourceSection
         connection={products}
         resourcesClassName="products-grid"

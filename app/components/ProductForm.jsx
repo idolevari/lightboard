@@ -1,6 +1,7 @@
 import {Link, useNavigate} from 'react-router';
 import {AddToCartButton} from './AddToCartButton';
 import {useAside} from './Aside';
+import {useI18n} from '~/lib/useI18n';
 
 /**
  * @param {{
@@ -11,6 +12,7 @@ import {useAside} from './Aside';
 export function ProductForm({productOptions, selectedVariant}) {
   const navigate = useNavigate();
   const {open} = useAside();
+  const {dict, to} = useI18n();
   return (
     <div className="product-form">
       {productOptions.map((option) => {
@@ -45,7 +47,7 @@ export function ProductForm({productOptions, selectedVariant}) {
                       prefetch="intent"
                       preventScrollReset
                       replace
-                      to={`/products/${handle}?${variantUriQuery}`}
+                      to={`${to(`/products/${handle}`)}?${variantUriQuery}`}
                       style={{
                         border: selected
                           ? '1px solid black'
@@ -110,7 +112,9 @@ export function ProductForm({productOptions, selectedVariant}) {
             : []
         }
       >
-        {selectedVariant?.availableForSale ? 'Add to cart' : 'Sold out'}
+        {selectedVariant?.availableForSale
+          ? dict.product.addToCart
+          : dict.product.soldOut}
       </AddToCartButton>
     </div>
   );
