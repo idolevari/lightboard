@@ -64,8 +64,16 @@ const HERO_SLIDES = [
     label: 'VAN LIFE · BEACH PARK',
   },
   {
+    img: 'https://cdn.shopify.com/s/files/1/0982/9325/2392/files/tim-marshall-hIHh4E4_OGA-unsplash.jpg?v=1777138490',
+    label: 'SURF · OFFSHORE',
+  },
+  {
     img: 'https://cdn.shopify.com/s/files/1/0982/9325/2392/files/leo_visions-SzJo8G7BP8E-unsplash.jpg?v=1777136172',
     label: 'WAKE UP · OCEAN VIEW',
+  },
+  {
+    img: 'https://cdn.shopify.com/s/files/1/0982/9325/2392/files/sean-stratton-iQsa35lj2iE-unsplash.jpg?v=1777138490',
+    label: 'SKATE · BOWL DAY',
   },
   {
     img: 'https://cdn.shopify.com/s/files/1/0982/9325/2392/files/mads-schmidt-rasmussen-tSp5_w9h5TQ-unsplash.jpg?v=1777136172',
