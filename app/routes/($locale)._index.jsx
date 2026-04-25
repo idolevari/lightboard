@@ -289,10 +289,6 @@ function FeaturedLightboard({featuredProduct}) {
   };
   return (
     <section className="feat3" id="featured">
-      <div className="feat3-marker">
-        <span>{f.marker}</span>
-      </div>
-
       <div className="feat3-grid">
         <div className="feat3-stage">
           <img

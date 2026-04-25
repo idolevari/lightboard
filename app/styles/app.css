@@ -788,31 +788,6 @@ section { position: relative; }
   border-bottom: 1px solid var(--rule);
   overflow: hidden;
 }
-.feat3-marker {
-  max-width: 1440px;
-  margin: 0 auto 32px;
-  padding: 0 var(--container-px);
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  color: var(--ink-soft);
-  font-size: 10px;
-  letter-spacing: 0.2em;
-  font-family: var(--mono);
-  text-transform: uppercase;
-}
-.feat3-marker::before {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: var(--rule);
-}
-.feat3-marker::after {
-  content: "";
-  flex: 0 0 120px;
-  height: 1px;
-  background: var(--rule);
-}
 .feat3-grid {
   max-width: 1440px;
   margin: 0 auto;
