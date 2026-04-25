@@ -56,8 +56,8 @@
     ]
   },
   "featured": {
-    "marker": "001 / SIGNATURE",
-    "eyebrow": "— SIGNATURE PIECE · 001",
+    "marker": "SIGNATURE",
+    "eyebrow": "— SIGNATURE PIECE",
     "titlePrefix": "The ",
     "titleName": "Lightboard.",
     "desc": "A surfboard-shaped wood canvas strung with warm LED fairy lights and magnetic frames. Clip in three of your favorite shots — from the lineup, the pow day, the session — and let the light do the rest. Comes in turquoise, sand, and matte black.",
@@ -93,9 +93,35 @@
       {"n": "100%", "k": "handmade"}
     ]
   },
+  "faq": {
+    "eyebrow": "— FREQUENTLY ASKED",
+    "titleLine1": "Before you",
+    "titleLine2": "ask.",
+    "items": [
+      {
+        "q": "How long will my order take?",
+        "a": "Every Lightboard is built to order. Average turnaround from confirmation to your door is 10–14 business days — one studio, one pair of hands, no rushing the wall art."
+      },
+      {
+        "q": "Can I order a custom size or finish?",
+        "a": "Yes. Send us a note with the idea, the wall it's going on and the three shots you'd hang in it — we'll come back with a sketch and a quote within a few days."
+      },
+      {
+        "q": "What is it made of?",
+        "a": "Solid handworked pine, natural oil finish, low-power warm LEDs, and magnets that hold three 9×13 cm prints. No cheap plastic, no MDF."
+      },
+      {
+        "q": "How do I care for it?",
+        "a": "A soft dry cloth every couple of weeks and a spot out of direct sunlight. If something ever goes wrong — send us a photo and we'll make it right."
+      },
+      {
+        "q": "What about returns?",
+        "a": "Stock pieces: 14 days in new condition. Custom commissions are one-of-a-kind so they're not returnable, but we walk every order through to make sure it lands the way you imagined."
+      }
+    ]
+  },
   "testify": {
-    "eyebrowNum": "03",
-    "eyebrow": "· WHAT PEOPLE SAY",
+    "eyebrow": "— WHAT PEOPLE SAY",
     "prev": "previous",
     "next": "next",
     "items": [
@@ -104,14 +130,6 @@
       {"a": "Serious craft. ", "b": "The wood smells like the workshop", "c": " for a week after it arrives.", "who": "YAEL K. · HAIFA · 2024"},
       {"a": "I ordered one. ", "b": "Three friends ordered the same week", "c": ". That says enough.", "who": "ELI R. · SKATE PARK REGULAR · 2025"}
     ]
-  },
-  "newsletter": {
-    "titleLine1": "Sign up.",
-    "titleLine2": " Never miss a wave.",
-    "kicker": "New drops, studio notes, and the occasional bad surf joke. No spam — paddle out or paddle home.",
-    "emailPlaceholder": "your@email.com",
-    "cta": "Join",
-    "emailLabel": "email"
   },
   "product": {
     "metaSuffix": "Product",

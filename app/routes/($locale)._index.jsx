@@ -2,6 +2,7 @@ import {Link, useLoaderData} from 'react-router';
 import {Suspense, useEffect, useState} from 'react';
 import {Await} from 'react-router';
 import {useI18n} from '~/lib/useI18n';
+import {useInView} from '~/lib/useInView';
 import {getDictionary, detectLocaleFromRequest} from '~/lib/i18n';
 
 export const meta = ({data}) => {
@@ -50,9 +51,77 @@ export default function Homepage() {
       <Hero />
       <FeaturedLightboard featuredProduct={data.featuredProduct} />
       <Story />
+      <Faq />
       <Testimonials />
-      <Newsletter />
     </>
+  );
+}
+
+/* ---------------- MOTION HELPERS ---------------- */
+
+function Reveal({className = '', delay = 0, children, style}) {
+  const [ref, inView] = useInView();
+  return (
+    <div
+      ref={ref}
+      className={`reveal${inView ? ' is-in' : ''}${className ? ` ${className}` : ''}`}
+      style={{transitionDelay: `${delay}ms`, ...style}}
+    >
+      {children}
+    </div>
+  );
+}
+
+function CountUp({value, active, duration = 1400}) {
+  const match = /^(\D*)([\d,]+)(.*)$/.exec(String(value));
+  const target = match ? parseInt(match[2].replace(/,/g, ''), 10) : 0;
+  const hasMatch = Boolean(match);
+  const [n, setN] = useState(0);
+  useEffect(() => {
+    if (!hasMatch || !active) return undefined;
+    if (
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    ) {
+      setN(target);
+      return undefined;
+    }
+    let raf;
+    const start = performance.now();
+    const tick = (now) => {
+      const t = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setN(Math.round(target * eased));
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [hasMatch, active, target, duration]);
+  if (!match) return value;
+  const [, prefix, num, suffix] = match;
+  const display = num.includes(',') ? n.toLocaleString('en-US') : String(n);
+  return (
+    <>
+      {prefix}
+      {display}
+      {suffix}
+    </>
+  );
+}
+
+function StoryStat({n, k, delay}) {
+  const [ref, inView] = useInView();
+  return (
+    <div
+      ref={ref}
+      className={`stat reveal${inView ? ' is-in' : ''}`}
+      style={{transitionDelay: `${delay}ms`}}
+    >
+      <b>
+        <CountUp value={n} active={inView} />
+      </b>
+      {k}
+    </div>
   );
 }
 
@@ -230,14 +299,14 @@ function FeaturedLightboard({featuredProduct}) {
         </div>
 
         <div className="feat3-rail">
-          <div>
+          <Reveal>
             <div className="feat3-eye">{f.eyebrow}</div>
             <h2 className="feat3-title">
               {f.titlePrefix}
               <em>{f.titleName}</em>
             </h2>
             <p className="feat3-desc">{f.desc}</p>
-          </div>
+          </Reveal>
 
           <div className="feat3-ticker">
             {f.specs.map((s) => (
@@ -352,6 +421,7 @@ function Story() {
   return (
     <section className="story" id="story">
       <div className="container">
+        <div className="section-horizon" aria-hidden="true" />
         <div className="story-grid">
           <div className="story-media">
             <span className="tag">{s.tag}</span>
@@ -366,27 +436,92 @@ function Story() {
             />
           </div>
           <div className="story-copy">
-            <div className="section-eyebrow" style={{marginBottom: 24}}>
-              <span>{s.eyebrow}</span>
-            </div>
-            <h2>
-              {s.titleLine1}
-              <br />
-              <em>{s.titleLine2}</em>
-            </h2>
-            <p>{s.p1}</p>
-            <p>{s.p2}</p>
-            <div className="sig">{s.sig}</div>
+            <Reveal>
+              <div className="section-eyebrow" style={{marginBottom: 24}}>
+                <span>{s.eyebrow}</span>
+              </div>
+            </Reveal>
+            <Reveal delay={80}>
+              <h2>
+                {s.titleLine1}
+                <br />
+                <em>{s.titleLine2}</em>
+              </h2>
+            </Reveal>
+            <Reveal delay={160}>
+              <p>{s.p1}</p>
+              <p>{s.p2}</p>
+              <div className="sig">{s.sig}</div>
+            </Reveal>
             <div className="story-stats">
-              {s.stats.map((st) => (
-                <div className="stat" key={`${st.n}-${st.k}`}>
-                  <b>{st.n}</b>
-                  {st.k}
-                </div>
+              {s.stats.map((st, idx) => (
+                <StoryStat
+                  key={`${st.n}-${st.k}`}
+                  n={st.n}
+                  k={st.k}
+                  delay={idx * 120}
+                />
               ))}
             </div>
           </div>
         </div>
+      </div>
+    </section>
+  );
+}
+
+/* ---------------- FAQ ---------------- */
+
+function Faq() {
+  const {dict} = useI18n();
+  const f = dict.faq;
+  const [open, setOpen] = useState(0);
+  return (
+    <section className="faq" id="faq">
+      <div className="container">
+        <div className="section-horizon" aria-hidden="true" />
+      </div>
+      <div className="container faq-container">
+        <header className="faq-head">
+          <Reveal>
+            <div className="section-eyebrow">
+              <span>{f.eyebrow}</span>
+            </div>
+          </Reveal>
+          <Reveal delay={80}>
+            <h2 className="section-title faq-title">
+              {f.titleLine1}
+              <br />
+              <em>{f.titleLine2}</em>
+            </h2>
+          </Reveal>
+        </header>
+        <ul className="faq-list" role="list">
+          {f.items.map((item, idx) => {
+            const isOpen = open === idx;
+            return (
+              <li className={`faq-item${isOpen ? ' open' : ''}`} key={item.q}>
+                <button
+                  type="button"
+                  className="faq-q"
+                  aria-expanded={isOpen}
+                  onClick={() => setOpen(isOpen ? -1 : idx)}
+                >
+                  <span className="faq-q-text">{item.q}</span>
+                  <span className="faq-mark" aria-hidden="true">
+                    <span />
+                    <span />
+                  </span>
+                </button>
+                <div className="faq-a-wrap" aria-hidden={!isOpen}>
+                  <div className="faq-a">
+                    <p>{item.a}</p>
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
       </div>
     </section>
   );
@@ -407,21 +542,25 @@ function Testimonials() {
   return (
     <section className="testify">
       <div className="container">
-        <div
-          className="section-eyebrow"
-          style={{justifyContent: 'center', display: 'inline-flex', marginBottom: 32}}
-        >
-          <span className="num">{t.eyebrowNum}</span>
-          <span>{t.eyebrow}</span>
-        </div>
-        <div style={{position: 'relative', minHeight: 240}}>
-          <blockquote key={i} style={{animation: 'fadeUp 0.5s ease both'}}>
-            «{q.a}
-            <em>{q.b}</em>
-            {q.c}»
-          </blockquote>
-          <div className="attribution">{q.who}</div>
-        </div>
+        <div className="section-horizon" aria-hidden="true" />
+        <Reveal>
+          <div
+            className="section-eyebrow"
+            style={{justifyContent: 'center', display: 'inline-flex', marginBottom: 32}}
+          >
+            <span>{t.eyebrow}</span>
+          </div>
+        </Reveal>
+        <Reveal delay={120}>
+          <div style={{position: 'relative', minHeight: 240}}>
+            <blockquote key={i} style={{animation: 'fadeUp 0.5s ease both'}}>
+              «{q.a}
+              <em>{q.b}</em>
+              {q.c}»
+            </blockquote>
+            <div className="attribution">{q.who}</div>
+          </div>
+        </Reveal>
         <div className="testify-nav">
           <button
             type="button"
@@ -450,47 +589,6 @@ function Testimonials() {
           >
             →
           </button>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ---------------- NEWSLETTER ---------------- */
-
-function Newsletter() {
-  const {dict} = useI18n();
-  const n = dict.newsletter;
-  const [email, setEmail] = useState('');
-  const [sent, setSent] = useState(false);
-  return (
-    <section className="newsletter" id="contact">
-      <div className="container">
-        <div className="newsletter-inner">
-          <div>
-            <h3>
-              {n.titleLine1}
-              <em>{n.titleLine2}</em>
-            </h3>
-            <p>{n.kicker}</p>
-          </div>
-          <form
-            className="nl-form"
-            onSubmit={(e) => {
-              e.preventDefault();
-              setSent(true);
-            }}
-          >
-            <input
-              type="email"
-              placeholder={n.emailPlaceholder}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              aria-label={n.emailLabel}
-            />
-            <button type="submit">{sent ? '✓' : n.cta}</button>
-          </form>
         </div>
       </div>
     </section>
