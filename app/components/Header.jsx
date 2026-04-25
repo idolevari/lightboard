@@ -47,11 +47,15 @@ export function Header({isLoggedIn, cart}) {
           ))}
         </nav>
 
-        <NavLink to={to('/')} prefetch="intent" end aria-label="Lightboard">
-          <span className="lb-logo">
-            <span>lightboard</span>
-            <span className="dot" aria-hidden="true" />
-          </span>
+        <NavLink to={to('/')} prefetch="intent" end aria-label="Lightboard" className="lb-logo-link">
+          <img
+            src="/lightboard-text.svg"
+            alt="Lightboard"
+            className="lb-logo-img"
+            width="200"
+            height="27"
+            decoding="async"
+          />
         </NavLink>
 
         <div className="lb-nav-right">

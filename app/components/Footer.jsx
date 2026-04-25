@@ -10,9 +10,14 @@ export function Footer() {
       <div className="container">
         <div className="footer-grid">
           <div className="footer-brand">
-            <h3 className="wordmark">
-              Lightboard<em>.</em>
-            </h3>
+            <img
+              src="/lightboard-text.svg"
+              alt="Lightboard"
+              className="footer-wordmark"
+              width="240"
+              height="33"
+              decoding="async"
+            />
             <p>{f.brandDesc}</p>
             <div className="footer-social">
               <a href="https://instagram.com/lightboard.co.il" aria-label="Instagram" target="_blank" rel="noreferrer">

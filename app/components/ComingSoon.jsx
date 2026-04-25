@@ -1,21 +1,42 @@
 export function ComingSoon() {
   return (
     <div className="coming-soon">
-      <div className="coming-soon-bg" />
-      <div className="coming-soon-overlay" />
+      <div className="coming-soon-bg" aria-hidden="true" />
+      <div className="coming-soon-overlay" aria-hidden="true" />
+
       <main className="coming-soon-content">
-        <div className="coming-soon-mark">Lightboard</div>
-        <div className="coming-soon-tagline">living · design · surfing</div>
-        <h1 className="coming-soon-title">Coming Soon</h1>
-        <p className="coming-soon-text">
-          אנחנו מתחדשים. חזרו בקרוב לחנות חדשה לגמרי.
-        </p>
+        <img
+          src="/lightboard-text.svg"
+          alt="Lightboard"
+          className="coming-soon-logo"
+          width="320"
+          height="44"
+        />
+
+        <h1 className="coming-soon-title">
+          אתר <em>חדש</em> בדרך.
+        </h1>
+
         <div className="coming-soon-contact">
-          <a href="https://wa.me/972557209448">WhatsApp</a>
-          <span>·</span>
-          <a href="mailto:lightboardshop@gmail.com">Email</a>
-          <span>·</span>
-          <a href="https://instagram.com/lightboard.co.il">Instagram</a>
+          <a
+            className="coming-soon-link"
+            href="https://wa.me/972557209448"
+            target="_blank"
+            rel="noreferrer"
+          >
+            WhatsApp
+          </a>
+          <a className="coming-soon-link" href="mailto:lightboardshop@gmail.com">
+            Email
+          </a>
+          <a
+            className="coming-soon-link"
+            href="https://www.instagram.com/lightboardshop/"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Instagram
+          </a>
         </div>
       </main>
     </div>

@@ -3,6 +3,30 @@
    Sun-bleached cream · deep ocean · warm sunset
    ============================================== */
 
+/* Ploni — Hebrew display face from the original WordPress site.
+   `unicode-range` constrains Ploni to Hebrew characters only, so Latin
+   copy still gets Fraunces/Heebo as designed. The browser only fetches
+   the woff2 if a Hebrew glyph in range actually appears on the page.
+   font-display:swap so we don't block render on the fetch. */
+@font-face {
+  font-family: "Ploni";
+  src: url("/fonts/ploni-light-aaa.woff2") format("woff2"),
+       url("/fonts/ploni-light-aaa.woff") format("woff");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0590-05FF, U+FB1D-FB4F, U+200F, U+202B, U+202E;
+}
+@font-face {
+  font-family: "Ploni";
+  src: url("/fonts/ploni-ultrabold-aaa.woff2") format("woff2"),
+       url("/fonts/ploni-ultrabold-aaa.woff") format("woff");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0590-05FF, U+FB1D-FB4F, U+200F, U+202B, U+202E;
+}
+
 :root {
   /* Editorial palette */
   --cream: #f4ede0;
@@ -12,9 +36,20 @@
   --ink-2: #14505f;
   --ink-soft: #2a6270;
   --sand: #c9b58d;
-  --orange: #e8774a;
-  --orange-2: #d4623a;
-  --teal: #3bb7c4;
+  /* Brand palette pulled from the Lightboard logo + WP Elementor system
+     colors (teal + lime). WP precedent uses lime for action surfaces and
+     teal for accent/highlights, and that's the hierarchy we mirror. */
+  --brand-teal: #27cfdc;
+  --brand-teal-2: #1ea3af;
+  --brand-lime: #dadb65;
+  --brand-lime-2: #c4c558;
+  --brand-peach: #ffbc7d;
+  /* `--orange` stays defined as the primary-accent token for legacy
+     selectors across the storefront, but now points at the brand teal.
+     Surfaces that read as CTA-action use --brand-lime explicitly. */
+  --orange: var(--brand-teal);
+  --orange-2: var(--brand-teal-2);
+  --teal: var(--brand-teal);
   --white: #fbf8f2;
   --rule: rgba(11, 58, 74, 0.14);
   --rule-strong: rgba(11, 58, 74, 0.28);
@@ -32,11 +67,15 @@
   --color-dark: var(--ink);
   --color-light: var(--cream);
 
-  /* Type stacks — Hebrew-first with Latin fallbacks */
-  --serif: "Fraunces", "Frank Ruhl Libre", Georgia, serif;
-  --sans: "Heebo", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  --script: "Caveat", "Gloria Hallelujah", cursive;
+  /* Type stacks — Hebrew-first with Latin fallbacks. Ploni sits in
+     every stack (sans / serif / mono / script). Its `unicode-range`
+     limits it to Hebrew glyphs, so it wins for HE copy in every role
+     while Fraunces (serif), Heebo (sans), JetBrains (mono) and Caveat
+     (script) still win for Latin. */
+  --serif: "Fraunces", "Ploni", "Frank Ruhl Libre", Georgia, serif;
+  --sans: "Ploni", "Heebo", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  --mono: "JetBrains Mono", "Ploni", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --script: "Caveat", "Ploni", "Gloria Hallelujah", cursive;
 
   --font-body: var(--sans);
   --font-display: var(--serif);
@@ -60,8 +99,8 @@
      (e.g. a multi-column grid that must collapse).
      ============================================ */
   --container-px: clamp(20px, 4vw, 40px);
-  --section-py: clamp(64px, 9vw, 120px);
-  --section-py-lg: clamp(80px, 11vw, 140px);
+  --section-py: clamp(48px, 7vw, 88px);
+  --section-py-lg: clamp(60px, 8vw, 104px);
   --tap-min: 44px;
 }
 
@@ -146,19 +185,27 @@ h1, h2, h3, h4, h5, h6 {
   padding-right: 80px;
 }
 [dir="rtl"] .lb-nav-right { padding-right: 0; }
+/* In RTL, the first grid column (lb-nav-left) sits on physical right —
+   reserve the same 80px the LTR side reserves so the rightmost menu
+   item (and its active underline) doesn't slip behind the toggle. */
+[dir="rtl"] .lb-nav-left { padding-right: 80px; }
 @media (max-width: 720px) {
-  /* Compact mobile header: hamburger | logo | cart-only cluster + lang
-     toggle on the inline-end side. Lang toggle follows reading direction
-     on mobile so it doesn't collide with the hamburger (which lands on
-     physical right in RTL via the grid order). Search + account icons
-     move to the burger menu to keep the right cluster within 375px. */
-  .lb-nav-inner { gap: 8px; }
+  /* Compact mobile header. Lock the inner row to RTL flow regardless
+     of locale so the icon order doesn't flip when switching HE/EN —
+     visually we always get: lang toggle | cart | logo | burger
+     (left → right). Search + account icons move to the burger menu to
+     keep the right cluster within 375px. */
+  .lb-nav-inner { gap: 8px; direction: rtl; }
   .lb-nav-right {
     padding-right: 0;
-    padding-inline-end: 80px;
+    /* Reserve room for the absolutely-positioned lang toggle (~80px
+       wide) plus the toggle's own inset from the screen edge, so the
+       cart cluster doesn't slide under it. */
+    padding-inline-end: calc(var(--container-px) + 80px);
     gap: 8px;
   }
   .lb-nav-left { gap: 8px; }
+  [dir="rtl"] .lb-nav-left { padding-right: 0; }
   .lb-nav-right .lb-icon-btn { display: none; }
 }
 .lb-nav a.lb-nav-link {
@@ -214,25 +261,23 @@ h1, h2, h3, h4, h5, h6 {
   .lb-nav-burger { display: inline-flex; }
 }
 
-.lb-logo {
+.lb-logo-link {
   display: inline-flex;
-  align-items: baseline;
-  gap: 3px;
-  font-family: var(--mono);
-  font-weight: 500;
-  font-size: 14px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  line-height: 1;
-  color: inherit;
+  align-items: center;
+  /* Match the previous text logo's tap height so layout proportions
+     stay consistent with the rest of the nav row. */
+  min-height: var(--tap-min);
 }
-.lb-logo .dot {
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: var(--orange);
-  display: inline-block;
-  align-self: flex-end;
-  margin-bottom: 1px;
+.lb-logo-img {
+  display: block;
+  height: 22px;
+  width: auto;
+  max-width: 100%;
+}
+@media (max-width: 720px) {
+  /* Slightly smaller on phones so the wordmark + cart icon + lang
+     toggle all sit comfortably in the 375px row. */
+  .lb-logo-img { height: 18px; }
 }
 
 .lb-lang-toggle {
@@ -279,13 +324,14 @@ h1, h2, h3, h4, h5, h6 {
   opacity: 1;
 }
 @media (max-width: 720px) {
-  /* On mobile, toggle follows parent reading direction so it doesn't
-     collide with the hamburger (which lands on physical right in RTL via
-     the grid flip). The toggle's own children stay LTR-ordered for HE/EN
-     stability, so we set physical sides explicitly here rather than rely
-     on `inset-inline-*`, which resolves against the toggle's own
-     direction (forced to ltr above). */
-  [dir="rtl"] .lb-lang-toggle { right: auto; left: 0; }
+  /* Lang toggle pinned to physical left in both locales on mobile, so
+     it stays beside the cart cluster instead of jumping sides. Inset
+     by --container-px so it lines up with the rest of the header
+     content instead of running into the screen edge. Placed after the
+     base rule (which sets `right: 0`) so the override sticks in the
+     cascade — otherwise the toggle gets both left:0 and right:0 and
+     stretches to fill the header width. */
+  .lb-lang-toggle { right: auto; left: var(--container-px); }
 }
 .header.lb-nav.scrolled .lb-lang-toggle .lb-lang-btn.active {
   background: var(--color-wood, #2D2419);
@@ -378,6 +424,15 @@ h1, h2, h3, h4, h5, h6 {
   display: block;
   user-select: none;
 }
+@media (max-width: 720px) {
+  /* Hero photos are landscape; on a portrait phone they get cropped
+     hard. Each slide can opt into a horizontal crop point via
+     `--hero-pos-mobile` (set inline) so the van/surfer/etc stays in
+     frame instead of getting sliced. */
+  .hero-media img {
+    object-position: var(--hero-pos-mobile, 50%) center;
+  }
+}
 .hero-media::after {
   content: "";
   position: absolute;
@@ -463,8 +518,8 @@ h1, h2, h3, h4, h5, h6 {
 }
 .hero-cta:hover {
   transform: translateY(-1px);
-  background: var(--orange);
-  color: var(--white);
+  background: var(--brand-lime);
+  color: var(--ink);
 }
 .hero-cta .arrow {
   width: 22px; height: 22px;
@@ -477,7 +532,7 @@ h1, h2, h3, h4, h5, h6 {
   font-size: 12px;
   transition: background 0.2s, color 0.2s;
 }
-.hero-cta:hover .arrow { background: var(--white); color: var(--orange); }
+.hero-cta:hover .arrow { background: var(--ink); color: var(--brand-lime); }
 [dir="rtl"] .hero-cta .arrow { transform: scaleX(-1); }
 
 .hero-dots {
@@ -624,7 +679,6 @@ section { position: relative; }
   text-transform: uppercase;
   color: var(--ink-soft);
 }
-.section-eyebrow .num { color: var(--orange); font-weight: 600; }
 .section-title {
   font-family: var(--serif);
   font-weight: 300;
@@ -648,7 +702,7 @@ section { position: relative; }
    ============================================ */
 .story {
   padding: var(--section-py) 0;
-  background: var(--cream);
+  background: var(--cream-2);
   position: relative;
 }
 .story-grid {
@@ -665,6 +719,18 @@ section { position: relative; }
   aspect-ratio: 4/5;
   overflow: hidden;
   border-radius: 2px;
+  /* Two-layer lift: a hard ink offset (matches the footer's deep
+     ocean), plus a softer ambient drop behind it so the photo reads
+     as floating, not flat-stickered. The offset flips in RTL so it
+     stays inside the page. */
+  box-shadow:
+    16px 16px 0 var(--ink),
+    0 32px 60px -18px rgba(11, 58, 74, 0.38);
+}
+[dir="rtl"] .story-media {
+  box-shadow:
+    -16px 16px 0 var(--ink),
+    0 32px 60px -18px rgba(11, 58, 74, 0.38);
 }
 .story-media img { width: 100%; height: 100%; object-fit: cover; }
 .story-media .tag {
@@ -695,14 +761,6 @@ section { position: relative; }
   max-width: 52ch;
   margin: 0 0 20px;
 }
-.story-copy .sig {
-  font-family: var(--script);
-  font-size: 28px;
-  color: var(--orange);
-  margin-top: 32px;
-  display: inline-block;
-  transform: rotate(-2deg);
-}
 .story-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -731,6 +789,7 @@ section { position: relative; }
   letter-spacing: -0.02em;
   margin-bottom: 4px;
   font-variation-settings: "SOFT" 30;
+  white-space: nowrap;
 }
 
 /* ============================================
@@ -742,31 +801,6 @@ section { position: relative; }
   background: var(--cream);
   border-bottom: 1px solid var(--rule);
   overflow: hidden;
-}
-.feat3-marker {
-  max-width: 1440px;
-  margin: 0 auto 32px;
-  padding: 0 var(--container-px);
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  color: var(--ink-soft);
-  font-size: 10px;
-  letter-spacing: 0.2em;
-  font-family: var(--mono);
-  text-transform: uppercase;
-}
-.feat3-marker::before {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: var(--rule);
-}
-.feat3-marker::after {
-  content: "";
-  flex: 0 0 120px;
-  height: 1px;
-  background: var(--rule);
 }
 .feat3-grid {
   max-width: 1440px;
@@ -1001,7 +1035,7 @@ section { position: relative; }
   transition: background 0.2s, transform 0.2s;
   min-width: 180px;
 }
-.feat3-cta:hover { background: var(--orange); transform: translateY(-1px); color: var(--white); }
+.feat3-cta:hover { background: var(--brand-lime); transform: translateY(-1px); color: var(--ink); }
 .feat3-cta .arrow { font-size: 18px; }
 [dir="rtl"] .feat3-cta .arrow { transform: scaleX(-1); }
 .feat3-ghost {
@@ -1017,11 +1051,178 @@ section { position: relative; }
 .feat3-ghost:hover { color: var(--ink); }
 
 /* ============================================
+   BACKGROUND DOODLES — surfboard + van line-art
+   pulled from the WP backup. They sit behind
+   the editorial sections at low opacity, picking
+   up the cream/ink palette as soft ornaments.
+   Hidden on mobile so they don't clutter the
+   compact stack.
+   ============================================ */
+.story,
+.faq,
+.testify {
+  /* Establish the stacking context the doodle pseudo-elements
+     anchor against. */
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+.story::before,
+.faq::before,
+.testify::before {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  background-repeat: no-repeat;
+  background-size: contain;
+  opacity: 0.07;
+  z-index: 0;
+}
+.story::before {
+  background-image: url('/illustrations/surfboard.svg');
+  width: clamp(220px, 32vw, 460px);
+  aspect-ratio: 775 / 810;
+  bottom: -60px;
+  inset-inline-end: -120px;
+  transform: rotate(-12deg);
+}
+.faq::before {
+  background-image: url('/illustrations/van.svg');
+  width: clamp(280px, 36vw, 540px);
+  aspect-ratio: 942 / 562;
+  top: 8%;
+  inset-inline-start: -80px;
+  transform: rotate(-3deg);
+}
+.testify::before {
+  background-image: url('/illustrations/surfboard.svg');
+  width: clamp(220px, 28vw, 400px);
+  aspect-ratio: 775 / 810;
+  top: 12%;
+  inset-inline-end: -100px;
+  transform: rotate(18deg);
+}
+.story > .container,
+.faq > .container,
+.testify > .container { position: relative; z-index: 1; }
+@media (max-width: 820px) {
+  .story::before,
+  .faq::before,
+  .testify::before { display: none; }
+}
+
+/* ============================================
+   FAQ
+   ============================================ */
+.faq {
+  padding: var(--section-py-lg) 0;
+  background: var(--cream);
+  position: relative;
+}
+.faq-container {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(0, 1.6fr);
+  gap: clamp(40px, 7vw, 96px);
+  align-items: start;
+}
+@media (max-width: 820px) {
+  .faq-container { grid-template-columns: 1fr; gap: 40px; }
+}
+.faq-head { position: sticky; top: 100px; }
+@media (max-width: 820px) {
+  .faq-head { position: static; }
+}
+.faq-title {
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: clamp(40px, 5vw, 68px);
+  line-height: 1;
+  letter-spacing: -0.025em;
+  margin: 16px 0 0;
+  color: var(--ink);
+  font-variation-settings: "SOFT" 30;
+}
+.faq-title em {
+  font-style: italic;
+  font-variation-settings: "SOFT" 90, "WONK" 1;
+  color: var(--orange);
+}
+.faq-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--rule-strong);
+}
+.faq-item { border-bottom: 1px solid var(--rule-strong); }
+.faq-q {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 22px 4px;
+  cursor: pointer;
+  color: var(--ink);
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: clamp(18px, 1.6vw, 22px);
+  line-height: 1.35;
+  letter-spacing: -0.005em;
+  text-align: start;
+  transition: color 0.18s ease;
+}
+.faq-q:hover { color: var(--brand-teal-2); }
+.faq-q-text { flex: 1; }
+.faq-mark {
+  position: relative;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  display: inline-block;
+}
+.faq-mark span {
+  position: absolute;
+  inset: 50% 0 auto 0;
+  height: 1.5px;
+  background: var(--ink);
+  transform: translateY(-50%);
+  transition: transform 0.25s ease, background 0.25s ease;
+}
+.faq-mark span:last-child { transform: translateY(-50%) rotate(90deg); }
+.faq-item.open .faq-mark span { background: var(--brand-teal); }
+.faq-item.open .faq-mark span:last-child { transform: translateY(-50%) rotate(0deg); }
+.faq-a-wrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.32s ease;
+}
+.faq-item.open .faq-a-wrap { grid-template-rows: 1fr; }
+.faq-a {
+  overflow: hidden;
+  min-height: 0;
+}
+.faq-a p {
+  margin: 0 0 24px;
+  padding-inline-end: clamp(12px, 6vw, 60px);
+  color: var(--ink-soft);
+  font-size: 16px;
+  line-height: 1.7;
+  max-width: 60ch;
+}
+@media (prefers-reduced-motion: reduce) {
+  .faq-a-wrap { transition: none; }
+  .faq-mark span { transition: none; }
+}
+
+/* ============================================
    TESTIMONIAL
    ============================================ */
 .testify {
   padding: var(--section-py-lg) 0;
-  background: var(--cream);
+  background: var(--cream-2);
   text-align: center;
 }
 .testify blockquote {
@@ -1094,7 +1295,7 @@ section { position: relative; }
   transition: background 0.3s;
 }
 .testify-dots button.on { width: 24px; }
-.testify-dots button.on::before { background: var(--orange); }
+.testify-dots button.on::before { background: var(--brand-lime); }
 
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(12px); }
@@ -1102,70 +1303,31 @@ section { position: relative; }
 }
 
 /* ============================================
-   NEWSLETTER
+   SCROLL REVEAL — generic fade-up applied to
+   any element wrapped in <Reveal>. The hook
+   (useInView) toggles `.is-in` once the element
+   crosses ~20% into the viewport. CountUp values
+   honor prefers-reduced-motion in JS; this CSS
+   honors it for the fade-up.
    ============================================ */
-.newsletter {
-  padding: var(--section-py) 0;
-  background: var(--orange);
-  color: var(--white);
+.reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
 }
-.newsletter-inner {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: clamp(32px, 6vw, 80px);
-  align-items: end;
+.reveal.is-in {
+  opacity: 1;
+  transform: none;
 }
-@media (max-width: 820px) {
-  .newsletter-inner { grid-template-columns: 1fr; }
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
 }
-.newsletter h3 {
-  font-family: var(--serif);
-  font-weight: 300;
-  font-size: clamp(36px, 4.5vw, 64px);
-  line-height: 1;
-  letter-spacing: -0.025em;
-  margin: 0;
-  font-variation-settings: "SOFT" 30;
-  color: var(--white);
-}
-.newsletter h3 em { font-style: italic; font-variation-settings: "SOFT" 90, "WONK" 1; }
-.newsletter p {
-  font-size: 14px;
-  line-height: 1.6;
-  opacity: 0.92;
-  max-width: 40ch;
-  margin: 20px 0 0;
-}
-.nl-form {
-  display: flex;
-  align-items: center;
-  border-bottom: 1px solid rgba(255,255,255,0.5);
-  padding-bottom: 8px;
-}
-.nl-form input {
-  flex: 1;
-  background: none;
-  border: none;
-  padding: 14px 0;
-  color: var(--white);
-  font-family: var(--sans);
-  font-size: 16px;
-  outline: none;
-}
-.nl-form input::placeholder { color: rgba(255,255,255,0.7); }
-.nl-form button {
-  padding: 10px 18px;
-  background: var(--white);
-  color: var(--orange);
-  border-radius: 999px;
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  font-weight: 600;
-  transition: background 0.15s, color 0.15s;
-}
-.nl-form button:hover { background: var(--ink); color: var(--white); }
 
 /* ============================================
    FOOTER
@@ -1209,17 +1371,13 @@ section { position: relative; }
 }
 .footer-col a { font-size: 14px; opacity: 0.8; transition: opacity 0.15s; }
 .footer-col a:hover { opacity: 1; }
-.footer-brand .wordmark {
-  font-family: var(--serif);
-  font-size: 40px;
-  line-height: 1;
-  letter-spacing: -0.03em;
-  margin: 0 0 16px;
-  font-weight: 300;
-  font-variation-settings: "SOFT" 30;
-  color: var(--white);
+.footer-brand .footer-wordmark {
+  display: block;
+  height: 32px;
+  width: auto;
+  max-width: 100%;
+  margin: 0 0 20px;
 }
-.footer-brand .wordmark em { font-style: italic; font-variation-settings: "SOFT" 90, "WONK" 1; color: var(--orange); }
 .footer-brand p {
   font-size: 14px;
   line-height: 1.7;
@@ -1555,7 +1713,7 @@ button[type="submit"],
   font-family: var(--mono);
 }
 button[type="submit"]:hover,
-.reset.add-to-cart:hover { background: var(--orange); }
+.reset.add-to-cart:hover { background: var(--brand-lime); color: var(--ink); }
 
 /* Blog / article grids */
 .blog-grid {
@@ -1596,8 +1754,11 @@ button[type="submit"]:hover,
 }
 .order-search-buttons { display: flex; gap: 0.75rem; flex-wrap: wrap; }
 
-/* Scaffold routes' generic <main> should not hide under fixed nav */
-main > :not(.hero):first-child {
+/* Scaffold routes' generic <main> should not hide under fixed nav.
+   Skip the ComingSoon gate — it's a fullscreen overlay with no header
+   to clear, and a 120px top pad collides with `box-sizing: border-box`
+   on its first child (the logo img), zeroing out the img's content area. */
+main:not(.coming-soon-content) > :not(.hero):first-child {
   padding-top: 120px;
 }
 
@@ -1606,96 +1767,121 @@ main > :not(.hero):first-child {
 * Coming Soon landing page (unchanged)
 * --------------------------------------------------
 */
+/* ============================================
+   COMING SOON — pre-launch gate
+   Editorial full-bleed photo (sunset van) + brand
+   typography. Mirrors the hero's eyebrow / serif /
+   pill-link rhythm so the gate feels like the real
+   storefront, not a placeholder.
+   ============================================ */
 .coming-soon {
   position: fixed;
   inset: 0;
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: center;
   color: var(--white);
   overflow: hidden;
   direction: rtl;
   text-align: center;
+  font-family: var(--sans);
 }
 .coming-soon-bg {
   position: absolute;
   inset: 0;
-  background-image: url('/coming-soon.jpg');
+  /* VW van at the beach — same Shopify CDN asset as the hero "VAN
+     LIFE · BEACH PARK" slide, so we don't duplicate the file in
+     /public. Mobile crop is biased left to keep the van anchored
+     instead of the people on the right. */
+  background-image: url('https://cdn.shopify.com/s/files/1/0982/9325/2392/files/mikail-mcverry-6WRjFofNhPs-unsplash.jpg?v=1777136172&width=2800');
   background-size: cover;
-  background-position: center;
+  background-position: 30% center;
   z-index: 0;
+}
+@media (min-width: 720px) {
+  .coming-soon-bg { background-position: center; }
 }
 .coming-soon-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    to bottom,
-    rgba(11, 58, 74, 0.3) 0%,
-    rgba(11, 58, 74, 0.5) 50%,
-    rgba(11, 58, 74, 0.78) 100%
-  );
+  /* Deep ink wash so the brand-coloured wordmark and copy stay
+     readable across the whole frame; centred vignette pulls extra
+     contrast into the middle where the title lives. */
+  background:
+    linear-gradient(
+      180deg,
+      rgba(11, 58, 74, 0.55) 0%,
+      rgba(11, 58, 74, 0.62) 50%,
+      rgba(11, 58, 74, 0.82) 100%
+    ),
+    radial-gradient(
+      ellipse at 50% 55%,
+      rgba(11, 58, 74, 0.35) 0%,
+      rgba(11, 58, 74, 0) 60%
+    );
   z-index: 1;
 }
 .coming-soon-content {
   position: relative;
   z-index: 2;
-  padding: 2rem 1.5rem;
-  max-width: 560px;
+  padding: clamp(48px, 8vw, 80px) var(--container-px);
+  width: 100%;
+  max-width: 640px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
-.coming-soon-mark {
-  font-family: var(--mono);
-  font-weight: 500;
-  font-size: 1.6rem;
-  letter-spacing: 0.25em;
-  color: var(--white);
-  line-height: 1;
-  margin-bottom: 0.5rem;
-  text-transform: uppercase;
-}
-.coming-soon-tagline {
-  font-size: 0.7rem;
-  font-weight: 500;
-  letter-spacing: 0.35em;
-  text-transform: uppercase;
-  color: var(--orange);
-  margin-bottom: 3.5rem;
+.coming-soon-logo {
+  height: clamp(40px, 6vw, 60px);
+  width: auto;
+  /* Soft ink shadow so the lime "BOARD" half doesn't disappear into
+     the bright sky in the photo's upper portion. */
+  filter: drop-shadow(0 2px 18px rgba(11, 58, 74, 0.55));
 }
 .coming-soon-title {
   font-family: var(--serif);
-  font-size: clamp(3rem, 8vw, 5.5rem);
+  font-size: clamp(40px, 8vw, 96px);
   font-weight: 300;
   line-height: 0.98;
   color: var(--white);
-  margin: 0 0 1.25rem;
+  /* Auto top margin + matching auto bottom margin on the contact
+     pills splits the slack equally above the title and below the
+     pills, so the title + pills cluster sits centred together while
+     the logo stays pinned at the top. */
+  margin: auto 0 clamp(36px, 6vw, 56px);
   letter-spacing: -0.03em;
   font-variation-settings: "SOFT" 30, "WONK" 1;
 }
-.coming-soon-text {
-  font-size: 1.05rem;
-  color: var(--cream-2);
-  margin: 0 0 2.5rem;
-  line-height: 1.55;
+.coming-soon-title em {
+  /* Same shape as the rest of the title — only the colour shifts.
+     Brand-lime echoes the lime "BOARD" half of the wordmark above. */
+  font-style: normal;
+  color: var(--brand-lime);
 }
 .coming-soon-contact {
-  display: flex;
-  gap: 0.75rem;
-  justify-content: center;
-  align-items: center;
-  font-size: 0.9rem;
-  color: var(--orange);
+  display: inline-flex;
   flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  /* Pairs with the title's `margin-top: auto` to centre the title +
+     pills cluster vertically while the logo stays pinned to the top. */
+  margin-bottom: auto;
 }
-.coming-soon-contact a {
+.coming-soon-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
   color: var(--white);
-  border-bottom: 1px solid transparent;
-  padding-bottom: 2px;
-  transition: border-color 0.2s ease, color 0.2s ease;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
-.coming-soon-contact a:hover {
-  color: var(--orange);
-  border-bottom-color: var(--orange);
-}
-.coming-soon-contact span {
-  color: var(--orange);
-  opacity: 0.6;
+.coming-soon-link:hover {
+  background: var(--brand-lime);
+  color: var(--ink);
+  border-color: var(--brand-lime);
 }
