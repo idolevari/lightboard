@@ -100,11 +100,20 @@ function CountUp({value, active, duration = 1400}) {
   if (!match) return value;
   const [, prefix, num, suffix] = match;
   const display = num.includes(',') ? n.toLocaleString('en-US') : String(n);
+  // Split the suffix at the first whitespace so a trailing word (e.g.
+  // " שנים") stays in the parent's RTL flow, while glued punctuation
+  // like "%" rides along with the LTR-isolated number cluster.
+  const suffixParts = /^(\S*)(\s.*)?$/.exec(suffix) ?? [];
+  const inSuffix = suffixParts[1] ?? '';
+  const outSuffix = suffixParts[2] ?? '';
   return (
     <>
-      {prefix}
-      {display}
-      {suffix}
+      <bdi dir="ltr">
+        {prefix}
+        {display}
+        {inSuffix}
+      </bdi>
+      {outSuffix}
     </>
   );
 }

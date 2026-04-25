@@ -776,11 +776,6 @@ section { position: relative; }
   letter-spacing: -0.02em;
   margin-bottom: 4px;
   font-variation-settings: "SOFT" 30;
-  /* LTR-isolate so a leading `+` or trailing `%` lands on the side it
-     would in print — RTL paragraphs otherwise re-order the bidi-neutral
-     sign. */
-  direction: ltr;
-  unicode-bidi: isolate;
 }
 
 /* ============================================
