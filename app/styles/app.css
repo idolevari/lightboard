@@ -4,7 +4,10 @@
    ============================================== */
 
 /* Ploni — Hebrew display face from the original WordPress site.
-   font-display:swap so we don't block render on the woff2 fetch. */
+   `unicode-range` constrains Ploni to Hebrew characters only, so Latin
+   copy still gets Fraunces/Heebo as designed. The browser only fetches
+   the woff2 if a Hebrew glyph in range actually appears on the page.
+   font-display:swap so we don't block render on the fetch. */
 @font-face {
   font-family: "Ploni";
   src: url("/fonts/ploni-light-aaa.woff2") format("woff2"),
@@ -12,6 +15,7 @@
   font-weight: 300;
   font-style: normal;
   font-display: swap;
+  unicode-range: U+0590-05FF, U+FB1D-FB4F, U+200F, U+202B, U+202E;
 }
 @font-face {
   font-family: "Ploni";
@@ -20,6 +24,7 @@
   font-weight: 800;
   font-style: normal;
   font-display: swap;
+  unicode-range: U+0590-05FF, U+FB1D-FB4F, U+200F, U+202B, U+202E;
 }
 
 :root {
@@ -51,13 +56,15 @@
   --color-dark: var(--ink);
   --color-light: var(--cream);
 
-  /* Type stacks — Hebrew-first with Latin fallbacks. Ploni leads the
-     sans stack so Hebrew copy gets the brand face from the WP era;
-     Heebo is the safe Google fallback if Ploni fails to load. */
-  --serif: "Fraunces", "Frank Ruhl Libre", Georgia, serif;
+  /* Type stacks — Hebrew-first with Latin fallbacks. Ploni sits in
+     every stack (sans / serif / mono / script). Its `unicode-range`
+     limits it to Hebrew glyphs, so it wins for HE copy in every role
+     while Fraunces (serif), Heebo (sans), JetBrains (mono) and Caveat
+     (script) still win for Latin. */
+  --serif: "Fraunces", "Ploni", "Frank Ruhl Libre", Georgia, serif;
   --sans: "Ploni", "Heebo", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  --script: "Caveat", "Gloria Hallelujah", cursive;
+  --mono: "JetBrains Mono", "Ploni", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --script: "Caveat", "Ploni", "Gloria Hallelujah", cursive;
 
   --font-body: var(--sans);
   --font-display: var(--serif);
