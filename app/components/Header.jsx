@@ -1,10 +1,9 @@
-import {Fragment, Suspense, useEffect, useState} from 'react';
+import {Suspense, useEffect, useState} from 'react';
 import {Await, NavLink, useAsyncValue, useLocation} from 'react-router';
 import {useAnalytics, useOptimisticCart} from '@shopify/hydrogen';
 import {useAside} from '~/components/Aside';
 import {useI18n} from '~/lib/useI18n';
 import {
-  DEFAULT_LOCALE,
   SUPPORTED_LOCALES,
   getLocaleConfig,
   swapLocaleInPath,
@@ -82,7 +81,7 @@ function LangToggle() {
   const location = useLocation();
   return (
     <div className="lb-lang-toggle" role="group" aria-label="Language">
-      {SUPPORTED_LOCALES.map((code, i) => {
+      {SUPPORTED_LOCALES.map((code) => {
         const cfg = getLocaleConfig(code);
         const href = swapLocaleInPath(
           location.pathname + location.search,
@@ -90,18 +89,17 @@ function LangToggle() {
         );
         const isActive = code === locale;
         return (
-          <Fragment key={code}>
-            {i > 0 && <span className="lb-lang-sep">/</span>}
-            <NavLink
-              to={href}
-              prefetch="intent"
-              reloadDocument={false}
-              className={`lb-lang-btn${isActive ? ' active' : ''}`}
-              aria-current={isActive ? 'true' : undefined}
-            >
-              {cfg.shortLabel}
-            </NavLink>
-          </Fragment>
+          <NavLink
+            key={code}
+            to={href}
+            prefetch="intent"
+            reloadDocument={false}
+            className={`lb-lang-btn${isActive ? ' active' : ''}`}
+            aria-current={isActive ? 'true' : undefined}
+            aria-label={cfg.label}
+          >
+            {cfg.shortLabel}
+          </NavLink>
         );
       })}
     </div>

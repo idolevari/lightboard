@@ -35,6 +35,13 @@ export const shouldRevalidate = ({formMethod, currentUrl, nextUrl}) => {
   // revalidate when manually revalidating via useRevalidator
   if (currentUrl.toString() === nextUrl.toString()) return true;
 
+  // Revalidate on locale change so the dict, html lang/dir, and active-locale
+  // chrome update in a single navigation (otherwise switching languages
+  // requires two clicks — first updates URL, second refreshes root data).
+  const currentLocale = parseLocaleFromPath(currentUrl.pathname).locale;
+  const nextLocale = parseLocaleFromPath(nextUrl.pathname).locale;
+  if (currentLocale !== nextLocale) return true;
+
   // Defaulting to no revalidation for root loader data to improve performance.
   // When using this feature, you risk your UI getting out of sync with your server.
   // Use with caution. If you are uncomfortable with this optimization, update the

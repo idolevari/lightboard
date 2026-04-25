@@ -165,23 +165,39 @@ h1, h2, h3, h4, h5, h6 {
 
 .lb-lang-toggle {
   display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  align-items: stretch;
+  padding: 2px;
+  border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+  border-radius: 999px;
   font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0.1em;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
+  line-height: 1;
   color: inherit;
 }
 .lb-lang-toggle .lb-lang-btn {
-  padding: 3px 6px;
-  opacity: 0.5;
-  transition: opacity 0.15s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  padding: 5px 9px;
+  border-radius: 999px;
   color: inherit;
+  opacity: 0.55;
+  transition: background-color 0.18s ease, color 0.18s ease, opacity 0.18s ease;
 }
-.lb-lang-toggle .lb-lang-btn:hover { opacity: 0.85; color: inherit; }
-.lb-lang-toggle .lb-lang-btn.active { opacity: 1; color: inherit; }
-.lb-lang-toggle .lb-lang-sep { opacity: 0.4; }
+.lb-lang-toggle .lb-lang-btn:hover { opacity: 1; }
+.lb-lang-toggle .lb-lang-btn.active {
+  background: var(--color-sand, #FDF8F0);
+  color: var(--color-wood, #2D2419);
+  opacity: 1;
+}
+.header.lb-nav.scrolled .lb-lang-toggle .lb-lang-btn.active {
+  background: var(--color-wood, #2D2419);
+  color: var(--color-sand, #FDF8F0);
+}
 
 .lb-icon-btn {
   display: inline-flex;
