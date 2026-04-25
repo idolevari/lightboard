@@ -451,7 +451,6 @@ function Story() {
             <Reveal delay={160}>
               <p>{s.p1}</p>
               <p>{s.p2}</p>
-              <div className="sig">{s.sig}</div>
             </Reveal>
             <div className="story-stats">
               {s.stats.map((st, idx) => (
