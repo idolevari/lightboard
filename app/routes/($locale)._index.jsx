@@ -87,6 +87,9 @@ const HERO_SLIDES = [
 
 const HERO_SRCSET_WIDTHS = [900, 1400, 2000, 2800];
 
+const STORY_IMAGE =
+  'https://cdn.shopify.com/s/files/1/0982/9325/2392/files/paulina-herpel-NYsnCI23XJc-unsplash.jpg?v=1777141874';
+
 function heroSrcSet(url) {
   return HERO_SRCSET_WIDTHS.map((w) => `${url}&width=${w} ${w}w`).join(', ');
 }
@@ -353,7 +356,11 @@ function Story() {
           <div className="story-media">
             <span className="tag">{s.tag}</span>
             <img
-              src="https://images.unsplash.com/photo-1530870110042-98b2cb110834?w=1200&q=80"
+              src={`${STORY_IMAGE}&width=1200`}
+              srcSet={[600, 900, 1200, 1600]
+                .map((w) => `${STORY_IMAGE}&width=${w} ${w}w`)
+                .join(', ')}
+              sizes="(min-width: 900px) 50vw, 100vw"
               alt={s.titleLine2}
               loading="lazy"
             />
