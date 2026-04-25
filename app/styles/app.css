@@ -204,9 +204,6 @@ h1, h2, h3, h4, h5, h6 {
   .lb-nav-left { gap: 8px; }
   [dir="rtl"] .lb-nav-left { padding-right: 0; }
   .lb-nav-right .lb-icon-btn { display: none; }
-  /* Lang toggle pinned to physical left in both locales on mobile, so
-     it stays beside the cart cluster instead of jumping sides. */
-  .lb-lang-toggle { right: auto; left: 0; }
 }
 .lb-nav a.lb-nav-link {
   position: relative;
@@ -324,13 +321,12 @@ h1, h2, h3, h4, h5, h6 {
   opacity: 1;
 }
 @media (max-width: 720px) {
-  /* On mobile, toggle follows parent reading direction so it doesn't
-     collide with the hamburger (which lands on physical right in RTL via
-     the grid flip). The toggle's own children stay LTR-ordered for HE/EN
-     stability, so we set physical sides explicitly here rather than rely
-     on `inset-inline-*`, which resolves against the toggle's own
-     direction (forced to ltr above). */
-  [dir="rtl"] .lb-lang-toggle { right: auto; left: 0; }
+  /* Lang toggle pinned to physical left in both locales on mobile, so
+     it stays beside the cart cluster instead of jumping sides. Placed
+     after the base rule (which sets `right: 0`) so the override sticks
+     in the cascade — otherwise the toggle gets both left:0 and right:0
+     and stretches to fill the header width. */
+  .lb-lang-toggle { right: auto; left: 0; }
 }
 .header.lb-nav.scrolled .lb-lang-toggle .lb-lang-btn.active {
   background: var(--color-wood, #2D2419);
@@ -779,6 +775,7 @@ section { position: relative; }
   letter-spacing: -0.02em;
   margin-bottom: 4px;
   font-variation-settings: "SOFT" 30;
+  white-space: nowrap;
 }
 
 /* ============================================
