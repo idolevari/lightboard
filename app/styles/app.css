@@ -190,12 +190,12 @@ h1, h2, h3, h4, h5, h6 {
    item (and its active underline) doesn't slip behind the toggle. */
 [dir="rtl"] .lb-nav-left { padding-right: 80px; }
 @media (max-width: 720px) {
-  /* Compact mobile header: hamburger | logo | cart-only cluster + lang
-     toggle on the inline-end side. Lang toggle follows reading direction
-     on mobile so it doesn't collide with the hamburger (which lands on
-     physical right in RTL via the grid order). Search + account icons
-     move to the burger menu to keep the right cluster within 375px. */
-  .lb-nav-inner { gap: 8px; }
+  /* Compact mobile header. Lock the inner row to RTL flow regardless
+     of locale so the icon order doesn't flip when switching HE/EN —
+     visually we always get: lang toggle | cart | logo | burger
+     (left → right). Search + account icons move to the burger menu to
+     keep the right cluster within 375px. */
+  .lb-nav-inner { gap: 8px; direction: rtl; }
   .lb-nav-right {
     padding-right: 0;
     padding-inline-end: 80px;
@@ -204,6 +204,9 @@ h1, h2, h3, h4, h5, h6 {
   .lb-nav-left { gap: 8px; }
   [dir="rtl"] .lb-nav-left { padding-right: 0; }
   .lb-nav-right .lb-icon-btn { display: none; }
+  /* Lang toggle pinned to physical left in both locales on mobile, so
+     it stays beside the cart cluster instead of jumping sides. */
+  .lb-lang-toggle { right: auto; left: 0; }
 }
 .lb-nav a.lb-nav-link {
   position: relative;
