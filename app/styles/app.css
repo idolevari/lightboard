@@ -779,6 +779,20 @@ section { position: relative; }
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink-soft);
+  padding-inline: 24px;
+}
+.story-stats .stat + .stat {
+  border-inline-start: 1px solid var(--rule);
+}
+.story-stats .stat:first-child {
+  padding-inline-start: 0;
+}
+.story-stats .stat:last-child {
+  padding-inline-end: 0;
+}
+@media (max-width: 480px) {
+  .story-stats .stat { padding-inline: 0; }
+  .story-stats .stat + .stat { padding-inline-start: 12px; }
 }
 .story-stats .stat b {
   display: block;
@@ -1885,3 +1899,423 @@ main:not(.coming-soon-content) > :not(.hero):first-child {
   color: var(--ink);
   border-color: var(--brand-lime);
 }
+
+/* ============================================
+   PHOTO CUSTOMIZER — PDP photo upload + crop
+   ============================================ */
+.photo-customizer {
+  margin: 24px 0;
+  padding: 20px;
+  background: var(--cream-2);
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+}
+.photo-customizer__header {
+  margin-bottom: 16px;
+}
+.photo-customizer__title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  margin: 0 0 4px 0;
+  color: var(--ink);
+}
+.photo-customizer__subtitle {
+  font-size: 14px;
+  color: var(--ink-soft);
+  margin: 0;
+}
+.photo-customizer__slots {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+@media (max-width: 640px) {
+  .photo-customizer__slots {
+    grid-template-columns: 1fr;
+  }
+}
+.photo-slot {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border-radius: 12px;
+  background: var(--cream);
+  border: 1.5px dashed var(--rule-strong);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.photo-slot--filled {
+  border-style: solid;
+  border-color: var(--brand-teal);
+}
+.photo-slot__index {
+  position: absolute;
+  top: 8px;
+  inset-inline-start: 10px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  background: rgba(255, 255, 255, 0.85);
+  padding: 2px 8px;
+  border-radius: 999px;
+  z-index: 2;
+}
+.photo-slot__pick {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  color: var(--ink);
+  font-family: var(--font-body);
+}
+.photo-slot__pick:hover {
+  background: rgba(39, 207, 220, 0.08);
+}
+.photo-slot__pick-label {
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+.photo-slot__pick-cta {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  border-bottom: 1px solid var(--brand-teal);
+  padding-bottom: 2px;
+}
+.photo-slot__thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.photo-slot__actions {
+  position: absolute;
+  inset: auto 0 0 0;
+  display: flex;
+  gap: 0;
+  background: rgba(11, 58, 74, 0.78);
+  backdrop-filter: blur(4px);
+}
+.photo-slot__action {
+  flex: 1;
+  padding: 10px 8px;
+  border: 0;
+  background: transparent;
+  color: var(--white);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+.photo-slot__action:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+.photo-slot__action--danger:hover {
+  background: rgba(255, 90, 90, 0.4);
+}
+.photo-slot__action[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.photo-slot__input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.photo-slot__error {
+  position: absolute;
+  inset: auto 8px 8px 8px;
+  margin: 0;
+  padding: 6px 10px;
+  background: rgba(220, 60, 60, 0.95);
+  color: white;
+  font-size: 11px;
+  border-radius: 6px;
+  z-index: 3;
+}
+
+.photo-customizer__preview {
+  margin-top: 24px;
+}
+.photo-customizer__preview-title {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin: 0 0 10px 0;
+}
+.board-preview {
+  display: flex;
+  justify-content: center;
+}
+.board-preview__board {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  aspect-ratio: 5 / 2;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.18), rgba(0,0,0,0.06)),
+    repeating-linear-gradient(90deg,
+      #c79b6a 0%, #c79b6a 6%,
+      #b88458 6.5%, #b88458 7%,
+      #c79b6a 7.5%, #c79b6a 14%);
+  border-radius: 24px;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.4) inset,
+    0 -2px 12px rgba(0,0,0,0.18) inset,
+    0 18px 40px -16px rgba(11, 58, 74, 0.35);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  padding: 14px;
+  overflow: hidden;
+}
+.board-preview__slot {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px -4px rgba(0,0,0,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+.board-preview__photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.board-preview__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: var(--ink-soft);
+  text-align: center;
+  padding: 6px;
+}
+.board-preview__empty-num {
+  font-family: var(--font-display);
+  font-size: 28px;
+  color: var(--sand);
+}
+.board-preview__empty-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.board-preview__lights {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 0 8px 4px 8px;
+  z-index: 0;
+}
+.board-preview__light {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff7c5 0%, rgba(255, 224, 130, 0.6) 60%, rgba(255, 224, 130, 0) 100%);
+  box-shadow: 0 0 8px rgba(255, 224, 130, 0.7);
+}
+
+.photo-customizer__upload-error {
+  margin: 12px 0 0 0;
+  padding: 10px 12px;
+  background: rgba(220, 60, 60, 0.12);
+  border: 1px solid rgba(220, 60, 60, 0.4);
+  color: rgb(140, 30, 30);
+  border-radius: 8px;
+  font-size: 13px;
+}
+.photo-customizer__actions {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.photo-customizer__approve {
+  appearance: none;
+  border: 0;
+  background: var(--brand-lime);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 14px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+.photo-customizer__approve:hover:not(:disabled) {
+  background: var(--brand-lime-2);
+}
+.photo-customizer__approve:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.photo-customizer__approve[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.photo-customizer__approved-note {
+  margin: 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--brand-teal-2);
+}
+
+/* ============================================
+   CROP DIALOG
+   ============================================ */
+.crop-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  overflow-y: auto;
+}
+.crop-dialog__backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 58, 74, 0.72);
+  backdrop-filter: blur(2px);
+  border: 0;
+  cursor: pointer;
+  /* Native button reset so the full-screen click target doesn't pick up a
+     theme background or focus ring. */
+  appearance: none;
+  padding: 0;
+}
+.crop-dialog__panel {
+  position: relative;
+  width: min(520px, 100%);
+  max-height: calc(100vh - 32px);
+  background: var(--cream);
+  border-radius: 16px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 30px 60px -20px rgba(0,0,0,0.5);
+  overflow-y: auto;
+}
+.crop-dialog__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 20px;
+  color: var(--ink);
+}
+.crop-dialog__stage {
+  position: relative;
+  /* Stage stays square at all sizes. Cap via max-width so the aspect-ratio
+     rule never falls back to a rectangle. */
+  width: 100%;
+  max-width: min(60vh, 480px);
+  aspect-ratio: 1 / 1;
+  margin: 0 auto;
+  background: var(--ink);
+  border-radius: 10px;
+  overflow: hidden;
+}
+/* react-easy-crop renders a darker overlay outside the crop area via a huge
+   box-shadow on the crop-area div. We don't want that visual treatment — the
+   whole stage IS the crop area. Force the crop area to fill the container
+   and drop the outer overlay. */
+.crop-dialog__stage .reactEasyCrop_CropArea {
+  width: 100% !important;
+  height: 100% !important;
+  box-shadow: none !important;
+  color: rgba(255, 255, 255, 0.0); /* react-easy-crop uses currentColor for the shadow */
+}
+.crop-dialog__stage .reactEasyCrop_CropAreaGrid::before,
+.crop-dialog__stage .reactEasyCrop_CropAreaGrid::after {
+  border-color: rgba(255, 255, 255, 0.55);
+}
+.crop-dialog__zoom {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink-soft);
+}
+.crop-dialog__zoom input[type=range] {
+  flex: 1;
+}
+.crop-dialog__actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+.crop-dialog__btn {
+  appearance: none;
+  border: 0;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  font-family: var(--font-body);
+}
+.crop-dialog__btn--ghost {
+  background: transparent;
+  color: var(--ink-soft);
+  border: 1px solid var(--rule);
+}
+.crop-dialog__btn--primary {
+  background: var(--brand-teal);
+  color: var(--white);
+}
+.crop-dialog__btn--primary[disabled] {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ============================================
+   CART LINE PHOTOS — render on cart line items
+   ============================================ */
+.cart-line-photos {
+  margin: 8px 0;
+}
+.cart-line-photos__thumbs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.cart-line-photos__thumb {
+  width: 36px;
+  height: 36px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid var(--rule);
+}
+.cart-line-photos__edit {
+  font-size: 12px;
+  color: var(--brand-teal-2);
+  text-decoration: underline;
+}
+

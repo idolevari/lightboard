@@ -3,6 +3,7 @@ import {CartForm} from '@shopify/hydrogen';
 import {CartMain} from '~/components/CartMain';
 import {useI18n} from '~/lib/useI18n';
 import {getDictionary} from '~/lib/i18n';
+import {isSameOriginPath} from '~/lib/redirect';
 
 /**
  * @type {Route.MetaFunction}
@@ -84,8 +85,8 @@ export async function action({request, context}) {
   const headers = cartId ? cart.setCartId(result.cart.id) : new Headers();
   const {cart: cartResult, errors, warnings} = result;
 
-  const redirectTo = formData.get('redirectTo') ?? null;
-  if (typeof redirectTo === 'string') {
+  const redirectTo = formData.get('redirectTo');
+  if (isSameOriginPath(redirectTo, request)) {
     status = 303;
     headers.set('Location', redirectTo);
   }

@@ -1,5 +1,6 @@
 import {redirect} from 'react-router';
 import {detectLocaleFromRequest, localizedPath} from '~/lib/i18n';
+import {isSameOriginPath} from '~/lib/redirect';
 
 /**
  * Automatically applies a discount found on the url
@@ -25,8 +26,7 @@ export async function loader({request, context, params}) {
     searchParams.get('return_to') ||
     localizedPath('/', locale);
 
-  if (redirectParam.includes('//')) {
-    // Avoid redirecting to external URLs to prevent phishing attacks
+  if (!isSameOriginPath(redirectParam, request)) {
     redirectParam = localizedPath('/', locale);
   }
 

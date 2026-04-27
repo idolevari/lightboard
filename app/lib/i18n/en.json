@@ -135,6 +135,37 @@
     "addToCart": "Add to cart",
     "soldOut": "Sold out"
   },
+  "photoCustomizer": {
+    "heading": "Make it yours",
+    "subheading": "Upload three photos, crop each to a square, and see your Lightboard come together.",
+    "slotLabel": "Photo {n}",
+    "pick": "Choose photo",
+    "editCrop": "Edit crop",
+    "remove": "Remove",
+    "previewTitle": "Preview",
+    "placeholder": "Your photo here",
+    "approve": "Approve photos",
+    "saveChanges": "Save changes",
+    "saveAndReturn": "Save & return to cart",
+    "approvedNote": "Photos locked in. You can add to cart.",
+    "savedNote": "Changes saved.",
+    "uploading": "Uploading…",
+    "cropSave": "Save crop",
+    "cropCancel": "Cancel",
+    "zoom": "Zoom",
+    "editFromCart": "Edit photos",
+    "errors": {
+      "noFile": "Pick a photo",
+      "heic": "iPhone HEIC isn't supported in browsers. Save the photo as JPG and try again.",
+      "badType": "Unsupported file type. Use JPG, PNG, or WebP.",
+      "tooLarge": "File too large. 15MB maximum.",
+      "tooSmall": "Image too small for print. Minimum 1200×1200 pixels.",
+      "loadFailed": "Couldn't load that file. Try a different photo.",
+      "renderFailed": "Couldn't generate the preview.",
+      "cannotEdit": "Can't edit this photo — please pick a new one.",
+      "uploadFailed": "Upload failed. Check your connection and try again."
+    }
+  },
   "cart": {
     "metaTitle": "Lightboard | Cart",
     "pageTitle": "Cart",
