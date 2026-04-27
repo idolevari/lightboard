@@ -1,6 +1,8 @@
 import {Await, Link} from 'react-router';
 import {Suspense, useId} from 'react';
 import {Aside} from '~/components/Aside';
+import {AccessibilityMenu} from '~/components/AccessibilityMenu';
+import {WhatsAppButton} from '~/components/WhatsAppButton';
 import {Footer} from '~/components/Footer';
 import {Header, HeaderMenu} from '~/components/Header';
 import {CartMain} from '~/components/CartMain';
@@ -23,6 +25,7 @@ export function PageLayout({
 }) {
   return (
     <Aside.Provider>
+      <SkipLink />
       <CartAside cart={cart} />
       <SearchAside />
       <MobileMenuAside header={header} publicStoreDomain={publicStoreDomain} />
@@ -34,9 +37,20 @@ export function PageLayout({
           publicStoreDomain={publicStoreDomain}
         />
       )}
-      <main>{children}</main>
+      <main id="main" tabIndex={-1}>{children}</main>
       <Footer />
+      <AccessibilityMenu />
+      <WhatsAppButton />
     </Aside.Provider>
+  );
+}
+
+function SkipLink() {
+  const {dict} = useI18n();
+  return (
+    <a className="skip-link" href="#main">
+      {dict.a11y?.skipToContent ?? 'Skip to main content'}
+    </a>
   );
 }
 

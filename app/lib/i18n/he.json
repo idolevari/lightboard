@@ -237,7 +237,14 @@
   "policies": {
     "indexTitle": "מדיניות",
     "indexMeta": "Lightboard | מדיניות",
-    "back": "← חזרה למדיניות"
+    "back": "← חזרה למדיניות",
+    "titles": {
+      "privacy-policy": "מדיניות פרטיות",
+      "shipping-policy": "מדיניות משלוחים",
+      "terms-of-service": "תקנון האתר",
+      "refund-policy": "מדיניות ביטולים והחזרות",
+      "subscription-policy": "מדיניות מנויים"
+    }
   },
   "account": {
     "metaSuffix": "חשבון",
@@ -305,8 +312,46 @@
     "applied": "הקופון הוחל!",
     "applyError": "לא הצלחנו להחיל את הקוד."
   },
+  "business": {
+    "legalName": "לייטבורד",
+    "tradingName": "Lightboard",
+    "idLabel": "ע.מ.",
+    "idNumber": "207160151",
+    "address": "גני עם",
+    "phone": "+972-55-720-9448",
+    "phoneDisplay": "055-7209448",
+    "email": "office@lightboard.co.il",
+    "accessibilityCoordinator": {
+      "name": "",
+      "email": "office@lightboard.co.il",
+      "phone": "055-7209448"
+    }
+  },
+  "a11y": {
+    "open": "פתיחת תפריט נגישות",
+    "close": "סגירת תפריט נגישות",
+    "title": "נגישות",
+    "textSize": "גודל טקסט",
+    "textNormal": "רגיל",
+    "textLarger": "גדול",
+    "textMuchLarger": "גדול מאוד",
+    "highContrast": "ניגודיות גבוהה",
+    "highlightLinks": "הדגשת קישורים",
+    "readableFont": "פונט קריא",
+    "reset": "איפוס",
+    "statementLink": "הצהרת נגישות",
+    "skipToContent": "דילוג לתוכן הראשי"
+  },
+  "whatsapp": {
+    "label": "צרו קשר בוואטסאפ",
+    "prefill": "היי לייטבורד! יש לי שאלה לגבי המוצרים שלכם."
+  },
   "footer": {
     "brandDesc": "נשמה קליפורנית, מלאכת ים תיכון. עיצובי קיר בהשראת גלישה, עבודת יד מתל אביב — נשלחים עם טיפה של מלח וחיוך.",
+    "metaIdLabel": "ע.מ.",
+    "metaAddressLabel": "כתובת",
+    "metaPhoneLabel": "טלפון",
+    "metaEmailLabel": "דוא״ל",
     "shopHeading": "חנות",
     "shop": [
       {"label": "מתלי תמונות", "to": "/collections/photo-hangers"},
@@ -332,9 +377,9 @@
     ],
     "rights": "LIGHTBOARD · כל הזכויות שמורות",
     "legal": [
-      {"label": "פרטיות", "to": "/policies/privacy-policy"},
+      {"label": "פרטיות ועוגיות", "to": "/policies/privacy-policy"},
       {"label": "תקנון", "to": "/policies/terms-of-service"},
-      {"label": "עוגיות", "to": "/policies/privacy-policy"}
+      {"label": "נגישות", "to": "/pages/accessibility"}
     ]
   }
 }

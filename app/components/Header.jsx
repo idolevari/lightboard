@@ -9,15 +9,23 @@ import {
   swapLocaleInPath,
 } from '~/lib/i18n';
 
+const HOME_PATH_RE = /^\/([a-z]{2}\/?)?$/;
+
 export function Header({isLoggedIn, cart}) {
   const {dict, to} = useI18n();
-  const [scrolled, setScrolled] = useState(false);
+  const location = useLocation();
+  const isHome = HOME_PATH_RE.test(location.pathname);
+  const [scrolled, setScrolled] = useState(!isHome);
   useEffect(() => {
+    if (!isHome) {
+      setScrolled(true);
+      return;
+    }
     const onScroll = () => setScrolled(window.scrollY > 40);
     onScroll();
     window.addEventListener('scroll', onScroll, {passive: true});
     return () => window.removeEventListener('scroll', onScroll);
-  }, []);
+  }, [isHome]);
 
   const menu = [
     {to: to('/'), label: dict.nav.home, end: true},

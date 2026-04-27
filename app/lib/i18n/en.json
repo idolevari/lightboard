@@ -237,7 +237,14 @@
   "policies": {
     "indexTitle": "Policies",
     "indexMeta": "Lightboard | Policies",
-    "back": "← Back to policies"
+    "back": "← Back to policies",
+    "titles": {
+      "privacy-policy": "Privacy Policy",
+      "shipping-policy": "Shipping Policy",
+      "terms-of-service": "Terms of Service",
+      "refund-policy": "Refund & Cancellation Policy",
+      "subscription-policy": "Subscription Policy"
+    }
   },
   "account": {
     "metaSuffix": "Account",
@@ -305,8 +312,46 @@
     "applied": "Discount applied!",
     "applyError": "We couldn't apply this code."
   },
+  "business": {
+    "legalName": "Lightboard",
+    "tradingName": "Lightboard",
+    "idLabel": "Business ID",
+    "idNumber": "207160151",
+    "address": "Ganei Am, Israel",
+    "phone": "+972-55-720-9448",
+    "phoneDisplay": "+972 55-720-9448",
+    "email": "office@lightboard.co.il",
+    "accessibilityCoordinator": {
+      "name": "",
+      "email": "office@lightboard.co.il",
+      "phone": "+972 55-720-9448"
+    }
+  },
+  "a11y": {
+    "open": "Open accessibility menu",
+    "close": "Close accessibility menu",
+    "title": "Accessibility",
+    "textSize": "Text size",
+    "textNormal": "Default",
+    "textLarger": "Larger",
+    "textMuchLarger": "Much larger",
+    "highContrast": "High contrast",
+    "highlightLinks": "Highlight links",
+    "readableFont": "Readable font",
+    "reset": "Reset",
+    "statementLink": "Accessibility statement",
+    "skipToContent": "Skip to main content"
+  },
+  "whatsapp": {
+    "label": "Chat with us on WhatsApp",
+    "prefill": "Hi Lightboard! I have a question about your products."
+  },
   "footer": {
     "brandDesc": "California soul, Mediterranean craft. Handmade wall pieces for the surf, snow, and skate obsessed. Shipped from Tel Aviv with aloha.",
+    "metaIdLabel": "Business ID",
+    "metaAddressLabel": "Address",
+    "metaPhoneLabel": "Phone",
+    "metaEmailLabel": "Email",
     "shopHeading": "Shop",
     "shop": [
       {"label": "Photo hangers", "to": "/collections/photo-hangers"},
@@ -332,9 +377,9 @@
     ],
     "rights": "LIGHTBOARD · ALL RIGHTS RESERVED",
     "legal": [
-      {"label": "Privacy", "to": "/policies/privacy-policy"},
+      {"label": "Privacy & Cookies", "to": "/policies/privacy-policy"},
       {"label": "Terms", "to": "/policies/terms-of-service"},
-      {"label": "Cookies", "to": "/policies/privacy-policy"}
+      {"label": "Accessibility", "to": "/pages/accessibility"}
     ]
   }
 }

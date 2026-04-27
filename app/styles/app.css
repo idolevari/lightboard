@@ -1430,6 +1430,29 @@ section { position: relative; }
 .footer-bottom a { color: rgba(251,248,242,0.7); }
 .footer-bottom a:hover { color: var(--orange); }
 
+.footer-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 24px;
+  font-style: normal;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: rgba(251,248,242,0.7);
+  padding: 28px 0 0;
+  margin-bottom: 4px;
+}
+.footer-meta .footer-meta-name {
+  font-family: var(--sans);
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  color: rgba(251,248,242,0.92);
+  font-weight: 500;
+  text-transform: none;
+}
+.footer-meta a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.footer-meta a:hover { color: var(--orange); }
+
 /* ============================================
    HYDROGEN CHROME — preserve cart aside + overlay mechanics
    ============================================ */
@@ -2317,5 +2340,496 @@ main:not(.coming-soon-content) > :not(.hero):first-child {
   font-size: 12px;
   color: var(--brand-teal-2);
   text-decoration: underline;
+}
+
+/* ============================================
+   ACCESSIBILITY (תקנות שוויון זכויות 2013 + תקן 5568)
+   - Skip link
+   - Global :focus-visible outline
+   - Self-hosted accessibility menu (button + panel)
+   - Body-class hooks for user a11y preferences:
+     larger text, much larger text, high contrast,
+     highlight links, readable font.
+   ============================================ */
+
+.skip-link {
+  position: fixed;
+  top: 8px;
+  inset-inline-start: 8px;
+  background: var(--ink);
+  color: var(--white);
+  padding: 12px 18px;
+  border-radius: 4px;
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: 14px;
+  z-index: 10000;
+  text-decoration: none;
+  transform: translateY(-200%);
+  transition: transform 0.15s ease;
+  pointer-events: none;
+}
+.skip-link:focus,
+.skip-link:focus-visible {
+  transform: translateY(0);
+  pointer-events: auto;
+  outline: 2px solid var(--orange);
+  outline-offset: 2px;
+}
+
+main:focus,
+main:focus-visible {
+  outline: none;
+}
+
+/* Focus rings: dark ink hits ~12:1 on cream and ~3.4:1 on white — passes
+   WCAG AA non-text contrast (3:1) on every brand-light surface. The
+   :focus-visible selector keeps the outline off mouse clicks. The dark-
+   surface overrides below switch to white for the inverted backgrounds
+   (footer, modals, hero CTA, accessibility floating button). */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible,
+[role="button"]:focus-visible,
+[role="link"]:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+.footer :focus-visible,
+.overlay :focus-visible,
+.hero-cta:focus-visible,
+.a11y-toggle:focus-visible,
+.btn-dark:focus-visible {
+  outline-color: var(--white);
+}
+
+/* Self-hosted accessibility menu
+   Pinned to bottom-end (RTL: left, LTR: right) so the WhatsApp FAB owns the
+   bottom-start corner everyone instinctively reaches for. */
+.a11y-toggle {
+  position: fixed;
+  bottom: 16px;
+  inset-inline-end: 16px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 0;
+  background: var(--ink);
+  color: var(--white);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.22);
+  z-index: 9000;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+.a11y-toggle:hover {
+  background: var(--ink-2);
+  transform: translateY(-1px);
+}
+.a11y-toggle:focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: 3px;
+}
+
+.a11y-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 58, 74, 0.32);
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  z-index: 9100;
+}
+
+.a11y-panel {
+  position: fixed;
+  bottom: 76px;
+  inset-inline-end: 16px;
+  width: min(340px, calc(100vw - 32px));
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+  background: var(--white);
+  color: var(--ink);
+  border: 1px solid var(--rule-strong);
+  border-radius: 12px;
+  padding: 20px 22px 18px;
+  box-shadow: 0 18px 40px rgba(11, 58, 74, 0.22);
+  z-index: 9200;
+  font-family: var(--sans);
+}
+.a11y-panel h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  font-family: var(--sans);
+  color: var(--ink);
+}
+.a11y-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.a11y-close {
+  background: transparent;
+  border: 0;
+  color: var(--ink-soft);
+  font-size: 22px;
+  line-height: 1;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.a11y-close:hover { background: var(--cream-2); color: var(--ink); }
+
+.a11y-group {
+  border: 0;
+  padding: 0;
+  margin: 0 0 14px;
+}
+.a11y-group legend {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ink-soft);
+  margin-bottom: 8px;
+  padding: 0;
+}
+.a11y-radio-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.a11y-radio-row label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--rule);
+  font-size: 13px;
+  cursor: pointer;
+  background: var(--cream);
+}
+.a11y-radio-row label:has(input:checked) {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--white);
+}
+.a11y-radio-row input { accent-color: var(--orange); }
+
+.a11y-toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 0;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+.a11y-toggles label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.a11y-toggles input { width: 18px; height: 18px; accent-color: var(--orange); }
+
+.a11y-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 14px;
+}
+.a11y-reset {
+  background: transparent;
+  border: 1px solid var(--rule-strong);
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 13px;
+  color: var(--ink);
+  cursor: pointer;
+  font-family: var(--sans);
+}
+.a11y-reset:hover { background: var(--cream-2); }
+.a11y-statement-link {
+  font-size: 13px;
+  color: var(--ink-soft);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.a11y-statement-link:hover { color: var(--ink); }
+
+/* User a11y preferences — body-class hooks.
+   `zoom` scales every box including px-only chrome, which is what we
+   want here (we don't want only rem-driven body copy to grow). */
+body.a11y-larger-text { zoom: 1.15; }
+body.a11y-much-larger-text { zoom: 1.32; }
+/* Floating WhatsApp contact button — bottom-start (RTL: right, LTR: left).
+   The SVG icon already provides the bubble shape and brand color, so the
+   wrapper is shape-free and only carries the drop shadow + hover lift. */
+.wa-fab {
+  position: fixed;
+  bottom: 16px;
+  inset-inline-start: 16px;
+  display: inline-flex;
+  z-index: 9000;
+  text-decoration: none;
+  filter: drop-shadow(0 6px 14px rgba(0,0,0,0.25));
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+.wa-fab:hover {
+  transform: translateY(-2px);
+  filter: drop-shadow(0 10px 18px rgba(0,0,0,0.3));
+}
+.wa-fab:focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: 4px;
+  border-radius: 50%;
+}
+.wa-fab img { display: block; width: 56px; height: 56px; }
+.a11y-toggle, .a11y-panel, .a11y-backdrop, .wa-fab { zoom: 1; }
+
+body.a11y-highlight-links a {
+  text-decoration: underline !important;
+  text-underline-offset: 3px !important;
+  outline: 1px dashed currentColor;
+  outline-offset: 2px;
+}
+
+body.a11y-readable-font,
+body.a11y-readable-font * {
+  font-family: "Heebo", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif !important;
+  letter-spacing: 0.01em !important;
+}
+
+/* High contrast — overrides palette tokens so the rest of the styles
+   automatically pick up the high-contrast colors. The accessibility
+   panel itself keeps its own legible palette via explicit values. */
+body.a11y-high-contrast {
+  --cream: #000;
+  --cream-2: #000;
+  --cream-3: #1a1a1a;
+  --white: #fff;
+  --ink: #fff;
+  --ink-2: #fff;
+  --ink-soft: #ffeb3b;
+  --sand: #ffeb3b;
+  --orange: #ffeb3b;
+  --orange-2: #ffd400;
+  --teal: #ffeb3b;
+  --brand-teal: #ffeb3b;
+  --brand-teal-2: #ffd400;
+  --brand-lime: #ffeb3b;
+  --brand-peach: #ffeb3b;
+  --rule: #fff;
+  --rule-strong: #fff;
+  --color-sand: #000;
+  --color-cream: #000;
+  --color-wood: #fff;
+  --color-terracotta: #ffeb3b;
+  --color-tan: #ffeb3b;
+  --color-border: #fff;
+  background: #000 !important;
+  color: #fff !important;
+}
+body.a11y-high-contrast,
+body.a11y-high-contrast * { background-image: none !important; }
+body.a11y-high-contrast .footer { background: #000 !important; }
+body.a11y-high-contrast a { color: #ffeb3b !important; text-decoration: underline !important; }
+body.a11y-high-contrast img,
+body.a11y-high-contrast video,
+body.a11y-high-contrast svg { filter: contrast(1.15); }
+body.a11y-high-contrast .a11y-panel {
+  background: #000 !important;
+  color: #fff !important;
+  border-color: #fff !important;
+}
+body.a11y-high-contrast .a11y-panel * { color: #fff !important; }
+body.a11y-high-contrast .a11y-panel a { color: #ffeb3b !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .a11y-toggle, .skip-link { transition: none; }
+}
+
+/* ============================================
+   POLICY + PAGE — editorial long-form reading
+   Used by /policies/* and /pages/* (Shopify-managed bodies).
+   ============================================ */
+.policy,
+.page {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: clamp(120px, 14vw, 168px) clamp(20px, 4vw, 32px) clamp(60px, 8vw, 96px);
+  font-family: var(--sans);
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1.7;
+}
+.policy-back {
+  margin-bottom: 24px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.policy-back a {
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+.policy-back a:hover { color: var(--ink); }
+
+.policy-body h1,
+.page-body h1 {
+  font-family: var(--serif);
+  font-size: clamp(36px, 5vw, 56px);
+  font-weight: 300;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin: 0 0 12px;
+  color: var(--ink);
+}
+.policy-body h2,
+.page-body h2 {
+  font-family: var(--serif);
+  font-size: clamp(22px, 2.6vw, 28px);
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  margin: 56px 0 14px;
+  color: var(--ink);
+}
+.policy-body h3,
+.page-body h3 {
+  font-family: var(--sans);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin: 32px 0 8px;
+  color: var(--ink);
+}
+/* First paragraph after H1 (the "last updated" line) reads as a subtle eyebrow. */
+.policy-body h1 + p,
+.page-body h1 + p {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin: 0 0 40px;
+}
+.policy-body p,
+.page-body p { margin: 0 0 16px; }
+.policy-body strong,
+.page-body strong { color: var(--ink); font-weight: 600; }
+.policy-body a,
+.page-body a {
+  color: var(--brand-teal-2);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.policy-body a:hover,
+.page-body a:hover { color: var(--ink); }
+.policy-body ul,
+.page-body ul {
+  list-style: disc;
+  padding-inline-start: 24px;
+  margin: 0 0 20px;
+}
+.policy-body ol,
+.page-body ol {
+  list-style: decimal;
+  padding-inline-start: 24px;
+  margin: 0 0 20px;
+}
+.policy-body li,
+.page-body li { margin: 0 0 8px; }
+.policy-body table,
+.page-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 0 24px;
+  font-size: 14px;
+}
+.policy-body th,
+.policy-body td,
+.page-body th,
+.page-body td {
+  text-align: start;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: top;
+}
+.policy-body th,
+.page-body th {
+  background: var(--cream-2);
+  font-family: var(--mono);
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.policy-body hr,
+.page-body hr {
+  border: 0;
+  border-top: 1px solid var(--rule);
+  margin: 48px 0;
+}
+.policy-body code,
+.page-body code {
+  font-family: var(--mono);
+  font-size: 0.92em;
+  background: var(--cream-2);
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+/* Policies index — list of policy links */
+.policies {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: clamp(120px, 14vw, 168px) clamp(20px, 4vw, 32px) clamp(60px, 8vw, 96px);
+  font-family: var(--sans);
+}
+.policies h1 {
+  font-family: var(--serif);
+  font-size: clamp(36px, 5vw, 56px);
+  font-weight: 300;
+  margin: 0 0 32px;
+  color: var(--ink);
+}
+.policies-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border-top: 1px solid var(--rule);
+}
+.policies-list li {
+  border-bottom: 1px solid var(--rule);
+}
+.policies-list a {
+  display: block;
+  padding: 18px 4px;
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 18px;
+  font-family: var(--serif);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  transition: color 0.15s, padding-inline-start 0.15s;
+}
+.policies-list a:hover {
+  color: var(--brand-teal-2);
+  padding-inline-start: 12px;
 }
 

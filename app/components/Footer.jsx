@@ -4,6 +4,9 @@ import {useI18n} from '~/lib/useI18n';
 export function Footer() {
   const {dict, to} = useI18n();
   const f = dict.footer;
+  const b = dict.business;
+  const businessName = b?.legalName || b?.tradingName;
+  const hasMeta = b?.address || b?.phoneDisplay || b?.idNumber || businessName;
 
   return (
     <footer className="footer">
@@ -51,9 +54,35 @@ export function Footer() {
           <FooterCol heading={f.companyHeading} items={f.company} to={to} />
         </div>
 
+        {hasMeta && (
+          <address className="footer-meta">
+            {businessName && <span className="footer-meta-name">{businessName}</span>}
+            {b.idNumber && (
+              <span>
+                {f.metaIdLabel || b.idLabel}: {b.idNumber}
+              </span>
+            )}
+            {b.address && (
+              <span>
+                {f.metaAddressLabel}: {b.address}
+              </span>
+            )}
+            {b.phoneDisplay && (
+              <span>
+                {f.metaPhoneLabel}: <a href={`tel:${b.phone || b.phoneDisplay}`}>{b.phoneDisplay}</a>
+              </span>
+            )}
+            {b.email && (
+              <span>
+                {f.metaEmailLabel}: <a href={`mailto:${b.email}`}>{b.email}</a>
+              </span>
+            )}
+          </address>
+        )}
+
         <div className="footer-bottom">
           <span>© {new Date().getFullYear()} {f.rights}</span>
-          <span style={{display: 'flex', gap: 20}}>
+          <span style={{display: 'flex', gap: 20, flexWrap: 'wrap'}}>
             {f.legal.map((l) => (
               <NavLink key={l.label} to={to(l.to)} prefetch="intent">
                 {l.label}
