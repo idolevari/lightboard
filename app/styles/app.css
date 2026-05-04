@@ -3049,20 +3049,25 @@ body.a11y-high-contrast .a11y-panel a { color: #ffeb3b !important; }
 .cart .cart-line-photos__edit:hover { color: var(--ink); }
 
 /* ============================================
-   CART DRAWER — fix the summary panel overlap
-   The legacy .cart-summary-aside used position:absolute;
-   bottom:0 which overlapped the line items whenever the
-   summary was taller than its budget (always, with a
-   discount applied). Switching the drawer body to a flex
-   column keeps the summary pinned to the bottom and lets
-   line items scroll independently above it, without any
-   max-height arithmetic.
+   CART DRAWER — flex layout so the summary pins
+   to the bottom of the drawer and the line items
+   scroll independently above it. The aside itself
+   becomes the flex container so header + main
+   split the drawer height (otherwise main would
+   take 100% and overflow the viewport by the
+   header's height, cropping the summary).
    ============================================ */
-.overlay aside > main {
+.overlay aside {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  overflow: hidden;
+}
+.overlay aside > header { flex: 0 0 auto; }
+.overlay aside > main {
+  flex: 1 1 auto;
   min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 .overlay aside .cart-main {
   flex: 1 1 auto;
