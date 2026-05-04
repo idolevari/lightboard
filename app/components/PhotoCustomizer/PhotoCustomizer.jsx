@@ -9,6 +9,7 @@ import {
   validatePhotoDimensions,
   validatePhotoFile,
 } from '~/lib/photo-canvas';
+import {pickThreeFromGallery} from '~/lib/surprise-gallery';
 import {PhotoSlot} from './PhotoSlot';
 import {CropDialog} from './CropDialog';
 import {PreviewBoard} from './PreviewBoard';
@@ -168,6 +169,34 @@ export function PhotoCustomizer({
       if (onUnapprove) onUnapprove();
     }
   }
+
+  /**
+   * "Surprise me" — populate all three slots with random, brand-curated
+   * photos from the gallery on Shopify Files. The slots are marked
+   * non-dirty so the existing approve flow skips the upload step and
+   * onApprove sends the gallery URLs straight through.
+   */
+  const handleSurprise = useCallback(() => {
+    markUnapproved();
+    setUploadError(null);
+    const currentlyShown = slots
+      .map((s) => s.uploadedCroppedUrl)
+      .filter(Boolean);
+    const picks = pickThreeFromGallery(currentlyShown);
+    setSlots((current) =>
+      current.map((slot, i) => {
+        if (slot.imageObjectUrl) URL.revokeObjectURL(slot.imageObjectUrl);
+        if (slot.thumbnailObjectUrl) URL.revokeObjectURL(slot.thumbnailObjectUrl);
+        return {
+          ...emptySlot(),
+          uploadedCroppedUrl: picks[i],
+          uploadedOriginalUrl: picks[i],
+          dirty: false,
+        };
+      }),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slots]);
 
   const handleFilePicked = useCallback(async (index, file) => {
     markUnapproved();
@@ -471,6 +500,22 @@ export function PhotoCustomizer({
             onRemove={() => handleRemove(i)}
           />
         ))}
+      </div>
+
+      <div className="photo-customizer__surprise" role="group" aria-label={t.surprise?.button ?? 'Pick photos from our gallery'}>
+        <p className="photo-customizer__surprise-helper">
+          {t.surprise?.helper ?? "Don't have photos handy?"}
+        </p>
+        <button
+          type="button"
+          className="photo-customizer__surprise-btn"
+          onClick={handleSurprise}
+          disabled={uploading}
+        >
+          {allFilled && !anyDirty
+            ? (t.surprise?.swap ?? 'Surprise me again')
+            : (t.surprise?.button ?? 'Surprise me from the gallery')}
+        </button>
       </div>
 
       <div className="photo-customizer__preview">

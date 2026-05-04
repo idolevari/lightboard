@@ -2207,6 +2207,48 @@ main:not(.coming-soon-content) > :not(.hero):first-child {
   color: var(--brand-teal-2);
 }
 
+/* "Surprise me" — populate the three slots with curated brand-aligned
+   photos so customers without photos handy can still buy a Lightboard. */
+.photo-customizer__surprise {
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px dashed var(--rule-strong);
+  border-radius: 12px;
+  background: var(--cream-2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+.photo-customizer__surprise-helper {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+.photo-customizer__surprise-btn {
+  appearance: none;
+  border: 1px solid var(--ink);
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 10px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+.photo-customizer__surprise-btn:hover:not(:disabled) {
+  background: var(--ink);
+  color: var(--white);
+}
+.photo-customizer__surprise-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* ============================================
    CROP DIALOG
    ============================================ */

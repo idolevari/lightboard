@@ -154,6 +154,11 @@
     "cropCancel": "Cancel",
     "zoom": "Zoom",
     "editFromCart": "Edit photos",
+    "surprise": {
+      "helper": "Don't have photos handy?",
+      "button": "Pick three from our gallery",
+      "swap": "Surprise me again"
+    },
     "errors": {
       "noFile": "Pick a photo",
       "heic": "iPhone HEIC isn't supported in browsers. Save the photo as JPG and try again.",
