@@ -196,7 +196,13 @@
     "quantity": "Quantity",
     "decreaseQuantity": "Decrease quantity",
     "increaseQuantity": "Increase quantity",
-    "loading": "Loading cart…"
+    "loading": "Loading cart…",
+    "terms": {
+      "prefix": "I have read and agree to the ",
+      "linkLabel": "terms of service",
+      "suffix": "",
+      "requiredHint": "Please agree to the terms before continuing to checkout"
+    }
   },
   "search": {
     "metaTitle": "Lightboard | Search",

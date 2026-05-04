@@ -14,6 +14,8 @@ export function CartSummary({cart, layout}) {
   const discountCodeInputId = useId();
   const giftCardHeadingId = useId();
   const giftCardInputId = useId();
+  const termsCheckboxId = useId();
+  const [termsAgreed, setTermsAgreed] = useState(false);
   const {dict} = useI18n();
 
   return (
@@ -39,14 +41,77 @@ export function CartSummary({cart, layout}) {
         giftCardHeadingId={giftCardHeadingId}
         giftCardInputId={giftCardInputId}
       />
-      <CartCheckoutActions checkoutUrl={cart?.checkoutUrl} />
+      {cart?.checkoutUrl && (
+        <TermsAgreement
+          checked={termsAgreed}
+          onChange={setTermsAgreed}
+          agreementId={termsCheckboxId}
+        />
+      )}
+      <CartCheckoutActions
+        checkoutUrl={cart?.checkoutUrl}
+        disabled={!termsAgreed}
+      />
     </div>
   );
 }
 
-function CartCheckoutActions({checkoutUrl}) {
+/**
+ * Grow Payments and Israeli ecommerce best practice both require an explicit
+ * agreement to the תקנון before the customer reaches the payment page. Standard
+ * Shopify (non-Plus) doesn't expose a built-in checkout T&C checkbox, so we gate
+ * the storefront-side checkout link instead — equivalent intent, customer cannot
+ * reach the payment page without an explicit acceptance.
+ */
+function TermsAgreement({checked, onChange, agreementId}) {
+  const {dict, to} = useI18n();
+  const t = dict.cart.terms ?? {};
+  return (
+    <div className="cart-terms">
+      <label htmlFor={agreementId} className="cart-terms-label">
+        <input
+          id={agreementId}
+          type="checkbox"
+          checked={checked}
+          onChange={(e) => onChange(e.target.checked)}
+          required
+        />
+        <span>
+          {t.prefix ?? 'I agree to the '}
+          <a
+            href={to('/policies/terms-of-service')}
+            target="_blank"
+            rel="noreferrer"
+          >
+            {t.linkLabel ?? 'terms of service'}
+          </a>
+          {t.suffix ?? ''}
+        </span>
+      </label>
+    </div>
+  );
+}
+
+function CartCheckoutActions({checkoutUrl, disabled}) {
   const {dict} = useI18n();
   if (!checkoutUrl) return null;
+  const t = dict.cart.terms ?? {};
+  if (disabled) {
+    return (
+      <div>
+        <button
+          type="button"
+          className="cart-checkout-disabled"
+          disabled
+          aria-disabled="true"
+          title={t.requiredHint ?? 'Please agree to the terms to continue'}
+        >
+          <p>{dict.cart.checkout}</p>
+        </button>
+        <br />
+      </div>
+    );
+  }
   return (
     <div>
       <a href={checkoutUrl} target="_self">

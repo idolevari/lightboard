@@ -3086,3 +3086,51 @@ body.a11y-high-contrast .a11y-panel a { color: #ffeb3b !important; }
   margin-top: auto;
 }
 
+/* ============================================
+   CART — T&C agreement checkbox (Grow / Israeli
+   consumer-law requirement). Disables the
+   checkout CTA until the customer ticks it.
+   ============================================ */
+.cart-terms {
+  margin: 12px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--rule);
+}
+.cart-terms-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink);
+  cursor: pointer;
+}
+.cart-terms-label input[type="checkbox"] {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  accent-color: var(--ink);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+.cart-terms-label a {
+  color: var(--brand-teal-2);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.cart-terms-label a:hover { color: var(--ink); }
+.cart-checkout-disabled {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.cart-checkout-disabled p {
+  margin: 0;
+}
+
