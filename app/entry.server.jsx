@@ -17,11 +17,36 @@ export default async function handleRequest(
   reactRouterContext,
   context,
 ) {
+  const isDev = context.env.NODE_ENV !== 'production';
   const {nonce, header, NonceProvider} = createContentSecurityPolicy({
     shop: {
       checkoutDomain: context.env.PUBLIC_CHECKOUT_DOMAIN,
       storeDomain: context.env.PUBLIC_STORE_DOMAIN,
     },
+    // Photo customizer creates blob: URLs for in-browser cropping/preview, and
+    // pulls Google Fonts stylesheets configured in root.jsx. Both need explicit
+    // CSP allowances since Hydrogen's defaults don't include them.
+    imgSrc: [
+      "'self'",
+      'blob:',
+      'data:',
+      'https://cdn.shopify.com',
+      'https://shopify.com',
+      ...(isDev ? ['http://localhost:*'] : []),
+    ],
+    styleSrc: [
+      "'self'",
+      "'unsafe-inline'",
+      'https://cdn.shopify.com',
+      'https://fonts.googleapis.com',
+      ...(isDev ? ['http://localhost:*'] : []),
+    ],
+    fontSrc: [
+      "'self'",
+      'data:',
+      'https://fonts.gstatic.com',
+      'https://cdn.shopify.com',
+    ],
   });
 
   const body = await renderToReadableStream(

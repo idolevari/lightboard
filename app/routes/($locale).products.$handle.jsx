@@ -13,6 +13,8 @@ import {ProductForm} from '~/components/ProductForm';
 import {redirectIfHandleIsLocalized} from '~/lib/redirect';
 import {useI18n} from '~/lib/useI18n';
 
+const REQUIRES_PHOTOS_TAG = 'requires-photos';
+
 /**
  * @type {Route.MetaFunction}
  */
@@ -46,17 +48,20 @@ export async function loader(args) {
  */
 async function loadCriticalData({context, params, request}) {
   const {handle} = params;
-  const {storefront} = context;
+  const {storefront, cart} = context;
 
   if (!handle) {
     throw new Error('Expected product handle to be defined');
   }
 
-  const [{product}] = await Promise.all([
+  const url = new URL(request.url);
+  const editLineId = url.searchParams.get('editLineId');
+
+  const [{product}, cartData] = await Promise.all([
     storefront.query(PRODUCT_QUERY, {
       variables: {handle, selectedOptions: getSelectedProductOptions(request)},
     }),
-    // Add other queries here, so that they are loaded in parallel
+    editLineId ? cart.get() : Promise.resolve(null),
   ]);
 
   if (!product?.id) {
@@ -66,8 +71,25 @@ async function loadCriticalData({context, params, request}) {
   // The API handle might be localized, so redirect to the localized handle
   redirectIfHandleIsLocalized(request, {handle, data: product});
 
+  const requiresPhotos =
+    Array.isArray(product.tags) && product.tags.includes(REQUIRES_PHOTOS_TAG);
+
+  let initialPhotoState = null;
+  let resolvedEditLineId = null;
+  if (editLineId && cartData?.lines?.nodes) {
+    const line = cartData.lines.nodes.find((n) => n.id === editLineId);
+    if (line) {
+      initialPhotoState = parsePhotoStateFromAttributes(line.attributes);
+      if (initialPhotoState) resolvedEditLineId = editLineId;
+    }
+  }
+
   return {
     product,
+    requiresPhotos,
+    editLineId: resolvedEditLineId,
+    initialPhotoState,
+    cartId: cartData?.id ?? null,
   };
 }
 
@@ -84,9 +106,35 @@ function loadDeferredData() {
   return {};
 }
 
+/**
+ * Pull the cropped photo URLs off a cart line's attributes. Originals and
+ * crop rects are persisted in the buyer's localStorage on approve, so the
+ * merchant-visible order line only carries the three Photo URLs.
+ * @param {Array<{key: string, value: string}>} attributes
+ */
+function parsePhotoStateFromAttributes(attributes) {
+  if (!Array.isArray(attributes)) return null;
+  const map = new Map(attributes.map((a) => [a.key, a.value]));
+  const photo1 = map.get('Photo 1');
+  const photo2 = map.get('Photo 2');
+  const photo3 = map.get('Photo 3');
+  if (!photo1 || !photo2 || !photo3) return null;
+  return {
+    croppedUrls: [photo1, photo2, photo3],
+    originalUrls: [null, null, null],
+    crops: [null, null, null],
+  };
+}
+
 export default function Product() {
   /** @type {LoaderReturnData} */
-  const {product} = useLoaderData();
+  const {
+    product,
+    requiresPhotos,
+    editLineId,
+    initialPhotoState,
+    cartId,
+  } = useLoaderData();
   const {dict} = useI18n();
 
   // Optimistically selects a variant with given available variant information
@@ -106,6 +154,7 @@ export default function Product() {
   });
 
   const {title, descriptionHtml} = product;
+  const isEditing = Boolean(editLineId && initialPhotoState);
 
   return (
     <div className="product">
@@ -120,6 +169,11 @@ export default function Product() {
         <ProductForm
           productOptions={productOptions}
           selectedVariant={selectedVariant}
+          requiresPhotos={requiresPhotos}
+          isEditing={isEditing}
+          editLineId={editLineId}
+          initialPhotoState={initialPhotoState}
+          cartId={cartId}
         />
         <br />
         <br />
@@ -194,6 +248,7 @@ const PRODUCT_FRAGMENT = `#graphql
     handle
     descriptionHtml
     description
+    tags
     encodedVariantExistence
     encodedVariantAvailability
     options {

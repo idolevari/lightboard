@@ -35,17 +35,20 @@ export default function Policies() {
   const {policies} = useLoaderData();
   const {dict, to} = useI18n();
 
+  const titleMap = dict.policies.titles ?? {};
   return (
-    <div className="policies">
+    <article className="policies">
       <h1>{dict.policies.indexTitle}</h1>
-      <div>
+      <ul className="policies-list">
         {policies.map((policy) => (
-          <fieldset key={policy.id}>
-            <Link to={to(`/policies/${policy.handle}`)}>{policy.title}</Link>
-          </fieldset>
+          <li key={policy.id}>
+            <Link to={to(`/policies/${policy.handle}`)}>
+              {titleMap[policy.handle] ?? policy.title}
+            </Link>
+          </li>
         ))}
-      </div>
-    </div>
+      </ul>
+    </article>
   );
 }
 

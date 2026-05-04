@@ -46,16 +46,12 @@ export default function Policy() {
   const {dict, to} = useI18n();
 
   return (
-    <div className="policy">
-      <br />
-      <br />
-      <div>
+    <article className="policy">
+      <div className="policy-back">
         <Link to={to('/policies')}>{dict.policies.back}</Link>
       </div>
-      <br />
-      <h1>{policy.title}</h1>
-      <div dangerouslySetInnerHTML={{__html: policy.body}} />
-    </div>
+      <div className="policy-body" dangerouslySetInnerHTML={{__html: policy.body}} />
+    </article>
   );
 }
 

@@ -135,6 +135,37 @@
     "addToCart": "Add to cart",
     "soldOut": "Sold out"
   },
+  "photoCustomizer": {
+    "heading": "Make it yours",
+    "subheading": "Upload three photos, crop each to a square, and see your Lightboard come together.",
+    "slotLabel": "Photo {n}",
+    "pick": "Choose photo",
+    "editCrop": "Edit crop",
+    "remove": "Remove",
+    "previewTitle": "Preview",
+    "placeholder": "Your photo here",
+    "approve": "Approve photos",
+    "saveChanges": "Save changes",
+    "saveAndReturn": "Save & return to cart",
+    "approvedNote": "Photos locked in. You can add to cart.",
+    "savedNote": "Changes saved.",
+    "uploading": "Uploading…",
+    "cropSave": "Save crop",
+    "cropCancel": "Cancel",
+    "zoom": "Zoom",
+    "editFromCart": "Edit photos",
+    "errors": {
+      "noFile": "Pick a photo",
+      "heic": "iPhone HEIC isn't supported in browsers. Save the photo as JPG and try again.",
+      "badType": "Unsupported file type. Use JPG, PNG, or WebP.",
+      "tooLarge": "File too large. 15MB maximum.",
+      "tooSmall": "Image too small for print. Minimum 1200×1200 pixels.",
+      "loadFailed": "Couldn't load that file. Try a different photo.",
+      "renderFailed": "Couldn't generate the preview.",
+      "cannotEdit": "Can't edit this photo — please pick a new one.",
+      "uploadFailed": "Upload failed. Check your connection and try again."
+    }
+  },
   "cart": {
     "metaTitle": "Lightboard | Cart",
     "pageTitle": "Cart",
@@ -206,7 +237,14 @@
   "policies": {
     "indexTitle": "Policies",
     "indexMeta": "Lightboard | Policies",
-    "back": "← Back to policies"
+    "back": "← Back to policies",
+    "titles": {
+      "privacy-policy": "Privacy Policy",
+      "shipping-policy": "Shipping Policy",
+      "terms-of-service": "Terms of Service",
+      "refund-policy": "Refund & Cancellation Policy",
+      "subscription-policy": "Subscription Policy"
+    }
   },
   "account": {
     "metaSuffix": "Account",
@@ -274,8 +312,46 @@
     "applied": "Discount applied!",
     "applyError": "We couldn't apply this code."
   },
+  "business": {
+    "legalName": "Lightboard",
+    "tradingName": "Lightboard",
+    "idLabel": "Business ID",
+    "idNumber": "207160151",
+    "address": "Ganei Am, Israel",
+    "phone": "+972-55-720-9448",
+    "phoneDisplay": "+972 55-720-9448",
+    "email": "office@lightboard.co.il",
+    "accessibilityCoordinator": {
+      "name": "",
+      "email": "office@lightboard.co.il",
+      "phone": "+972 55-720-9448"
+    }
+  },
+  "a11y": {
+    "open": "Open accessibility menu",
+    "close": "Close accessibility menu",
+    "title": "Accessibility",
+    "textSize": "Text size",
+    "textNormal": "Default",
+    "textLarger": "Larger",
+    "textMuchLarger": "Much larger",
+    "highContrast": "High contrast",
+    "highlightLinks": "Highlight links",
+    "readableFont": "Readable font",
+    "reset": "Reset",
+    "statementLink": "Accessibility statement",
+    "skipToContent": "Skip to main content"
+  },
+  "whatsapp": {
+    "label": "Chat with us on WhatsApp",
+    "prefill": "Hi Lightboard! I have a question about your products."
+  },
   "footer": {
     "brandDesc": "California soul, Mediterranean craft. Handmade wall pieces for the surf, snow, and skate obsessed. Shipped from Tel Aviv with aloha.",
+    "metaIdLabel": "Business ID",
+    "metaAddressLabel": "Address",
+    "metaPhoneLabel": "Phone",
+    "metaEmailLabel": "Email",
     "shopHeading": "Shop",
     "shop": [
       {"label": "Photo hangers", "to": "/collections/photo-hangers"},
@@ -301,9 +377,9 @@
     ],
     "rights": "LIGHTBOARD · ALL RIGHTS RESERVED",
     "legal": [
-      {"label": "Privacy", "to": "/policies/privacy-policy"},
+      {"label": "Privacy & Cookies", "to": "/policies/privacy-policy"},
       {"label": "Terms", "to": "/policies/terms-of-service"},
-      {"label": "Cookies", "to": "/policies/privacy-policy"}
+      {"label": "Accessibility", "to": "/pages/accessibility"}
     ]
   }
 }

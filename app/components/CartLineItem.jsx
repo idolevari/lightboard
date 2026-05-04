@@ -5,6 +5,20 @@ import {ProductPrice} from './ProductPrice';
 import {useAside} from './Aside';
 import {useI18n} from '~/lib/useI18n';
 
+const PHOTO_ATTR_KEYS = ['Photo 1', 'Photo 2', 'Photo 3'];
+
+/**
+ * Pull the three photo URLs out of a cart line's attributes, if present.
+ * Returns null when the line is not a photo-customized line.
+ */
+function getLinePhotoUrls(attributes) {
+  if (!Array.isArray(attributes) || attributes.length === 0) return null;
+  const map = new Map(attributes.map((a) => [a.key, a.value]));
+  const urls = PHOTO_ATTR_KEYS.map((k) => map.get(k));
+  if (urls.some((u) => !u)) return null;
+  return urls;
+}
+
 /**
  * A single line item in the cart. It displays the product image, title, price.
  * It also provides controls to update the quantity or remove the line item.
@@ -17,13 +31,17 @@ import {useI18n} from '~/lib/useI18n';
  * }}
  */
 export function CartLineItem({layout, line, childrenMap}) {
-  const {id, merchandise} = line;
+  const {id, merchandise, attributes} = line;
   const {product, title, image, selectedOptions} = merchandise;
   const lineItemUrl = useVariantUrl(product.handle, selectedOptions);
   const {close} = useAside();
-  const {dict} = useI18n();
+  const {dict, to} = useI18n();
   const lineItemChildren = childrenMap[id];
   const childrenLabelId = `cart-line-children-${id}`;
+  const photoUrls = getLinePhotoUrls(attributes);
+  const editPhotosHref = photoUrls
+    ? `${to(`/products/${product.handle}`)}?editLineId=${encodeURIComponent(id)}`
+    : null;
 
   return (
     <li key={id} className="cart-line">
@@ -63,6 +81,34 @@ export function CartLineItem({layout, line, childrenMap}) {
               </li>
             ))}
           </ul>
+          {photoUrls ? (
+            <div className="cart-line-photos">
+              <div className="cart-line-photos__thumbs">
+                {photoUrls.map((url, i) => (
+                  <img
+                    key={i}
+                    src={url}
+                    alt={dict.photoCustomizer?.slotLabel
+                      ?.replace('{n}', String(i + 1)) ?? `Photo ${i + 1}`}
+                    className="cart-line-photos__thumb"
+                    loading="lazy"
+                  />
+                ))}
+              </div>
+              {editPhotosHref ? (
+                <Link
+                  to={editPhotosHref}
+                  prefetch="intent"
+                  className="cart-line-photos__edit"
+                  onClick={() => {
+                    if (layout === 'aside') close();
+                  }}
+                >
+                  {dict.photoCustomizer?.editFromCart ?? 'Edit photos'}
+                </Link>
+              ) : null}
+            </div>
+          ) : null}
           <CartLineQuantity line={line} />
         </div>
       </div>
