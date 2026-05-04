@@ -13,3 +13,4 @@ node_modules
 .cursor/
 scripts/
 policies/
+.shopify-files-app/
