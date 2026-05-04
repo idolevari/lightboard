@@ -196,7 +196,13 @@
     "quantity": "כמות",
     "decreaseQuantity": "הפחתת כמות",
     "increaseQuantity": "הגדלת כמות",
-    "loading": "טוען סל…"
+    "loading": "טוען סל…",
+    "terms": {
+      "prefix": "קראתי ואני מאשר/ת את ",
+      "linkLabel": "תקנון האתר",
+      "suffix": "",
+      "requiredHint": "יש לאשר את התקנון לפני המעבר לתשלום"
+    }
   },
   "search": {
     "metaTitle": "Lightboard | חיפוש",
