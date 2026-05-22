@@ -18,6 +18,31 @@ Hebrew-first (RTL) Shopify Hydrogen + Oxygen storefront. Migrating from a WordPr
 - **Production domain:** https://lightboard.co.il (DNS at box.co.il, A record → 23.227.38.65, CNAME www → shops.myshopify.com)
 - **GraphiQL (local):** http://localhost:3000/graphiql
 
+## Task tracker (Notion)
+
+All product/dev tasks live in this Notion board — sync with it whenever closing or opening work, not just an internal TaskList:
+
+- **Board URL:** https://www.notion.so/6a1aa6009185487caa4c238823ea97a2?v=0a578964423546daab4063c84501992b
+- **Database ID:** `6a1aa6009185487caa4c238823ea97a2`
+- **Data source (collection):** `collection://0a55c71d-b5c3-492f-ab91-760d4bf2846e`
+
+**Schema (status type):**
+
+- `Status` (status: Not started / In progress / Done) — the canonical column. The Board view groups by it.
+- `Category` (select: Storefront / Data Migration / Design / Operations / Marketing)
+- `Priority` (select: High / Medium / Low)
+- `Task name` (title)
+- `Created` (auto)
+
+There was historically a duplicate `Status 1` column — it's been removed. Only update `Status`. The Board view may still reference `Status 1` in its group-by config; if cards appear in "No status", re-bind the Board's groupBy to `Status`.
+
+**Workflow when closing a task:**
+
+1. Verify against the codebase before marking Done (don't trust task titles alone — read the relevant components/routes)
+2. Set `Status: "Done"` via the Notion MCP `notion-update-page` tool
+3. Add a short note explaining what shipped (commit refs, file paths, behavior) via `insert_content`
+4. When adding new outstanding work, prefer creating tasks on this board over an ad-hoc TaskList
+
 ## Deployment
 
 Every push to `main` auto-deploys to Oxygen via `.github/workflows/oxygen-deployment.yml`. Secret name: `OXYGEN_DEPLOYMENT_TOKEN_1000130179`.
