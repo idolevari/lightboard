@@ -1,6 +1,7 @@
 import {Outlet, redirect} from 'react-router';
 import {DEFAULT_LOCALE, SUPPORTED_LOCALES} from '~/lib/i18n';
 import {enforceLaunchGate} from '~/lib/coming-soon';
+import type {Route} from './+types/($locale)';
 
 /**
  * Layout route for every path under the optional locale segment.
@@ -13,10 +14,8 @@ import {enforceLaunchGate} from '~/lib/coming-soon';
  * When the launch gate is active, every nested path other than `/` is
  * redirected here so the root layout can render <ComingSoon /> without any
  * child route loader running and leaking data.
- *
- * @param {Route.LoaderArgs} args
  */
-export async function loader({params, request, context}) {
+export async function loader({params, request, context}: Route.LoaderArgs) {
   enforceLaunchGate(request, context.env);
 
   const raw = params.locale;
@@ -40,5 +39,3 @@ export async function loader({params, request, context}) {
 export default function LocaleLayout() {
   return <Outlet />;
 }
-
-/** @typedef {import('./+types/($locale)').Route} Route */

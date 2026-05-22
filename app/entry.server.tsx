@@ -1,21 +1,16 @@
 import {ServerRouter} from 'react-router';
+import type {EntryContext} from 'react-router';
 import {isbot} from 'isbot';
 import {renderToReadableStream} from 'react-dom/server';
 import {createContentSecurityPolicy} from '@shopify/hydrogen';
+import type {HydrogenRouterContextProvider} from '@shopify/hydrogen';
 
-/**
- * @param {Request} request
- * @param {number} responseStatusCode
- * @param {Headers} responseHeaders
- * @param {EntryContext} reactRouterContext
- * @param {HydrogenRouterContextProvider} context
- */
 export default async function handleRequest(
-  request,
-  responseStatusCode,
-  responseHeaders,
-  reactRouterContext,
-  context,
+  request: Request,
+  responseStatusCode: number,
+  responseHeaders: Headers,
+  reactRouterContext: EntryContext,
+  context: HydrogenRouterContextProvider,
 ) {
   const isDev = context.env.NODE_ENV !== 'production';
   const {nonce, header, NonceProvider} = createContentSecurityPolicy({
@@ -92,6 +87,3 @@ export default async function handleRequest(
     status: responseStatusCode,
   });
 }
-
-/** @typedef {import('@shopify/hydrogen').HydrogenRouterContextProvider} HydrogenRouterContextProvider */
-/** @typedef {import('react-router').EntryContext} EntryContext */

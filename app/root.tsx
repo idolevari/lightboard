@@ -1,3 +1,4 @@
+import type {ReactNode} from 'react';
 import {Analytics, getShopAnalytics, useNonce} from '@shopify/hydrogen';
 import {
   Outlet,
@@ -9,6 +10,7 @@ import {
   ScrollRestoration,
   useRouteLoaderData,
 } from 'react-router';
+import type {ShouldRevalidateFunction} from 'react-router';
 import {FOOTER_QUERY, HEADER_QUERY} from '~/lib/fragments';
 import resetStyles from '~/styles/reset.css?url';
 import appStyles from '~/styles/app.css?url';
@@ -25,12 +27,16 @@ import {
 } from '~/lib/i18n';
 import {isLaunchGateActive} from '~/lib/coming-soon';
 import {MetaPixel, MetaPixelScript} from '~/lib/meta-pixel';
+import type {Route} from './+types/root';
 
 /**
  * This is important to avoid re-fetching root queries on sub-navigations
- * @type {ShouldRevalidateFunction}
  */
-export const shouldRevalidate = ({formMethod, currentUrl, nextUrl}) => {
+export const shouldRevalidate: ShouldRevalidateFunction = ({
+  formMethod,
+  currentUrl,
+  nextUrl,
+}) => {
   // revalidate when a mutation is performed e.g add to cart, login...
   if (formMethod && formMethod !== 'GET') return true;
 
@@ -89,10 +95,7 @@ export function links() {
   ];
 }
 
-/**
- * @param {Route.LoaderArgs} args
- */
-export async function loader(args) {
+export async function loader(args: Route.LoaderArgs) {
   const {env} = args.context;
   const locale = detectLocaleFromRequest(args.request);
   const dict = getDictionary(locale);
@@ -105,7 +108,7 @@ export async function loader(args) {
   // loaders are also blocked by the locale layout gate.
   if (isLaunchGateActive(args.request, env)) {
     return {
-      showComingSoon: true,
+      showComingSoon: true as const,
       locale,
       localeConfig,
       dict,
@@ -122,7 +125,7 @@ export async function loader(args) {
   return {
     ...deferredData,
     ...criticalData,
-    showComingSoon: false,
+    showComingSoon: false as const,
     locale,
     localeConfig,
     dict,
@@ -147,9 +150,8 @@ export async function loader(args) {
 /**
  * Load data necessary for rendering content above the fold. This is the critical data
  * needed to render the page. If it's unavailable, the whole page should 400 or 500 error.
- * @param {Route.LoaderArgs}
  */
-async function loadCriticalData({context}) {
+async function loadCriticalData({context}: Route.LoaderArgs) {
   const {storefront} = context;
 
   const [header] = await Promise.all([
@@ -169,9 +171,8 @@ async function loadCriticalData({context}) {
  * Load data for rendering content below the fold. This data is deferred and will be
  * fetched after the initial page load. If it's unavailable, the page should still 200.
  * Make sure to not throw any errors here, as it will cause the page to 500.
- * @param {Route.LoaderArgs}
  */
-function loadDeferredData({context}) {
+function loadDeferredData({context}: Route.LoaderArgs) {
   const {storefront, customerAccount, cart} = context;
 
   // defer the footer query (below the fold)
@@ -182,7 +183,7 @@ function loadDeferredData({context}) {
         footerMenuHandle: 'footer', // Adjust to your footer menu handle
       },
     })
-    .catch((error) => {
+    .catch((error: unknown) => {
       // Log query errors, but don't throw them so the page can still render
       console.error(error);
       return null;
@@ -194,12 +195,13 @@ function loadDeferredData({context}) {
   };
 }
 
-/**
- * @param {{children?: React.ReactNode}}
- */
-export function Layout({children}) {
+export type RootLoader = typeof loader;
+
+type LayoutProps = {children?: ReactNode};
+
+export function Layout({children}: LayoutProps) {
   const nonce = useNonce();
-  const data = useRouteLoaderData('root');
+  const data = useRouteLoaderData<RootLoader>('root');
   const locale = data?.locale ?? DEFAULT_LOCALE;
   const config = data?.localeConfig ?? getLocaleConfig(locale);
   const pathnameNoLocale = data?.pathnameNoLocale ?? '/';
@@ -226,7 +228,10 @@ export function Layout({children}) {
         />
         <Meta />
         <Links />
-        <MetaPixelScript pixelId={data?.metaPixelId} nonce={nonce} />
+        <MetaPixelScript
+          pixelId={data && !data.showComingSoon ? data.metaPixelId : null}
+          nonce={nonce}
+        />
       </head>
       <body>
         {children}
@@ -238,8 +243,7 @@ export function Layout({children}) {
 }
 
 export default function App() {
-  /** @type {RootLoader} */
-  const data = useRouteLoaderData('root');
+  const data = useRouteLoaderData<RootLoader>('root');
 
   if (!data) {
     return <Outlet />;
@@ -265,7 +269,7 @@ export default function App() {
 
 export function ErrorBoundary() {
   const error = useRouteError();
-  const data = useRouteLoaderData('root');
+  const data = useRouteLoaderData<RootLoader>('root');
   const dict = data?.dict ?? getDictionary(DEFAULT_LOCALE);
   const locale = data?.locale ?? DEFAULT_LOCALE;
   let errorMessage = 'Unknown error';
@@ -324,9 +328,3 @@ export function ErrorBoundary() {
     </div>
   );
 }
-
-/** @typedef {LoaderReturnData} RootLoader */
-
-/** @typedef {import('react-router').ShouldRevalidateFunction} ShouldRevalidateFunction */
-/** @typedef {import('./+types/root').Route} Route */
-/** @typedef {ReturnType<typeof useLoaderData<typeof loader>>} LoaderReturnData */
