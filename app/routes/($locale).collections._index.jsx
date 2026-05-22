@@ -2,9 +2,10 @@ import {useLoaderData, Link} from 'react-router';
 import {getPaginationVariables, Image} from '@shopify/hydrogen';
 import {PaginatedResourceSection} from '~/components/PaginatedResourceSection';
 import {useI18n} from '~/lib/useI18n';
+import {pageTitle} from '~/lib/meta';
 
-export const meta = () => {
-  return [{title: 'Lightboard | Collections'}];
+export const meta = ({matches}) => {
+  return [{title: pageTitle(matches, 'Collections')}];
 };
 
 /**
@@ -32,6 +33,7 @@ async function loadCriticalData({context, request}) {
 
   const [{collections}] = await Promise.all([
     context.storefront.query(COLLECTIONS_QUERY, {
+      cache: context.storefront.CacheLong(),
       variables: paginationVariables,
     }),
     // Add other queries here, so that they are loaded in parallel

@@ -4,18 +4,31 @@ import {Link} from 'react-router';
 import {ProductPrice} from './ProductPrice';
 import {useAside} from './Aside';
 import {useI18n} from '~/lib/useI18n';
+import {
+  translateOptionName,
+  translateOptionValue,
+} from '~/lib/productOptionLabels';
 
 const PHOTO_ATTR_KEYS = ['Photo 1', 'Photo 2', 'Photo 3'];
+const TRUSTED_PHOTO_HOST = 'https://cdn.shopify.com/';
 
 /**
  * Pull the three photo URLs out of a cart line's attributes, if present.
  * Returns null when the line is not a photo-customized line.
+ *
+ * Cart line attributes are buyer-supplied and can be set by any client-side
+ * Storefront API mutation. We only render URLs that live on the Shopify CDN
+ * to prevent a crafted cart from turning a line item into a tracking pixel
+ * or pulling external content into the page.
  */
 function getLinePhotoUrls(attributes) {
   if (!Array.isArray(attributes) || attributes.length === 0) return null;
   const map = new Map(attributes.map((a) => [a.key, a.value]));
   const urls = PHOTO_ATTR_KEYS.map((k) => map.get(k));
   if (urls.some((u) => !u)) return null;
+  if (!urls.every((u) => typeof u === 'string' && u.startsWith(TRUSTED_PHOTO_HOST))) {
+    return null;
+  }
   return urls;
 }
 
@@ -73,13 +86,19 @@ export function CartLineItem({layout, line, childrenMap}) {
           </Link>
           <ProductPrice price={line?.cost?.totalAmount} />
           <ul>
-            {selectedOptions.map((option) => (
-              <li key={option.name}>
-                <small>
-                  {option.name}: {option.value}
-                </small>
-              </li>
-            ))}
+            {selectedOptions
+              .filter(
+                (option) =>
+                  !(option.name === 'Title' && option.value === 'Default Title'),
+              )
+              .map((option) => (
+                <li key={option.name}>
+                  <small>
+                    {translateOptionName(dict, option.name)}:{' '}
+                    {translateOptionValue(dict, option.value)}
+                  </small>
+                </li>
+              ))}
           </ul>
           {photoUrls ? (
             <div className="cart-line-photos">

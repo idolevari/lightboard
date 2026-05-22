@@ -533,7 +533,11 @@ h1, h2, h3, h4, h5, h6 {
   transition: background 0.2s, color 0.2s;
 }
 .hero-cta:hover .arrow { background: var(--ink); color: var(--brand-lime); }
-[dir="rtl"] .hero-cta .arrow { transform: scaleX(-1); }
+
+/* Flip the right-arrow glyph for RTL pages — the literal "→" character is
+   direction-neutral in Unicode and doesn't auto-mirror, so we mirror with
+   CSS for every .arrow span across the storefront. */
+[dir="rtl"] .arrow { display: inline-block; transform: scaleX(-1); }
 
 .hero-dots {
   display: flex;
@@ -1051,7 +1055,6 @@ section { position: relative; }
 }
 .feat3-cta:hover { background: var(--brand-lime); transform: translateY(-1px); color: var(--ink); }
 .feat3-cta .arrow { font-size: 18px; }
-[dir="rtl"] .feat3-cta .arrow { transform: scaleX(-1); }
 .feat3-ghost {
   font-size: 11px;
   letter-spacing: 0.15em;
@@ -1361,8 +1364,10 @@ section { position: relative; }
   padding-bottom: clamp(40px, 6vw, 60px);
   border-bottom: 1px solid rgba(255,255,255,0.14);
 }
+.footer-grid--single { grid-template-columns: 1fr; }
 @media (max-width: 820px) {
   .footer-grid { grid-template-columns: 1fr 1fr; }
+  .footer-grid--single { grid-template-columns: 1fr; }
 }
 @media (max-width: 560px) {
   .footer-grid { grid-template-columns: 1fr; gap: 32px; }

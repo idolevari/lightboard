@@ -1,3 +1,13 @@
+html {
+  scroll-behavior: smooth;
+  /* Account for the sticky header when anchor-linking to a section. */
+  scroll-padding-top: 88px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
+
 body {
   font-family:
     system-ui,

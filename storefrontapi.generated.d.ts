@@ -412,20 +412,84 @@ export type FeaturedProductQueryVariables = StorefrontAPI.Exact<{
 }>;
 
 export type FeaturedProductQuery = {
-  products: {
-    nodes: Array<
-      Pick<StorefrontAPI.Product, 'id' | 'title' | 'handle'> & {
-        priceRange: {
-          minVariantPrice: Pick<
-            StorefrontAPI.MoneyV2,
-            'amount' | 'currencyCode'
+  shop: {
+    featured?: StorefrontAPI.Maybe<{
+      reference?: StorefrontAPI.Maybe<
+        Pick<StorefrontAPI.Product, 'id' | 'title' | 'handle'> & {
+          priceRange: {
+            minVariantPrice: Pick<
+              StorefrontAPI.MoneyV2,
+              'amount' | 'currencyCode'
+            >;
+          };
+          featuredImage?: StorefrontAPI.Maybe<
+            Pick<
+              StorefrontAPI.Image,
+              'id' | 'url' | 'altText' | 'width' | 'height'
+            >
           >;
-        };
-        featuredImage?: StorefrontAPI.Maybe<
-          Pick<
-            StorefrontAPI.Image,
-            'id' | 'url' | 'altText' | 'width' | 'height'
-          >
+          options: Array<
+            Pick<StorefrontAPI.ProductOption, 'id' | 'name'> & {
+              optionValues: Array<
+                Pick<StorefrontAPI.ProductOptionValue, 'id' | 'name'> & {
+                  swatch?: StorefrontAPI.Maybe<
+                    Pick<StorefrontAPI.ProductOptionValueSwatch, 'color'>
+                  >;
+                }
+              >;
+            }
+          >;
+        }
+      >;
+    }>;
+  };
+};
+
+export type FaQsQueryVariables = StorefrontAPI.Exact<{[key: string]: never}>;
+
+export type FaQsQuery = {
+  metaobjects: {
+    nodes: Array<
+      Pick<StorefrontAPI.Metaobject, 'id' | 'handle'> & {
+        fields: Array<Pick<StorefrontAPI.MetaobjectField, 'key' | 'value'>>;
+      }
+    >;
+  };
+};
+
+export type TestimonialsQueryVariables = StorefrontAPI.Exact<{
+  [key: string]: never;
+}>;
+
+export type TestimonialsQuery = {
+  metaobjects: {
+    nodes: Array<
+      Pick<StorefrontAPI.Metaobject, 'id' | 'handle'> & {
+        fields: Array<Pick<StorefrontAPI.MetaobjectField, 'key' | 'value'>>;
+      }
+    >;
+  };
+};
+
+export type HeroSlidesQueryVariables = StorefrontAPI.Exact<{
+  [key: string]: never;
+}>;
+
+export type HeroSlidesQuery = {
+  metaobjects: {
+    nodes: Array<
+      Pick<StorefrontAPI.Metaobject, 'id' | 'handle'> & {
+        fields: Array<
+          Pick<StorefrontAPI.MetaobjectField, 'key' | 'value'> & {
+            reference?: StorefrontAPI.Maybe<{
+              image?: StorefrontAPI.Maybe<
+                Pick<
+                  StorefrontAPI.Image,
+                  'url' | 'altText' | 'width' | 'height'
+                >
+              >;
+            }>;
+          }
         >;
       }
     >;
@@ -1270,9 +1334,21 @@ interface GeneratedQueryTypes {
     return: FeaturedCollectionQuery;
     variables: FeaturedCollectionQueryVariables;
   };
-  '#graphql\n  query FeaturedProduct($country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    products(first: 1, sortKey: UPDATED_AT, reverse: true) {\n      nodes {\n        id\n        title\n        handle\n        priceRange {\n          minVariantPrice { amount currencyCode }\n        }\n        featuredImage { id url altText width height }\n      }\n    }\n  }\n': {
+  '#graphql\n  query FeaturedProduct($country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    shop {\n      featured: metafield(namespace: "custom", key: "featured_product") {\n        reference {\n          ... on Product {\n            id\n            title\n            handle\n            priceRange {\n              minVariantPrice { amount currencyCode }\n            }\n            featuredImage { id url altText width height }\n            options {\n              id\n              name\n              optionValues {\n                id\n                name\n                swatch { color }\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n': {
     return: FeaturedProductQuery;
     variables: FeaturedProductQueryVariables;
+  };
+  '#graphql\n  query FAQs {\n    metaobjects(type: "faq", first: 20, sortKey: "position") {\n      nodes {\n        id\n        handle\n        fields { key value }\n      }\n    }\n  }\n': {
+    return: FAQsQuery;
+    variables: FAQsQueryVariables;
+  };
+  '#graphql\n  query Testimonials {\n    metaobjects(type: "testimonial", first: 20, sortKey: "position") {\n      nodes {\n        id\n        handle\n        fields { key value }\n      }\n    }\n  }\n': {
+    return: TestimonialsQuery;
+    variables: TestimonialsQueryVariables;
+  };
+  '#graphql\n  query HeroSlides {\n    metaobjects(type: "hero_slide", first: 10, sortKey: "position") {\n      nodes {\n        id\n        handle\n        fields {\n          key\n          value\n          reference {\n            ... on MediaImage {\n              image { url altText width height }\n            }\n          }\n        }\n      }\n    }\n  }\n': {
+    return: HeroSlidesQuery;
+    variables: HeroSlidesQueryVariables;
   };
   '#graphql\n  query Article(\n    $articleHandle: String!\n    $blogHandle: String!\n    $country: CountryCode\n    $language: LanguageCode\n  ) @inContext(language: $language, country: $country) {\n    blog(handle: $blogHandle) {\n      handle\n      articleByHandle(handle: $articleHandle) {\n        handle\n        title\n        contentHtml\n        publishedAt\n        author: authorV2 {\n          name\n        }\n        image {\n          id\n          altText\n          url\n          width\n          height\n        }\n        seo {\n          description\n          title\n        }\n      }\n    }\n  }\n': {
     return: ArticleQuery;

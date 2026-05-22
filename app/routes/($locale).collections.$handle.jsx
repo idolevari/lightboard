@@ -3,12 +3,30 @@ import {getPaginationVariables, Analytics} from '@shopify/hydrogen';
 import {PaginatedResourceSection} from '~/components/PaginatedResourceSection';
 import {redirectIfHandleIsLocalized} from '~/lib/redirect';
 import {ProductItem} from '~/components/ProductItem';
+import {canonicalUrl, pageTitle} from '~/lib/meta';
 
 /**
  * @type {Route.MetaFunction}
  */
-export const meta = ({data}) => {
-  return [{title: `Lightboard | ${data?.collection.title ?? ''} Collection`}];
+export const meta = ({data, matches, params}) => {
+  const collection = data?.collection;
+  const collectionTitle = collection?.title;
+  return [
+    {
+      title: pageTitle(
+        matches,
+        collectionTitle ? `${collectionTitle} Collection` : null,
+      ),
+    },
+    {
+      tagName: 'link',
+      rel: 'canonical',
+      href: canonicalUrl(matches, `/collections/${params.handle ?? ''}`),
+    },
+    ...(collection?.description
+      ? [{name: 'description', content: collection.description}]
+      : []),
+  ];
 };
 
 /**
@@ -42,6 +60,7 @@ async function loadCriticalData({context, params, request}) {
 
   const [{collection}] = await Promise.all([
     storefront.query(COLLECTION_QUERY, {
+      cache: storefront.CacheShort(),
       variables: {handle, ...paginationVariables},
       // Add other queries here, so that they are loaded in parallel
     }),

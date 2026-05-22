@@ -1,11 +1,26 @@
 import {useLoaderData} from 'react-router';
 import {redirectIfHandleIsLocalized} from '~/lib/redirect';
+import {sanitizeShopifyHtml} from '~/lib/sanitize';
+import {canonicalUrl, pageTitle} from '~/lib/meta';
 
 /**
  * @type {Route.MetaFunction}
  */
-export const meta = ({data}) => {
-  return [{title: `Lightboard | ${data?.page.title ?? ''}`}];
+export const meta = ({data, matches}) => {
+  const page = data?.page;
+  if (!page) return [];
+  const title = pageTitle(matches, page.seo?.title || page.title);
+  const description = page.seo?.description || '';
+  const tags = [
+    {title},
+    {tagName: 'link', rel: 'canonical', href: canonicalUrl(matches, `/pages/${page.handle}`)},
+    {property: 'og:title', content: title},
+  ];
+  if (description) {
+    tags.push({name: 'description', content: description});
+    tags.push({property: 'og:description', content: description});
+  }
+  return tags;
 };
 
 /**
@@ -33,6 +48,7 @@ async function loadCriticalData({context, request, params}) {
 
   const [{page}] = await Promise.all([
     context.storefront.query(PAGE_QUERY, {
+      cache: context.storefront.CacheLong(),
       variables: {
         handle: params.handle,
       },
@@ -67,7 +83,10 @@ export default function Page() {
 
   return (
     <article className="page">
-      <div className="page-body" dangerouslySetInnerHTML={{__html: page.body}} />
+      <div
+        className="page-body"
+        dangerouslySetInnerHTML={{__html: sanitizeShopifyHtml(page.body)}}
+      />
     </article>
   );
 }

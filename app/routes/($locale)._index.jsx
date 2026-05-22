@@ -1,58 +1,243 @@
 import {Link, useLoaderData} from 'react-router';
-import {Suspense, useEffect, useState} from 'react';
-import {Await} from 'react-router';
+import {useEffect, useState} from 'react';
+import {Image} from '@shopify/hydrogen';
 import {useI18n} from '~/lib/useI18n';
 import {useInView} from '~/lib/useInView';
 import {getDictionary, detectLocaleFromRequest} from '~/lib/i18n';
+import {
+  getOptionValueHex,
+  translateOptionValue,
+} from '~/lib/productOptionLabels';
+import {isLaunchGateActive} from '~/lib/coming-soon';
+import {canonicalUrl} from '~/lib/meta';
+import {sanitizeShopifyHtml} from '~/lib/sanitize';
 
-export const meta = ({data}) => {
+export const meta = ({data, matches}) => {
   const dict = data?.dict ?? getDictionary('he');
-  return [
+  const href = canonicalUrl(matches, '/');
+  const image = data?.featuredProduct?.featuredImage?.url;
+  const tags = [
     {title: dict.meta.title},
     {name: 'description', content: dict.meta.description},
+    {tagName: 'link', rel: 'canonical', href},
+    {property: 'og:type', content: 'website'},
+    {property: 'og:title', content: dict.meta.title},
+    {property: 'og:description', content: dict.meta.description},
+    {property: 'og:url', content: href},
+    {name: 'twitter:card', content: 'summary_large_image'},
   ];
+  if (image) {
+    tags.push({property: 'og:image', content: image});
+    tags.push({name: 'twitter:image', content: image});
+  }
+  return tags;
 };
 
 /** @param {Route.LoaderArgs} args */
 export async function loader(args) {
-  const deferredData = loadDeferredData(args);
-  const criticalData = await loadCriticalData(args);
-  return {...deferredData, ...criticalData};
+  // Launch-gate: do not fetch products/collections when the public site is
+  // closed; the root layout renders <ComingSoon /> instead.
+  if (isLaunchGateActive(args.request, args.context.env)) {
+    const locale = detectLocaleFromRequest(args.request);
+    return {
+      isShopLinked: false,
+      featuredCollection: null,
+      featuredProduct: null,
+      faqs: [],
+      testimonials: [],
+      heroSlides: [],
+      hero: null,
+      story: null,
+      dict: getDictionary(locale),
+      locale,
+    };
+  }
+  return await loadCriticalData(args);
 }
 
 async function loadCriticalData({context, request}) {
   const locale = detectLocaleFromRequest(request);
   const dict = getDictionary(locale);
-  const [{collections}] = await Promise.all([
-    context.storefront.query(FEATURED_COLLECTION_QUERY),
+  const {storefront} = context;
+  const [
+    {collections},
+    productData,
+    faqData,
+    testimonialData,
+    heroData,
+    homepageData,
+  ] = await Promise.all([
+    storefront.query(FEATURED_COLLECTION_QUERY, {
+      cache: storefront.CacheLong(),
+    }),
+    storefront
+      .query(FEATURED_PRODUCT_QUERY, {cache: storefront.CacheShort()})
+      .catch((error) => {
+        console.error(error);
+        return null;
+      }),
+    storefront
+      .query(FAQS_QUERY, {cache: storefront.CacheLong()})
+      .catch((error) => {
+        console.error(error);
+        return null;
+      }),
+    storefront
+      .query(TESTIMONIALS_QUERY, {cache: storefront.CacheLong()})
+      .catch((error) => {
+        console.error(error);
+        return null;
+      }),
+    storefront
+      .query(HERO_SLIDES_QUERY, {cache: storefront.CacheLong()})
+      .catch((error) => {
+        console.error(error);
+        return null;
+      }),
+    storefront
+      .query(HOMEPAGE_SECTIONS_QUERY, {cache: storefront.CacheLong()})
+      .catch((error) => {
+        console.error(error);
+        return null;
+      }),
   ]);
   return {
     isShopLinked: Boolean(context.env.PUBLIC_STORE_DOMAIN),
     featuredCollection: collections?.nodes?.[0] ?? null,
+    featuredProduct: productData?.shop?.featured?.reference ?? null,
+    faqs: extractMetaobjectFields(faqData?.metaobjects?.nodes, locale, [
+      {target: 'question', heKey: 'question_he', enKey: 'question_en'},
+      {target: 'answer', heKey: 'answer_he', enKey: 'answer_en'},
+    ]),
+    testimonials: extractMetaobjectFields(
+      testimonialData?.metaobjects?.nodes,
+      locale,
+      [
+        {target: 'body', heKey: 'body_he', enKey: 'body_en'},
+        {target: 'attribution', heKey: 'attribution_he', enKey: 'attribution_en'},
+      ],
+    ),
+    heroSlides: extractHeroSlides(heroData?.metaobjects?.nodes),
+    hero: extractHeroSection(homepageData?.shop?.hero?.reference, locale),
+    story: extractStorySection(homepageData?.shop?.story?.reference, locale),
     dict,
     locale,
   };
 }
 
-function loadDeferredData({context}) {
-  const featuredProduct = context.storefront
-    .query(FEATURED_PRODUCT_QUERY)
-    .catch((error) => {
-      console.error(error);
-      return null;
-    });
-  return {featuredProduct};
+/**
+ * Pick the locale-appropriate value from a `{<base>_he, <base>_en}` field
+ * pair on a metaobject reference response. Falls back to Hebrew when the
+ * English value is empty so the storefront never renders a blank.
+ */
+function pickField(node, base, locale) {
+  const he = node?.[`${base}_he`]?.value;
+  const en = node?.[`${base}_en`]?.value;
+  return locale === 'en' ? en || he || '' : he || '';
+}
+
+function extractHeroSection(node, locale) {
+  if (!node) return null;
+  let tapeItems = [];
+  const tapeRaw = node?.[`tape_items_${locale === 'en' ? 'en' : 'he'}`]?.value;
+  const tapeFallback = node?.tape_items_he?.value;
+  try {
+    tapeItems = JSON.parse(tapeRaw ?? tapeFallback ?? '[]');
+  } catch {
+    tapeItems = [];
+  }
+  return {
+    eyebrow: pickField(node, 'eyebrow', locale),
+    titleLine1: pickField(node, 'title_line_1', locale),
+    titleLine2: pickField(node, 'title_line_2', locale),
+    kicker: pickField(node, 'kicker', locale),
+    cta: pickField(node, 'cta', locale),
+    tape: Array.isArray(tapeItems) ? tapeItems : [],
+  };
+}
+
+function extractStorySection(node, locale) {
+  if (!node) return null;
+  const statRefs = node?.stats?.references?.nodes ?? [];
+  const stats = statRefs
+    .map((s) => ({
+      id: s.id,
+      n: s.value?.value ?? '',
+      k:
+        locale === 'en'
+          ? s.label_en?.value || s.label_he?.value || ''
+          : s.label_he?.value || '',
+      position: parseInt(s.position?.value ?? '0', 10) || 0,
+    }))
+    .sort((a, b) => a.position - b.position);
+  return {
+    tag: node?.tag?.value ?? '',
+    eyebrow: pickField(node, 'eyebrow', locale),
+    titleLine1: pickField(node, 'title_line_1', locale),
+    titleLine2: pickField(node, 'title_line_2', locale),
+    p1: pickField(node, 'p1', locale),
+    p2: pickField(node, 'p2', locale),
+    stats,
+  };
+}
+
+/**
+ * Reshape the hero_slide metaobjects into the {img, label, mobilePos} shape
+ * the <Hero> component expects. Returns empty when no entries exist so the
+ * component can fall back to the in-code defaults.
+ */
+function extractHeroSlides(nodes) {
+  if (!Array.isArray(nodes) || nodes.length === 0) return [];
+  const items = nodes.map((node) => {
+    const byKey = Object.fromEntries(
+      (node.fields ?? []).map((f) => [f.key, f]),
+    );
+    const imageField = byKey.image;
+    const url = imageField?.reference?.image?.url ?? null;
+    return {
+      id: node.id,
+      img: url,
+      label: byKey.label?.value ?? '',
+      mobilePos: byKey.mobile_position?.value ?? undefined,
+      position: parseInt(byKey.position?.value ?? '0', 10) || 0,
+    };
+  }).filter((s) => s.img);
+  items.sort((a, b) => a.position - b.position);
+  return items;
+}
+
+/**
+ * Reduce a metaobject result list to plain JS objects keyed by the chosen
+ * locale's text. Falls back to the Hebrew variant when an English value is
+ * empty so the storefront never renders a blank.
+ */
+function extractMetaobjectFields(nodes, locale, mapping) {
+  if (!Array.isArray(nodes)) return [];
+  const items = nodes.map((node) => {
+    const byKey = Object.fromEntries(
+      (node.fields ?? []).map((f) => [f.key, f.value]),
+    );
+    const result = {id: node.id, position: parseInt(byKey.position, 10) || 0};
+    for (const {target, heKey, enKey} of mapping) {
+      const he = byKey[heKey] ?? '';
+      const en = byKey[enKey] ?? '';
+      result[target] = locale === 'en' ? en || he : he;
+    }
+    return result;
+  });
+  items.sort((a, b) => a.position - b.position);
+  return items;
 }
 
 export default function Homepage() {
   const data = useLoaderData();
   return (
     <>
-      <Hero />
+      <Hero slides={data.heroSlides} content={data.hero} />
       <FeaturedLightboard featuredProduct={data.featuredProduct} />
-      <Story />
-      <Faq />
-      <Testimonials />
+      <Story content={data.story} />
+      <Faq items={data.faqs} />
+      <Testimonials items={data.testimonials} />
     </>
   );
 }
@@ -170,25 +355,34 @@ const HERO_SLIDES = [
 const HERO_SRCSET_WIDTHS = [900, 1400, 2000, 2800];
 
 function heroSrcSet(url) {
-  return HERO_SRCSET_WIDTHS.map((w) => `${url}&width=${w} ${w}w`).join(', ');
+  const sep = url.includes('?') ? '&' : '?';
+  return HERO_SRCSET_WIDTHS.map(
+    (w) => `${url}${sep}width=${w} ${w}w`,
+  ).join(', ');
 }
 
 const STORY_IMAGE =
   'https://cdn.shopify.com/s/files/1/0982/9325/2392/files/paulina-herpel-NYsnCI23XJc-unsplash.jpg?v=1777141874';
 
-function Hero() {
-  const {dict, to} = useI18n();
-  const h = dict.hero;
+function Hero({slides, content}) {
+  const {dict} = useI18n();
+  // Slides + section copy both live in Shopify (metaobjects + shop metafield).
+  // The slides have a code fallback so the page never renders empty; the
+  // section copy renders only when the merchant has configured the
+  // `homepage.hero` metafield.
+  const activeSlides =
+    Array.isArray(slides) && slides.length > 0 ? slides : HERO_SLIDES;
+  const tape = content?.tape ?? [];
   const [i, setI] = useState(0);
   const [paused, setPaused] = useState(false);
   useEffect(() => {
     if (paused) return undefined;
     const id = setInterval(
-      () => setI((x) => (x + 1) % HERO_SLIDES.length),
+      () => setI((x) => (x + 1) % activeSlides.length),
       5200,
     );
     return () => clearInterval(id);
-  }, [paused]);
+  }, [paused, activeSlides.length]);
 
   return (
     <section
@@ -196,9 +390,9 @@ function Hero() {
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
-      {HERO_SLIDES.map((s, j) => (
+      {activeSlides.map((s, j) => (
         <div
-          key={s.img}
+          key={s.id ?? s.img}
           className="hero-media"
           style={{
             opacity: j === i ? 1 : 0,
@@ -212,7 +406,7 @@ function Hero() {
           }}
         >
           <img
-            src={`${s.img}&width=2000`}
+            src={`${s.img}${s.img.includes('?') ? '&' : '?'}width=2000`}
             srcSet={heroSrcSet(s.img)}
             sizes="100vw"
             alt=""
@@ -223,32 +417,42 @@ function Hero() {
         </div>
       ))}
       <div className="container hero-inner">
-        <div className="hero-eyebrow">
-          <span className="tick" />
-          <span>{h.eyebrow}</span>
-          <span style={{opacity: 0.5, margin: '0 8px'}}>/</span>
-          <span style={{fontFamily: 'var(--mono)', opacity: 0.85}}>
-            {HERO_SLIDES[i].label}
-          </span>
-        </div>
-        <h1 className="hero-title">
-          {h.titleLine1}
-          <br />
-          <em>{h.titleLine2}</em>
-        </h1>
+        {(content?.eyebrow || activeSlides[i]?.label) && (
+          <div className="hero-eyebrow">
+            <span className="tick" />
+            {content?.eyebrow && <span>{content.eyebrow}</span>}
+            {content?.eyebrow && activeSlides[i]?.label && (
+              <span style={{opacity: 0.5, margin: '0 8px'}}>/</span>
+            )}
+            {activeSlides[i]?.label && (
+              <span style={{fontFamily: 'var(--mono)', opacity: 0.85}}>
+                {activeSlides[i].label}
+              </span>
+            )}
+          </div>
+        )}
+        {(content?.titleLine1 || content?.titleLine2) && (
+          <h1 className="hero-title">
+            {content?.titleLine1}
+            {content?.titleLine1 && content?.titleLine2 && <br />}
+            {content?.titleLine2 && <em>{content.titleLine2}</em>}
+          </h1>
+        )}
         <div className="hero-meta">
-          <p className="hero-kicker">{h.kicker}</p>
-          <Link to={to('/collections')} prefetch="intent" className="hero-cta">
-            <span>{h.cta}</span>
-            <span className="arrow" aria-hidden="true">→</span>
-          </Link>
+          {content?.kicker && <p className="hero-kicker">{content.kicker}</p>}
+          {content?.cta && (
+            <a href="#featured" className="hero-cta">
+              <span>{content.cta}</span>
+              <span className="arrow" aria-hidden="true">→</span>
+            </a>
+          )}
         </div>
-        <div className="hero-dots" role="tablist" aria-label={h.cta}>
-          {HERO_SLIDES.map((s, j) => (
+        <div className="hero-dots" role="tablist" aria-label={dict.hero.slideAria}>
+          {activeSlides.map((s, j) => (
             <button
-              key={s.img}
+              key={s.id ?? s.img}
               onClick={() => setI(j)}
-              aria-label={`${h.slideAria} ${j + 1}`}
+              aria-label={`${dict.hero.slideAria} ${j + 1}`}
               aria-selected={j === i}
               role="tab"
               className={j === i ? 'on' : ''}
@@ -257,222 +461,297 @@ function Hero() {
           ))}
           <span className="count">
             {String(i + 1).padStart(2, '0')} /{' '}
-            {String(HERO_SLIDES.length).padStart(2, '0')}
+            {String(activeSlides.length).padStart(2, '0')}
           </span>
         </div>
       </div>
 
       <div className="scroll-hint" aria-hidden="true">SCROLL</div>
 
-      <div className="hero-tape" aria-hidden="true">
-        <div className="hero-tape-track">
-          <span>
-            {[...h.tape, ...h.tape, ...h.tape].map((s, k) => (
-              // The tape is intentionally tripled for seamless scroll; index
-              // is the only stable key since each string repeats three times.
-              // eslint-disable-next-line react/no-array-index-key
-              <span key={k} style={{display: 'inline-flex', alignItems: 'center', gap: 48}}>
-                <span>{s}</span>
-                <span className="dot-sep" />
-              </span>
-            ))}
-          </span>
+      {tape.length > 0 && (
+        <div className="hero-tape" aria-hidden="true">
+          <div className="hero-tape-track">
+            <span>
+              {[...tape, ...tape, ...tape].map((s, k) => (
+                // The tape is intentionally tripled for seamless scroll; index
+                // is the only stable key since each string repeats three times.
+                // eslint-disable-next-line react/no-array-index-key
+                <span key={k} style={{display: 'inline-flex', alignItems: 'center', gap: 48}}>
+                  <span>{s}</span>
+                  <span className="dot-sep" />
+                </span>
+              ))}
+            </span>
+          </div>
         </div>
-      </div>
+      )}
     </section>
   );
 }
 
 /* ---------------- FEATURED ---------------- */
 
+/**
+ * Pick the locale-appropriate metafield value off a Storefront response
+ * shaped like `{ <key>_he: { value }, <key>_en: { value } }`. Falls back to
+ * the Hebrew value when the English one is empty so the storefront never
+ * renders a blank.
+ */
+function localizedMetafield(node, base, locale) {
+  const he = node?.[`${base}_he`]?.value;
+  const en = node?.[`${base}_en`]?.value;
+  return locale === 'en' ? en || he || '' : he || '';
+}
+
+function extractProductSpecs(node, locale) {
+  const refs = node?.specs?.references?.nodes ?? [];
+  return refs
+    .map((spec) => ({
+      id: spec.id,
+      k:
+        locale === 'en'
+          ? spec.label_en?.value || spec.label_he?.value || ''
+          : spec.label_he?.value || '',
+      v:
+        locale === 'en'
+          ? spec.value_en?.value || spec.value_he?.value || ''
+          : spec.value_he?.value || '',
+      position: parseInt(spec.position?.value ?? '0', 10) || 0,
+    }))
+    .sort((a, b) => a.position - b.position);
+}
+
 function FeaturedLightboard({featuredProduct}) {
-  const {dict} = useI18n();
+  const {dict, locale} = useI18n();
   const f = dict.featured;
-  const [finish, setFinish] = useState(f.finishes[0]);
-  const swatchColors = {
-    turquoise: '#3bb7c4',
-    sand: '#d4b08a',
-    black: '#1a1a1a',
-  };
+  // Drive the swatch picker from the live Shopify variant data so the merchant
+  // can add/rename/recolor variants in admin without a code deploy.
+  const colorOption =
+    featuredProduct?.options?.find((o) => o.name === 'Color') ?? null;
+  const colorValues = colorOption?.optionValues ?? [];
+  const [selectedColor, setSelectedColor] = useState(
+    colorValues[0]?.name ?? null,
+  );
+  const productImage = featuredProduct?.featuredImage;
+  // All marketing copy comes from product metafields (namespace "marketing")
+  // — the merchant edits these in Shopify Admin → Products → Lightboard.
+  const eyebrow = localizedMetafield(featuredProduct, 'eyebrow', locale);
+  const headlineHtml = localizedMetafield(featuredProduct, 'headline', locale);
+  const description = localizedMetafield(featuredProduct, 'description', locale);
+  const tagMadeToOrder = localizedMetafield(
+    featuredProduct,
+    'tagMadeToOrder',
+    locale,
+  );
+  const tagDimensions = featuredProduct?.tagDimensions?.value ?? '';
+  const shipNote = localizedMetafield(featuredProduct, 'shipNote', locale);
+  const specs = extractProductSpecs(featuredProduct, locale);
+  const altText =
+    productImage?.altText || featuredProduct?.title || 'Lightboard';
   return (
     <section className="feat3" id="featured">
       <div className="feat3-grid">
         <div className="feat3-stage">
-          <img
-            src="/lightboard-lifestyle.png"
-            alt={f.titlePrefix + f.titleName}
-            className="feat3-photo"
-            loading="eager"
-          />
+          {productImage ? (
+            <Image
+              data={productImage}
+              alt={altText}
+              className="feat3-photo"
+              sizes="(min-width: 1024px) 50vw, 100vw"
+              loading="eager"
+            />
+          ) : (
+            <img
+              src="/lightboard-lifestyle.png"
+              alt={altText}
+              className="feat3-photo"
+              loading="eager"
+            />
+          )}
           <div className="feat3-tags">
-            <span className="feat3-tag">{f.tagMadeToOrder}</span>
-            <span className="feat3-tag alt">{f.tagDimensions}</span>
+            {tagMadeToOrder && (
+              <span className="feat3-tag">{tagMadeToOrder}</span>
+            )}
+            {tagDimensions && (
+              <span className="feat3-tag alt">{tagDimensions}</span>
+            )}
           </div>
         </div>
 
         <div className="feat3-rail">
           <Reveal>
-            <div className="feat3-eye">{f.eyebrow}</div>
-            <h2 className="feat3-title">
-              {f.titlePrefix}
-              <em>{f.titleName}</em>
-            </h2>
-            <p className="feat3-desc">{f.desc}</p>
+            {eyebrow && <div className="feat3-eye">{eyebrow}</div>}
+            {headlineHtml && (
+              <h2
+                className="feat3-title"
+                dangerouslySetInnerHTML={{
+                  __html: sanitizeShopifyHtml(headlineHtml),
+                }}
+              />
+            )}
+            {description && <p className="feat3-desc">{description}</p>}
           </Reveal>
 
-          <div className="feat3-ticker">
-            {f.specs.map((s) => (
-              <div className="feat3-tick" key={s.k}>
-                <span className="k">{s.k}</span>
-                <span className="v">{s.v}</span>
-              </div>
-            ))}
-          </div>
-
-          <div>
-            <div className="feat3-picker-head">
-              <span>{f.finishLabel}</span>
-              <span className="current">{finish.label}</span>
-            </div>
-            <div className="feat3-swatches">
-              {f.finishes.map((fn) => (
-                <button
-                  key={fn.id}
-                  onClick={() => setFinish(fn)}
-                  className={`feat3-swatch ${finish.id === fn.id ? 'on' : ''}`}
-                  aria-pressed={finish.id === fn.id}
-                  type="button"
-                >
-                  <span
-                    className="dot"
-                    style={{background: swatchColors[fn.id] ?? '#999'}}
-                    aria-hidden="true"
-                  />
-                  <span>{fn.label}</span>
-                </button>
+          {specs.length > 0 && (
+            <div className="feat3-ticker">
+              {specs.map((s) => (
+                <div className="feat3-tick" key={s.id}>
+                  <span className="k">{s.k}</span>
+                  <span className="v">{s.v}</span>
+                </div>
               ))}
             </div>
-          </div>
+          )}
 
-          <Suspense
-            fallback={
-              <BuyBar
-                price="149"
-                note={f.shipNote}
-                ctaPrimary={f.ctaPrimary}
-                ctaSecondary={f.ctaSecondary}
-                handle="lightboard"
-              />
-            }
-          >
-            <Await
-              resolve={featuredProduct}
-              errorElement={
-                <BuyBar
-                  price="149"
-                  note={f.shipNote}
-                  ctaPrimary={f.ctaPrimary}
-                  ctaSecondary={f.ctaSecondary}
-                  handle="lightboard"
-                />
+          {colorValues.length > 1 && (
+            <div>
+              <div className="feat3-picker-head">
+                <span>{f.finishLabel}</span>
+                <span className="current">
+                  {translateOptionValue(dict, selectedColor)}
+                </span>
+              </div>
+              <div className="feat3-swatches">
+                {colorValues.map((v) => {
+                  const hex = v.swatch?.color ?? getOptionValueHex(v.name);
+                  const isOn = selectedColor === v.name;
+                  return (
+                    <button
+                      key={v.id}
+                      onClick={() => setSelectedColor(v.name)}
+                      className={`feat3-swatch ${isOn ? 'on' : ''}`}
+                      aria-pressed={isOn}
+                      type="button"
+                    >
+                      <span
+                        className="dot"
+                        style={{background: hex ?? '#999'}}
+                        aria-hidden="true"
+                      />
+                      <span>{translateOptionValue(dict, v.name)}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {featuredProduct ? (
+            <BuyBar
+              price={featuredProduct.priceRange?.minVariantPrice?.amount}
+              currencyCode={
+                featuredProduct.priceRange?.minVariantPrice?.currencyCode
               }
-            >
-              {(data) => {
-                const product = data?.products?.nodes?.[0];
-                const handle = product?.handle ?? 'lightboard';
-                const amount = product?.priceRange?.minVariantPrice?.amount;
-                const price = amount
-                  ? String(Math.round(parseFloat(amount)))
-                  : '149';
-                return (
-                  <BuyBar
-                    price={price}
-                    note={f.shipNote}
-                    ctaPrimary={f.ctaPrimary}
-                    ctaSecondary={f.ctaSecondary}
-                    handle={handle}
-                  />
-                );
-              }}
-            </Await>
-          </Suspense>
+              note={shipNote}
+              ctaPrimary={f.ctaPrimary}
+              handle={featuredProduct.handle}
+              variantColor={selectedColor}
+            />
+          ) : null}
         </div>
       </div>
     </section>
   );
 }
 
-function BuyBar({price, note, ctaPrimary, ctaSecondary, handle}) {
+function BuyBar({price, currencyCode, note, ctaPrimary, handle, variantColor}) {
   const {to} = useI18n();
-  const href = to(`/products/${handle}`);
+  const base = to(`/products/${handle}`);
+  const href = variantColor
+    ? `${base}?Color=${encodeURIComponent(variantColor)}`
+    : base;
+  const amount = price != null ? Math.round(parseFloat(price)) : null;
   return (
     <div className="feat3-buy">
-      <div className="feat3-price">
-        <span className="cur">₪</span>
-        <span className="num">{price}</span>
-        <span className="note">{note}</span>
-      </div>
+      {amount != null && (
+        <div className="feat3-price">
+          <span className="cur">{currencySymbol(currencyCode)}</span>
+          <span className="num">{amount}</span>
+          <span className="note">{note}</span>
+        </div>
+      )}
       <div className="feat3-actions">
         <Link to={href} prefetch="intent" className="feat3-cta">
           <span>{ctaPrimary}</span>
           <span className="arrow" aria-hidden="true">→</span>
-        </Link>
-        <Link to={href} prefetch="intent" className="feat3-ghost">
-          {ctaSecondary}
         </Link>
       </div>
     </div>
   );
 }
 
+function currencySymbol(code) {
+  switch (code) {
+    case 'ILS':
+      return '₪';
+    case 'USD':
+      return '$';
+    case 'EUR':
+      return '€';
+    default:
+      return code ?? '';
+  }
+}
+
 /* ---------------- STORY ---------------- */
 
-function Story() {
-  const {dict} = useI18n();
-  const s = dict.story;
+function Story({content}) {
+  // All story copy comes from the `homepage_story` metaobject linked via the
+  // `homepage.story` shop metafield. The merchant edits everything (paragraph
+  // text, stats, eyebrow, title) from Shopify Admin → Content → Metaobjects.
+  if (!content) return null;
+  const altText = content.titleLine2 || content.titleLine1 || 'Story';
   return (
     <section className="story" id="story">
       <div className="container">
         <div className="story-grid">
           <div className="story-media">
-            <span className="tag">{s.tag}</span>
+            {content.tag && <span className="tag">{content.tag}</span>}
             <img
               src={`${STORY_IMAGE}&width=1200`}
               srcSet={[600, 900, 1200, 1600]
                 .map((w) => `${STORY_IMAGE}&width=${w} ${w}w`)
                 .join(', ')}
               sizes="(min-width: 900px) 50vw, 100vw"
-              alt={s.titleLine2}
+              alt={altText}
               loading="lazy"
             />
           </div>
           <div className="story-copy">
-            <Reveal>
-              <div className="section-eyebrow" style={{marginBottom: 24}}>
-                <span>{s.eyebrow}</span>
+            {content.eyebrow && (
+              <Reveal>
+                <div className="section-eyebrow" style={{marginBottom: 24}}>
+                  <span>{content.eyebrow}</span>
+                </div>
+              </Reveal>
+            )}
+            {(content.titleLine1 || content.titleLine2) && (
+              <Reveal delay={80}>
+                <h2>
+                  {content.titleLine1}
+                  {content.titleLine1 && content.titleLine2 && <br />}
+                  {content.titleLine2 && <em>{content.titleLine2}</em>}
+                </h2>
+              </Reveal>
+            )}
+            {(content.p1 || content.p2) && (
+              <Reveal delay={160}>
+                {content.p1 && <p>{content.p1}</p>}
+                {content.p2 && <p>{content.p2}</p>}
+              </Reveal>
+            )}
+            {content.stats?.length > 0 && (
+              <div className="story-stats">
+                {content.stats.map((st, idx) => (
+                  <StoryStat
+                    key={st.id}
+                    n={st.n}
+                    k={st.k}
+                    delay={idx * 120}
+                  />
+                ))}
               </div>
-            </Reveal>
-            <Reveal delay={80}>
-              <h2>
-                {s.titleLine1}
-                <br />
-                <em>{s.titleLine2}</em>
-              </h2>
-            </Reveal>
-            <Reveal delay={160}>
-              <p>{s.p1}</p>
-              <p>{s.p2}</p>
-            </Reveal>
-            <div className="story-stats">
-              {s.stats.map((st, idx) => (
-                <StoryStat
-                  key={`${st.n}-${st.k}`}
-                  n={st.n}
-                  k={st.k}
-                  delay={idx * 120}
-                />
-              ))}
-            </div>
+            )}
           </div>
         </div>
       </div>
@@ -482,10 +761,11 @@ function Story() {
 
 /* ---------------- FAQ ---------------- */
 
-function Faq() {
+function Faq({items}) {
   const {dict} = useI18n();
   const f = dict.faq;
   const [open, setOpen] = useState(0);
+  if (!Array.isArray(items) || items.length === 0) return null;
   return (
     <section className="faq" id="faq">
       <div className="container faq-container">
@@ -504,17 +784,17 @@ function Faq() {
           </Reveal>
         </header>
         <ul className="faq-list" role="list">
-          {f.items.map((item, idx) => {
+          {items.map((item, idx) => {
             const isOpen = open === idx;
             return (
-              <li className={`faq-item${isOpen ? ' open' : ''}`} key={item.q}>
+              <li className={`faq-item${isOpen ? ' open' : ''}`} key={item.id}>
                 <button
                   type="button"
                   className="faq-q"
                   aria-expanded={isOpen}
                   onClick={() => setOpen(isOpen ? -1 : idx)}
                 >
-                  <span className="faq-q-text">{item.q}</span>
+                  <span className="faq-q-text">{item.question}</span>
                   <span className="faq-mark" aria-hidden="true">
                     <span />
                     <span />
@@ -522,7 +802,7 @@ function Faq() {
                 </button>
                 <div className="faq-a-wrap" aria-hidden={!isOpen}>
                   <div className="faq-a">
-                    <p>{item.a}</p>
+                    <p>{item.answer}</p>
                   </div>
                 </div>
               </li>
@@ -536,15 +816,17 @@ function Faq() {
 
 /* ---------------- TESTIMONIALS ---------------- */
 
-function Testimonials() {
+function Testimonials({items}) {
   const {dict} = useI18n();
   const t = dict.testify;
-  const quotes = t.items;
+  const quotes = Array.isArray(items) ? items : [];
   const [i, setI] = useState(0);
   useEffect(() => {
+    if (quotes.length <= 1) return undefined;
     const id = setInterval(() => setI((x) => (x + 1) % quotes.length), 6200);
     return () => clearInterval(id);
   }, [quotes.length]);
+  if (quotes.length === 0) return null;
   const q = quotes[i];
   return (
     <section className="testify">
@@ -560,11 +842,9 @@ function Testimonials() {
         <Reveal delay={120}>
           <div style={{position: 'relative', minHeight: 240}}>
             <blockquote key={i} style={{animation: 'fadeUp 0.5s ease both'}}>
-              «{q.a}
-              <em>{q.b}</em>
-              {q.c}»
+              «{q.body}»
             </blockquote>
-            <div className="attribution">{q.who}</div>
+            <div className="attribution">{q.attribution}</div>
           </div>
         </Reveal>
         <div className="testify-nav">
@@ -579,7 +859,7 @@ function Testimonials() {
           <div className="testify-dots">
             {quotes.map((q, j) => (
               <button
-                key={q.who}
+                key={q.id}
                 onClick={() => setI(j)}
                 aria-label={`${t.eyebrow.trim()} ${j + 1}`}
                 className={j === i ? 'on' : ''}
@@ -621,15 +901,152 @@ const FEATURED_COLLECTION_QUERY = `#graphql
 const FEATURED_PRODUCT_QUERY = `#graphql
   query FeaturedProduct($country: CountryCode, $language: LanguageCode)
     @inContext(country: $country, language: $language) {
-    products(first: 1, sortKey: UPDATED_AT, reverse: true) {
+    shop {
+      featured: metafield(namespace: "custom", key: "featured_product") {
+        reference {
+          ... on Product {
+            id
+            title
+            handle
+            priceRange {
+              minVariantPrice { amount currencyCode }
+            }
+            featuredImage { id url altText width height }
+            options {
+              id
+              name
+              optionValues {
+                id
+                name
+                swatch { color }
+              }
+            }
+            eyebrow_he: metafield(namespace: "marketing", key: "eyebrow_he") { value }
+            eyebrow_en: metafield(namespace: "marketing", key: "eyebrow_en") { value }
+            headline_he: metafield(namespace: "marketing", key: "headline_he") { value }
+            headline_en: metafield(namespace: "marketing", key: "headline_en") { value }
+            description_he: metafield(namespace: "marketing", key: "description_he") { value }
+            description_en: metafield(namespace: "marketing", key: "description_en") { value }
+            tagMadeToOrder_he: metafield(namespace: "marketing", key: "tag_made_to_order_he") { value }
+            tagMadeToOrder_en: metafield(namespace: "marketing", key: "tag_made_to_order_en") { value }
+            tagDimensions: metafield(namespace: "marketing", key: "tag_dimensions") { value }
+            shipNote_he: metafield(namespace: "marketing", key: "ship_note_he") { value }
+            shipNote_en: metafield(namespace: "marketing", key: "ship_note_en") { value }
+            specs: metafield(namespace: "marketing", key: "specs") {
+              references(first: 20) {
+                nodes {
+                  ... on Metaobject {
+                    id
+                    label_he: field(key: "label_he") { value }
+                    label_en: field(key: "label_en") { value }
+                    value_he: field(key: "value_he") { value }
+                    value_en: field(key: "value_en") { value }
+                    position: field(key: "position") { value }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+const FAQS_QUERY = `#graphql
+  query FAQs {
+    metaobjects(type: "faq", first: 20, sortKey: "position") {
       nodes {
         id
-        title
         handle
-        priceRange {
-          minVariantPrice { amount currencyCode }
+        fields { key value }
+      }
+    }
+  }
+`;
+
+const TESTIMONIALS_QUERY = `#graphql
+  query Testimonials {
+    metaobjects(type: "testimonial", first: 20, sortKey: "position") {
+      nodes {
+        id
+        handle
+        fields { key value }
+      }
+    }
+  }
+`;
+
+const HERO_SLIDES_QUERY = `#graphql
+  query HeroSlides {
+    metaobjects(type: "hero_slide", first: 10, sortKey: "position") {
+      nodes {
+        id
+        handle
+        fields {
+          key
+          value
+          reference {
+            ... on MediaImage {
+              image { url altText width height }
+            }
+          }
         }
-        featuredImage { id url altText width height }
+      }
+    }
+  }
+`;
+
+const HOMEPAGE_SECTIONS_QUERY = `#graphql
+  query HomepageSections {
+    shop {
+      hero: metafield(namespace: "homepage", key: "hero") {
+        reference {
+          ... on Metaobject {
+            eyebrow_he: field(key: "eyebrow_he") { value }
+            eyebrow_en: field(key: "eyebrow_en") { value }
+            title_line_1_he: field(key: "title_line_1_he") { value }
+            title_line_1_en: field(key: "title_line_1_en") { value }
+            title_line_2_he: field(key: "title_line_2_he") { value }
+            title_line_2_en: field(key: "title_line_2_en") { value }
+            kicker_he: field(key: "kicker_he") { value }
+            kicker_en: field(key: "kicker_en") { value }
+            cta_he: field(key: "cta_he") { value }
+            cta_en: field(key: "cta_en") { value }
+            tape_items_he: field(key: "tape_items_he") { value }
+            tape_items_en: field(key: "tape_items_en") { value }
+          }
+        }
+      }
+      story: metafield(namespace: "homepage", key: "story") {
+        reference {
+          ... on Metaobject {
+            tag: field(key: "tag") { value }
+            eyebrow_he: field(key: "eyebrow_he") { value }
+            eyebrow_en: field(key: "eyebrow_en") { value }
+            title_line_1_he: field(key: "title_line_1_he") { value }
+            title_line_1_en: field(key: "title_line_1_en") { value }
+            title_line_2_he: field(key: "title_line_2_he") { value }
+            title_line_2_en: field(key: "title_line_2_en") { value }
+            p1_he: field(key: "p1_he") { value }
+            p1_en: field(key: "p1_en") { value }
+            p2_he: field(key: "p2_he") { value }
+            p2_en: field(key: "p2_en") { value }
+            stats: field(key: "stats") {
+              references(first: 10) {
+                nodes {
+                  ... on Metaobject {
+                    id
+                    value: field(key: "value") { value }
+                    label_he: field(key: "label_he") { value }
+                    label_en: field(key: "label_en") { value }
+                    position: field(key: "position") { value }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     }
   }

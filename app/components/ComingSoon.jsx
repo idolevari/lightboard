@@ -1,4 +1,10 @@
+import {mailtoHref, useBusiness, whatsappHref} from '~/lib/brand';
+
 export function ComingSoon() {
+  const b = useBusiness();
+  const whatsapp = whatsappHref(b);
+  const mailto = mailtoHref(b);
+
   return (
     <div className="coming-soon">
       <div className="coming-soon-bg" aria-hidden="true" />
@@ -18,25 +24,31 @@ export function ComingSoon() {
         </h1>
 
         <div className="coming-soon-contact">
-          <a
-            className="coming-soon-link"
-            href="https://wa.me/972557209448"
-            target="_blank"
-            rel="noreferrer"
-          >
-            WhatsApp
-          </a>
-          <a className="coming-soon-link" href="mailto:lightboardshop@gmail.com">
-            Email
-          </a>
-          <a
-            className="coming-soon-link"
-            href="https://www.instagram.com/lightboardshop/"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Instagram
-          </a>
+          {whatsapp && (
+            <a
+              className="coming-soon-link"
+              href={whatsapp}
+              target="_blank"
+              rel="noreferrer"
+            >
+              WhatsApp
+            </a>
+          )}
+          {mailto && (
+            <a className="coming-soon-link" href={mailto}>
+              Email
+            </a>
+          )}
+          {b?.instagram && (
+            <a
+              className="coming-soon-link"
+              href={b.instagram}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Instagram
+            </a>
+          )}
         </div>
       </main>
     </div>

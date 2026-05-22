@@ -22,16 +22,23 @@ Hebrew-first (RTL) Shopify Hydrogen + Oxygen storefront. Migrating from a WordPr
 
 Every push to `main` auto-deploys to Oxygen via `.github/workflows/oxygen-deployment.yml`. Secret name: `OXYGEN_DEPLOYMENT_TOKEN_1000130179`.
 
-## Coming Soon Page
+## Coming Soon / Launch Gate
 
-Public visitors see `app/components/ComingSoon.jsx` by default. Bypass logic lives in `app/root.jsx` loader:
+When the launch gate is on, public visitors see `app/components/ComingSoon.jsx` and no other route can fetch data. Gate logic lives in `app/lib/coming-soon.js` and is enforced server-side by:
 
-- **Localhost** (`npm run dev`) → always shows the real storefront
-- **`?comingsoon=1`** on any URL → force-renders Coming Soon (for previewing it during dev)
-- **Production** → Coming Soon unless cookie `lb_preview=true` is set
-- **To unlock production:** visit `/preview?token=surfsup2026` once — sets a 30-day cookie. Token is in `app/routes/preview.jsx`.
+- `app/root.jsx` — returns minimal data (no header/footer/cart/shop/consent) when gated
+- `app/routes/($locale).jsx` — redirects every non-`/` customer-facing path to `/`
+- `app/routes/($locale)._index.jsx` — short-circuits the homepage loader
+- `app/routes/api.photos.upload.jsx` — returns 404 while gated
 
-Remove the Coming Soon gate at launch by reverting the conditional in `app/root.jsx` → `App()`.
+**Controls:**
+
+- `env.COMING_SOON='true'` → enables the gate (any other value = off)
+- **Localhost** (`localhost` / `127.0.0.1`) → always bypasses, so `npm run dev` works
+- **Bypass cookie** `lb_preview=1` (httpOnly, Secure, SameSite=Lax, 30 days) → set by `/preview`
+- **`/preview?token=<env.PREVIEW_TOKEN>`** → constant-time check, sets the cookie, redirects to `/`. Unknown/missing token returns 404. Set `PREVIEW_TOKEN` in the Oxygen env to enable bypass; without it nobody can preview.
+
+**Launching:** set `COMING_SOON=false` (or remove the env var). No code change needed.
 
 ## Brand
 

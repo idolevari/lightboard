@@ -2,12 +2,17 @@ import {useLoaderData} from 'react-router';
 import {Image} from '@shopify/hydrogen';
 import {redirectIfHandleIsLocalized} from '~/lib/redirect';
 import {useI18n} from '~/lib/useI18n';
+import {sanitizeShopifyHtml} from '~/lib/sanitize';
+import {pageTitle} from '~/lib/meta';
 
 /**
  * @type {Route.MetaFunction}
  */
-export const meta = ({data}) => {
-  return [{title: `Lightboard | ${data?.article.title ?? ''} article`}];
+export const meta = ({data, matches}) => {
+  const articleTitle = data?.article.title;
+  return [
+    {title: pageTitle(matches, articleTitle ? `${articleTitle} article` : null)},
+  ];
 };
 
 /**
@@ -37,6 +42,7 @@ async function loadCriticalData({context, request, params}) {
 
   const [{blog}] = await Promise.all([
     context.storefront.query(ARTICLE_QUERY, {
+      cache: context.storefront.CacheLong(),
       variables: {blogHandle, articleHandle},
     }),
     // Add other queries here, so that they are loaded in parallel
@@ -96,7 +102,7 @@ export default function Article() {
 
       {image && <Image data={image} sizes="90vw" loading="eager" />}
       <div
-        dangerouslySetInnerHTML={{__html: contentHtml}}
+        dangerouslySetInnerHTML={{__html: sanitizeShopifyHtml(contentHtml)}}
         className="article"
       />
     </div>
