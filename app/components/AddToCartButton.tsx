@@ -1,21 +1,22 @@
+import type {ReactNode} from 'react';
 import {CartForm} from '@shopify/hydrogen';
+import type {OptimisticCartLineInput} from '@shopify/hydrogen';
 
-/**
- * @param {{
- *   analytics?: unknown;
- *   children: React.ReactNode;
- *   disabled?: boolean;
- *   lines: Array<OptimisticCartLineInput>;
- *   onClick?: () => void;
- * }}
- */
+type AddToCartButtonProps = {
+  analytics?: unknown;
+  children: ReactNode;
+  disabled?: boolean;
+  lines: Array<OptimisticCartLineInput>;
+  onClick?: () => void;
+};
+
 export function AddToCartButton({
   analytics,
   children,
   disabled,
   lines,
   onClick,
-}) {
+}: AddToCartButtonProps) {
   return (
     <CartForm route="/cart" inputs={{lines}} action={CartForm.ACTIONS.LinesAdd}>
       {(fetcher) => (
@@ -37,6 +38,3 @@ export function AddToCartButton({
     </CartForm>
   );
 }
-
-/** @typedef {import('react-router').FetcherWithComponents} FetcherWithComponents */
-/** @typedef {import('@shopify/hydrogen').OptimisticCartLineInput} OptimisticCartLineInput */

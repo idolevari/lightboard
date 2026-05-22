@@ -1,5 +1,7 @@
 import {Link, useNavigate} from 'react-router';
 import {CartForm} from '@shopify/hydrogen';
+import type {MappedProductOptions} from '@shopify/hydrogen';
+import type {ProductFragment} from 'storefrontapi.generated';
 import {AddToCartButton} from './AddToCartButton';
 import {useAside} from './Aside';
 import {useI18n} from '~/lib/useI18n';
@@ -13,12 +15,12 @@ import {
  * Variant option swatches for the PDP. Pure UI — no shared state with the
  * customizer/cart pieces, so it can be rendered above the product description
  * while the customize + add-to-cart panel lives further down.
- *
- * @param {{
- *   productOptions: MappedProductOptions[];
- * }}
  */
-export function ProductOptions({productOptions}) {
+export function ProductOptions({
+  productOptions,
+}: {
+  productOptions: MappedProductOptions[];
+}) {
   const navigate = useNavigate();
   const {dict, to} = useI18n();
 
@@ -115,19 +117,21 @@ export function ProductOptions({productOptions}) {
   );
 }
 
+type PhotoAttribute = {key: string; value: string};
+
+type ProductCartActionProps = {
+  selectedVariant: ProductFragment['selectedOrFirstAvailableVariant'];
+  requiresPhotos?: boolean;
+  isEditing?: boolean;
+  editLineId?: string | null;
+  photoAttributes?: PhotoAttribute[] | null;
+};
+
 /**
  * Cart submission panel. Renders the AddToCart button (or the line-update form
  * when editing an existing cart line). Reads photoAttributes from the parent
  * route because the photo customizer that produces them lives in a separate
  * subtree on the PDP.
- *
- * @param {{
- *   selectedVariant: ProductFragment['selectedOrFirstAvailableVariant'];
- *   requiresPhotos?: boolean;
- *   isEditing?: boolean;
- *   editLineId?: string | null;
- *   photoAttributes?: Array<{key: string, value: string}> | null;
- * }}
  */
 export function ProductCartAction({
   selectedVariant,
@@ -135,7 +139,7 @@ export function ProductCartAction({
   isEditing = false,
   editLineId = null,
   photoAttributes = null,
-}) {
+}: ProductCartActionProps) {
   const {open} = useAside();
   const {dict, to} = useI18n();
 
@@ -183,7 +187,17 @@ export function ProductCartAction({
  * existing line. The form auto-submits as soon as `attributes` becomes
  * non-null — the photo customizer flips that state on Approve.
  */
-function UpdateCartLineForm({lineId, attributes, label, to}) {
+function UpdateCartLineForm({
+  lineId,
+  attributes,
+  label,
+  to,
+}: {
+  lineId: string;
+  attributes: PhotoAttribute[] | null;
+  label: string;
+  to: (path: string) => string;
+}) {
   return (
     <CartForm
       route="/cart"
@@ -204,6 +218,3 @@ function UpdateCartLineForm({lineId, attributes, label, to}) {
     </CartForm>
   );
 }
-
-/** @typedef {import('@shopify/hydrogen').MappedProductOptions} MappedProductOptions */
-/** @typedef {import('storefrontapi.generated').ProductFragment} ProductFragment */

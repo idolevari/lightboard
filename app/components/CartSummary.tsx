@@ -1,12 +1,29 @@
 import {CartForm, Money} from '@shopify/hydrogen';
+import type {OptimisticCart} from '@shopify/hydrogen';
 import {useEffect, useId, useRef, useState} from 'react';
+import type {ReactNode, Ref} from 'react';
 import {useFetcher} from 'react-router';
 import {useI18n} from '~/lib/useI18n';
+import type {CartApiQueryFragment} from 'storefrontapi.generated';
+import type {CartLayout} from '~/components/CartMain';
 
-/**
- * @param {CartSummaryProps}
- */
-export function CartSummary({cart, layout}) {
+type CartSummaryProps = {
+  cart: OptimisticCart<CartApiQueryFragment | null>;
+  layout: CartLayout;
+};
+
+type DiscountCodeApplication = {
+  code: string;
+  applicable: boolean;
+};
+
+type GiftCardCode = {
+  id: string;
+  lastCharacters: string;
+  amountUsed: React.ComponentProps<typeof Money>['data'];
+};
+
+export function CartSummary({cart, layout}: CartSummaryProps) {
   const className =
     layout === 'page' ? 'cart-summary-page' : 'cart-summary-aside';
   const summaryId = useId();
@@ -25,19 +42,19 @@ export function CartSummary({cart, layout}) {
         <dt>{dict.cart.subtotal}</dt>
         <dd>
           {cart?.cost?.subtotalAmount?.amount ? (
-            <Money data={cart?.cost?.subtotalAmount} />
+            <Money data={cart.cost.subtotalAmount} />
           ) : (
             '-'
           )}
         </dd>
       </dl>
       <CartDiscounts
-        discountCodes={cart?.discountCodes}
+        discountCodes={cart?.discountCodes as DiscountCodeApplication[] | undefined}
         discountsHeadingId={discountsHeadingId}
         discountCodeInputId={discountCodeInputId}
       />
       <CartGiftCard
-        giftCardCodes={cart?.appliedGiftCards}
+        giftCardCodes={cart?.appliedGiftCards as GiftCardCode[] | undefined}
         giftCardHeadingId={giftCardHeadingId}
         giftCardInputId={giftCardInputId}
       />
@@ -63,7 +80,15 @@ export function CartSummary({cart, layout}) {
  * the storefront-side checkout link instead — equivalent intent, customer cannot
  * reach the payment page without an explicit acceptance.
  */
-function TermsAgreement({checked, onChange, agreementId}) {
+function TermsAgreement({
+  checked,
+  onChange,
+  agreementId,
+}: {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  agreementId: string;
+}) {
   const {dict, to} = useI18n();
   const t = dict.cart.terms ?? {};
   return (
@@ -92,7 +117,13 @@ function TermsAgreement({checked, onChange, agreementId}) {
   );
 }
 
-function CartCheckoutActions({checkoutUrl, disabled}) {
+function CartCheckoutActions({
+  checkoutUrl,
+  disabled,
+}: {
+  checkoutUrl?: string | null;
+  disabled: boolean;
+}) {
   const {dict} = useI18n();
   if (!checkoutUrl) return null;
   const t = dict.cart.terms ?? {};
@@ -126,6 +157,10 @@ function CartDiscounts({
   discountCodes,
   discountsHeadingId,
   discountCodeInputId,
+}: {
+  discountCodes?: DiscountCodeApplication[];
+  discountsHeadingId: string;
+  discountCodeInputId: string;
 }) {
   const {dict} = useI18n();
   const codes =
@@ -175,7 +210,13 @@ function CartDiscounts({
   );
 }
 
-function UpdateDiscountForm({discountCodes, children}) {
+function UpdateDiscountForm({
+  discountCodes,
+  children,
+}: {
+  discountCodes?: string[];
+  children: ReactNode;
+}) {
   return (
     <CartForm
       route="/cart"
@@ -189,12 +230,20 @@ function UpdateDiscountForm({discountCodes, children}) {
   );
 }
 
-function CartGiftCard({giftCardCodes, giftCardHeadingId, giftCardInputId}) {
-  const giftCardCodeInput = useRef(null);
-  const removeButtonRefs = useRef(new Map());
-  const previousCardIdsRef = useRef([]);
+function CartGiftCard({
+  giftCardCodes,
+  giftCardHeadingId,
+  giftCardInputId,
+}: {
+  giftCardCodes?: GiftCardCode[];
+  giftCardHeadingId: string;
+  giftCardInputId: string;
+}) {
+  const giftCardCodeInput = useRef<HTMLInputElement | null>(null);
+  const removeButtonRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
+  const previousCardIdsRef = useRef<string[]>([]);
   const giftCardAddFetcher = useFetcher({key: 'gift-card-add'});
-  const [removedCardIndex, setRemovedCardIndex] = useState(null);
+  const [removedCardIndex, setRemovedCardIndex] = useState<number | null>(null);
   const {dict} = useI18n();
 
   useEffect(() => {
@@ -230,7 +279,7 @@ function CartGiftCard({giftCardCodes, giftCardHeadingId, giftCardInputId}) {
     previousCardIdsRef.current = currentCardIds;
   }, [giftCardCodes, removedCardIndex]);
 
-  const handleRemoveClick = (cardId) => {
+  const handleRemoveClick = (cardId: string) => {
     const index = previousCardIdsRef.current.indexOf(cardId);
     if (index !== -1) {
       setRemovedCardIndex(index);
@@ -291,7 +340,13 @@ function CartGiftCard({giftCardCodes, giftCardHeadingId, giftCardInputId}) {
   );
 }
 
-function AddGiftCardForm({fetcherKey, children}) {
+function AddGiftCardForm({
+  fetcherKey,
+  children,
+}: {
+  fetcherKey: string;
+  children: ReactNode;
+}) {
   return (
     <CartForm
       fetcherKey={fetcherKey}
@@ -309,6 +364,12 @@ function RemoveGiftCardForm({
   children,
   onRemoveClick,
   buttonRef,
+}: {
+  giftCardId: string;
+  lastCharacters: string;
+  children: ReactNode;
+  onRemoveClick: () => void;
+  buttonRef: Ref<HTMLButtonElement>;
 }) {
   const {dict} = useI18n();
   return (
@@ -332,13 +393,3 @@ function RemoveGiftCardForm({
     </CartForm>
   );
 }
-
-/**
- * @typedef {{
- *   cart: OptimisticCart<CartApiQueryFragment | null>;
- *   layout: CartLayout;
- * }} CartSummaryProps
- */
-/** @typedef {import('storefrontapi.generated').CartApiQueryFragment} CartApiQueryFragment */
-/** @typedef {import('~/components/CartMain').CartLayout} CartLayout */
-/** @typedef {import('@shopify/hydrogen').OptimisticCart} OptimisticCart */

@@ -2,25 +2,36 @@ import {useEffect, useId, useRef, useState} from 'react';
 import {useI18n} from '~/lib/useI18n';
 
 const STORAGE_KEY = 'lb-a11y';
-const DEFAULTS = {
+
+type TextSize = 'normal' | 'larger' | 'much-larger';
+
+type A11ySettings = {
+  textSize: TextSize;
+  highContrast: boolean;
+  highlightLinks: boolean;
+  readableFont: boolean;
+};
+
+const DEFAULTS: A11ySettings = {
   textSize: 'normal',
   highContrast: false,
   highlightLinks: false,
   readableFont: false,
 };
 
-function loadSettings() {
+function loadSettings(): A11ySettings {
   if (typeof window === 'undefined') return DEFAULTS;
   try {
     const stored = window.localStorage.getItem(STORAGE_KEY);
     if (!stored) return DEFAULTS;
-    return {...DEFAULTS, ...JSON.parse(stored)};
+    const parsed = JSON.parse(stored) as Partial<A11ySettings>;
+    return {...DEFAULTS, ...parsed};
   } catch {
     return DEFAULTS;
   }
 }
 
-function applyToBody(s) {
+function applyToBody(s: A11ySettings) {
   if (typeof document === 'undefined') return;
   const c = document.body.classList;
   c.toggle('a11y-larger-text', s.textSize === 'larger');
@@ -34,11 +45,11 @@ export function AccessibilityMenu() {
   const {dict, to} = useI18n();
   const a = dict.a11y ?? {};
   const [open, setOpen] = useState(false);
-  const [settings, setSettings] = useState(DEFAULTS);
+  const [settings, setSettings] = useState<A11ySettings>(DEFAULTS);
   const [hydrated, setHydrated] = useState(false);
   const panelId = useId();
-  const buttonRef = useRef(null);
-  const panelRef = useRef(null);
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const loaded = loadSettings();
@@ -73,8 +84,8 @@ export function AccessibilityMenu() {
           'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
         );
         if (focusables.length === 0) return;
-        const first = focusables[0];
-        const last = focusables[focusables.length - 1];
+        const first = focusables[0] as HTMLElement;
+        const last = focusables[focusables.length - 1] as HTMLElement;
         if (e.shiftKey && document.activeElement === first) {
           e.preventDefault();
           last.focus();
@@ -85,12 +96,13 @@ export function AccessibilityMenu() {
       },
       {signal: ctrl.signal},
     );
-    const closeBtn = panelRef.current?.querySelector('.a11y-close');
+    const closeBtn = panelRef.current?.querySelector<HTMLElement>('.a11y-close');
     closeBtn?.focus();
     return () => ctrl.abort();
   }, [open]);
 
-  const update = (patch) => setSettings((s) => ({...s, ...patch}));
+  const update = (patch: Partial<A11ySettings>) =>
+    setSettings((s) => ({...s, ...patch}));
   const reset = () => setSettings(DEFAULTS);
 
   return (

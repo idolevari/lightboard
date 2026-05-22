@@ -1,20 +1,22 @@
 import {useState, useCallback} from 'react';
 import Cropper from 'react-easy-crop';
+import type {Area, Point} from 'react-easy-crop';
+import type {CropPixels} from '~/lib/photo-canvas';
+
+type CropDialogProps = {
+  imageUrl: string;
+  initialCrop?: CropPixels | null;
+  slotLabel: string;
+  saveLabel: string;
+  cancelLabel: string;
+  zoomLabel: string;
+  onSave: (cropPixels: CropPixels) => void;
+  onCancel: () => void;
+};
 
 /**
  * Square-aspect crop modal. Renders a backdrop + centered card with
  * react-easy-crop inside and Save/Cancel actions.
- *
- * @param {{
- *   imageUrl: string,
- *   initialCrop?: {x: number, y: number, width: number, height: number} | null,
- *   slotLabel: string,
- *   saveLabel: string,
- *   cancelLabel: string,
- *   zoomLabel: string,
- *   onSave: (cropPixels: {x: number, y: number, width: number, height: number}) => void,
- *   onCancel: () => void,
- * }}
  */
 export function CropDialog({
   imageUrl,
@@ -25,14 +27,19 @@ export function CropDialog({
   zoomLabel,
   onSave,
   onCancel,
-}) {
-  const [crop, setCrop] = useState({x: 0, y: 0});
+}: CropDialogProps) {
+  const [crop, setCrop] = useState<Point>({x: 0, y: 0});
   const [zoom, setZoom] = useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState(initialCrop ?? null);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<CropPixels | null>(
+    initialCrop ?? null,
+  );
 
-  const handleCropComplete = useCallback((_area, areaPixels) => {
-    setCroppedAreaPixels(areaPixels);
-  }, []);
+  const handleCropComplete = useCallback(
+    (_area: Area, areaPixels: Area) => {
+      setCroppedAreaPixels(areaPixels);
+    },
+    [],
+  );
 
   function handleSave() {
     if (croppedAreaPixels) onSave(croppedAreaPixels);
@@ -59,7 +66,10 @@ export function CropDialog({
             onCropChange={setCrop}
             onZoomChange={setZoom}
             onCropComplete={handleCropComplete}
-            objectFit="auto-cover"
+            // "auto-cover" is not in the react-easy-crop type union but the
+            // package falls back to its default behavior at runtime; keep the
+            // historical value rather than changing observable behavior here.
+            objectFit={'auto-cover' as 'cover'}
             restrictPosition={true}
           />
         </div>

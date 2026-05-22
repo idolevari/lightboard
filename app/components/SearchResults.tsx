@@ -1,12 +1,21 @@
 import {Link} from 'react-router';
+import type {ReactNode} from 'react';
 import {Image, Money, Pagination} from '@shopify/hydrogen';
 import {urlWithTrackingParams} from '~/lib/search';
+import type {RegularSearchReturn} from '~/lib/search';
 import {useI18n} from '~/lib/useI18n';
 
-/**
- * @param {Omit<SearchResultsProps, 'error' | 'type'>}
- */
-export function SearchResults({term, result, children}) {
+type SearchItems = RegularSearchReturn['result']['items'];
+
+type SearchResultsProps = RegularSearchReturn & {
+  children: (args: SearchItems & {term: string}) => ReactNode;
+};
+
+export function SearchResults({
+  term,
+  result,
+  children,
+}: Omit<SearchResultsProps, 'error' | 'type'>) {
   if (!result?.total) return null;
   return children({...result.items, term});
 }
@@ -16,7 +25,16 @@ SearchResults.Pages = SearchResultsPages;
 SearchResults.Products = SearchResultsProducts;
 SearchResults.Empty = SearchResultsEmpty;
 
-function SearchResultsArticles({term, articles}) {
+type ArticleNode = SearchItems['articles']['nodes'][number];
+type PageNode = SearchItems['pages']['nodes'][number];
+
+function SearchResultsArticles({
+  term,
+  articles,
+}: {
+  term: string;
+  articles: SearchItems['articles'];
+}) {
   const {dict, to} = useI18n();
   if (!articles?.nodes.length) return null;
 
@@ -24,7 +42,7 @@ function SearchResultsArticles({term, articles}) {
     <div className="search-result">
       <h2>{dict.search.articles}</h2>
       <div>
-        {articles?.nodes?.map((article) => {
+        {articles?.nodes?.map((article: ArticleNode) => {
           const articleUrl = urlWithTrackingParams({
             baseUrl: to(`/blogs/${article.handle}`),
             trackingParams: article.trackingParameters,
@@ -44,7 +62,13 @@ function SearchResultsArticles({term, articles}) {
   );
 }
 
-function SearchResultsPages({term, pages}) {
+function SearchResultsPages({
+  term,
+  pages,
+}: {
+  term: string;
+  pages: SearchItems['pages'];
+}) {
   const {dict, to} = useI18n();
   if (!pages?.nodes.length) return null;
 
@@ -52,7 +76,7 @@ function SearchResultsPages({term, pages}) {
     <div className="search-result">
       <h2>{dict.search.pages}</h2>
       <div>
-        {pages?.nodes?.map((page) => {
+        {pages?.nodes?.map((page: PageNode) => {
           const pageUrl = urlWithTrackingParams({
             baseUrl: to(`/pages/${page.handle}`),
             trackingParams: page.trackingParameters,
@@ -72,7 +96,13 @@ function SearchResultsPages({term, pages}) {
   );
 }
 
-function SearchResultsProducts({term, products}) {
+function SearchResultsProducts({
+  term,
+  products,
+}: {
+  term: string;
+  products: SearchItems['products'];
+}) {
   const {dict, to} = useI18n();
   if (!products?.nodes.length) return null;
 
@@ -135,15 +165,3 @@ function SearchResultsEmpty() {
   const {dict} = useI18n();
   return <p>{dict.search.noResults}</p>;
 }
-
-/** @typedef {RegularSearchReturn['result']['items']} SearchItems */
-/**
- * @typedef {Pick<SearchItems, ItemType> & Pick<RegularSearchReturn, 'term'>} PartialSearchResult
- * @template {keyof SearchItems} ItemType
- */
-/**
- * @typedef {RegularSearchReturn & {
- *   children: (args: SearchItems & {term: string}) => React.ReactNode;
- * }} SearchResultsProps
- */
-/** @typedef {import('~/lib/search').RegularSearchReturn} RegularSearchReturn */

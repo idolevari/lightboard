@@ -1,6 +1,7 @@
 import {Suspense, useEffect, useState} from 'react';
 import {Await, Link, NavLink, useAsyncValue, useLocation} from 'react-router';
 import {useAnalytics, useOptimisticCart} from '@shopify/hydrogen';
+import type {CartReturn} from '@shopify/hydrogen';
 import {useAside} from '~/components/Aside';
 import {useI18n} from '~/lib/useI18n';
 import {
@@ -8,10 +9,24 @@ import {
   getLocaleConfig,
   swapLocaleInPath,
 } from '~/lib/i18n';
+import type {
+  CartApiQueryFragment,
+  HeaderQuery,
+} from 'storefrontapi.generated';
 
 const HOME_PATH_RE = /^\/([a-z]{2}\/?)?$/;
 
-export function Header({isLoggedIn, cart}) {
+type ResolvedCart = CartApiQueryFragment | CartReturn | null;
+type HeaderCart = Promise<ResolvedCart> | ResolvedCart;
+
+export type HeaderProps = {
+  header: HeaderQuery;
+  cart: HeaderCart;
+  isLoggedIn: Promise<boolean>;
+  publicStoreDomain: string;
+};
+
+export function Header({isLoggedIn, cart}: HeaderProps) {
   const {dict, to} = useI18n();
   const location = useLocation();
   const isHome = HOME_PATH_RE.test(location.pathname);
@@ -116,7 +131,19 @@ function LangToggle() {
   );
 }
 
-export function HeaderMenu({menu, primaryDomainUrl, viewport, publicStoreDomain}) {
+type HeaderMenuProps = {
+  menu: HeaderQuery['menu'] | null | undefined;
+  primaryDomainUrl?: string;
+  viewport: 'desktop' | 'mobile';
+  publicStoreDomain: string;
+};
+
+export function HeaderMenu({
+  menu,
+  primaryDomainUrl,
+  viewport,
+  publicStoreDomain,
+}: HeaderMenuProps) {
   const className = `header-menu-${viewport}`;
   const {close} = useAside();
   const {to, dict} = useI18n();
@@ -154,7 +181,7 @@ export function HeaderMenu({menu, primaryDomainUrl, viewport, publicStoreDomain}
   );
 }
 
-function MenuToggle({label}) {
+function MenuToggle({label}: {label: string}) {
   const {open} = useAside();
   return (
     <button
@@ -172,7 +199,7 @@ function MenuToggle({label}) {
   );
 }
 
-function SearchToggle({label}) {
+function SearchToggle({label}: {label: string}) {
   const {open} = useAside();
   return (
     <button
@@ -189,7 +216,13 @@ function SearchToggle({label}) {
   );
 }
 
-function AccountLink({isLoggedIn, label}) {
+function AccountLink({
+  isLoggedIn,
+  label,
+}: {
+  isLoggedIn: Promise<boolean>;
+  label: string;
+}) {
   const {to} = useI18n();
   return (
     <NavLink
@@ -219,7 +252,7 @@ function AccountLink({isLoggedIn, label}) {
   );
 }
 
-function CartBadge({count, label}) {
+function CartBadge({count, label}: {count: number; label: string}) {
   const {open} = useAside();
   const {publish, shop, cart, prevCart} = useAnalytics();
   return (
@@ -247,7 +280,7 @@ function CartBadge({count, label}) {
   );
 }
 
-function CartToggle({cart, label}) {
+function CartToggle({cart, label}: {cart: HeaderCart; label: string}) {
   return (
     <Suspense fallback={<CartBadge count={0} label={label} />}>
       <Await resolve={cart}>
@@ -257,8 +290,8 @@ function CartToggle({cart, label}) {
   );
 }
 
-function CartBanner({label}) {
-  const originalCart = useAsyncValue();
+function CartBanner({label}: {label: string}) {
+  const originalCart = useAsyncValue() as ResolvedCart;
   const cart = useOptimisticCart(originalCart);
   return <CartBadge count={cart?.totalQuantity ?? 0} label={label} />;
 }

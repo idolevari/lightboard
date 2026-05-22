@@ -9,6 +9,7 @@ import {
   validatePhotoDimensions,
   validatePhotoFile,
 } from '~/lib/photo-canvas';
+import type {CropPixels} from '~/lib/photo-canvas';
 import {pickThreeFromGallery} from '~/lib/surprise-gallery';
 import {BoardCanvas} from './BoardCanvas';
 import {CropDialog} from './CropDialog';
@@ -17,25 +18,70 @@ const SLOT_COUNT = 3;
 const PREVIEW_THUMBNAIL_SIZE = 480;
 const STATE_STORAGE_PREFIX = 'lightboard:photoState:';
 
+type PhotoSlotState = {
+  file: File | null;
+  imageObjectUrl: string | null;
+  imageEl: HTMLImageElement | null;
+  imageDimensions: {width: number; height: number} | null;
+  crop: CropPixels | null;
+  thumbnailObjectUrl: string | null;
+  uploadedCroppedUrl: string | null;
+  uploadedOriginalUrl: string | null;
+  dirty: boolean;
+  error: string | null;
+};
+
+type StoredPhotoState = {
+  originalUrls: Array<string | null>;
+  crops: Array<CropPixels | null>;
+};
+
+export type PhotoCustomizerInitialState = {
+  croppedUrls: string[];
+  originalUrls: Array<string | null>;
+  crops: Array<CropPixels | null>;
+};
+
+export type PhotoAttribute = {key: string; value: string};
+
+export type PhotoCustomizerProps = {
+  cartId?: string | null;
+  initialState?: PhotoCustomizerInitialState | null;
+  isEditing?: boolean;
+  onApprove: (attrs: PhotoAttribute[]) => void;
+  onUnapprove?: () => void;
+};
+
+type UploadResult = {
+  cropped: Array<string | null>;
+  originals: Array<string | null>;
+};
+
 /**
  * Build the localStorage key for a photo line. We index by the first cropped
  * URL because every approve generates fresh, unique CDN URLs — so the key is
  * stable per line and avoids collisions across orders.
  */
-function stateStorageKey(firstCroppedUrl) {
+function stateStorageKey(firstCroppedUrl: string | null | undefined) {
   if (!firstCroppedUrl) return null;
   return STATE_STORAGE_PREFIX + firstCroppedUrl;
 }
 
-function readStoredPhotoState(firstCroppedUrl) {
+function readStoredPhotoState(
+  firstCroppedUrl: string | null | undefined,
+): StoredPhotoState | null {
   if (typeof window === 'undefined') return null;
   const key = stateStorageKey(firstCroppedUrl);
   if (!key) return null;
   try {
     const raw = window.localStorage.getItem(key);
     if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (!parsed || !Array.isArray(parsed.originalUrls) || !Array.isArray(parsed.crops)) {
+    const parsed = JSON.parse(raw) as StoredPhotoState | null;
+    if (
+      !parsed ||
+      !Array.isArray(parsed.originalUrls) ||
+      !Array.isArray(parsed.crops)
+    ) {
       return null;
     }
     return parsed;
@@ -44,7 +90,10 @@ function readStoredPhotoState(firstCroppedUrl) {
   }
 }
 
-function writeStoredPhotoState(firstCroppedUrl, payload) {
+function writeStoredPhotoState(
+  firstCroppedUrl: string | null | undefined,
+  payload: StoredPhotoState,
+) {
   if (typeof window === 'undefined') return;
   const key = stateStorageKey(firstCroppedUrl);
   if (!key) return;
@@ -56,7 +105,7 @@ function writeStoredPhotoState(firstCroppedUrl, payload) {
   }
 }
 
-function emptySlot() {
+function emptySlot(): PhotoSlotState {
   return {
     file: null,
     imageObjectUrl: null,
@@ -72,7 +121,7 @@ function emptySlot() {
 }
 
 /** Pick whichever URL the preview should display for this slot. */
-function previewUrlFor(slot) {
+function previewUrlFor(slot: PhotoSlotState): string | null {
   return slot.thumbnailObjectUrl || slot.uploadedCroppedUrl || null;
 }
 
@@ -84,18 +133,6 @@ function previewUrlFor(slot) {
  * slots have been cropped, uploaded to Shopify Files, and the user clicks
  * Approve. The parent (ProductForm) merges those attributes into LinesAdd or
  * LinesUpdate as appropriate.
- *
- * @param {{
- *   cartId?: string | null,
- *   initialState?: {
- *     croppedUrls: string[],
- *     originalUrls: string[],
- *     crops: Array<{x: number, y: number, width: number, height: number}>,
- *   } | null,
- *   isEditing?: boolean,
- *   onApprove: (attrs: Array<{key: string, value: string}>) => void,
- *   onUnapprove?: () => void,
- * }}
  */
 export function PhotoCustomizer({
   cartId,
@@ -103,14 +140,16 @@ export function PhotoCustomizer({
   isEditing = false,
   onApprove,
   onUnapprove,
-}) {
+}: PhotoCustomizerProps) {
   const {dict} = useI18n();
   const t = dict.photoCustomizer;
 
-  const [slots, setSlots] = useState(() => seedSlots(initialState));
-  const [cropDialogIndex, setCropDialogIndex] = useState(null);
+  const [slots, setSlots] = useState<PhotoSlotState[]>(() =>
+    seedSlots(initialState),
+  );
+  const [cropDialogIndex, setCropDialogIndex] = useState<number | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [uploadError, setUploadError] = useState(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [approved, setApproved] = useState(() => !!initialState && !isEditing);
 
   const mountedRef = useRef(true);
@@ -154,7 +193,7 @@ export function PhotoCustomizer({
   const allFilled = slots.every((s) => previewUrlFor(s));
   const anyDirty = slots.some((s) => s.dirty);
 
-  function patchSlot(index, patch) {
+  function patchSlot(index: number, patch: Partial<PhotoSlotState>) {
     setSlots((current) => {
       const next = current.slice();
       next[index] = {...next[index], ...patch};
@@ -180,7 +219,7 @@ export function PhotoCustomizer({
     setUploadError(null);
     const currentlyShown = slots
       .map((s) => s.uploadedCroppedUrl)
-      .filter(Boolean);
+      .filter((url): url is string => Boolean(url));
     const picks = pickThreeFromGallery(currentlyShown);
     setSlots((current) =>
       current.map((slot, i) => {
@@ -197,147 +236,158 @@ export function PhotoCustomizer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slots]);
 
-  const handleFilePicked = useCallback(async (index, file) => {
-    markUnapproved();
-    const fileCheck = validatePhotoFile(file);
-    if (!fileCheck.ok) {
-      patchSlot(index, {error: t.errors[fileCheck.reason]});
-      return;
-    }
-    let loaded;
-    try {
-      loaded = await loadImageFromFile(file);
-    } catch (err) {
-      console.error('[PhotoCustomizer] loadImageFromFile failed', {
-        name: file.name,
-        type: file.type,
-        size: file.size,
-        err,
-      });
-      patchSlot(index, {error: t.errors.loadFailed});
-      return;
-    }
-    if (!mountedRef.current) {
-      URL.revokeObjectURL(loaded.objectUrl);
-      return;
-    }
-    const dimsCheck = validatePhotoDimensions(loaded);
-    if (!dimsCheck.ok) {
-      URL.revokeObjectURL(loaded.objectUrl);
-      patchSlot(index, {error: t.errors[dimsCheck.reason]});
-      return;
-    }
-
-    setSlots((current) => {
-      const next = current.slice();
-      const prev = next[index];
-      if (prev.imageObjectUrl) URL.revokeObjectURL(prev.imageObjectUrl);
-      if (prev.thumbnailObjectUrl) URL.revokeObjectURL(prev.thumbnailObjectUrl);
-      next[index] = {
-        ...emptySlot(),
-        file,
-        imageObjectUrl: loaded.objectUrl,
-        imageEl: loaded.image,
-        imageDimensions: {width: loaded.width, height: loaded.height},
-        crop: getDefaultSquareCrop(loaded),
-        dirty: true,
-      };
-      return next;
-    });
-    setCropDialogIndex(index);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [t]);
-
-  const handleEditCrop = useCallback(async (index) => {
-    markUnapproved();
-    const slot = slots[index];
-    if (slot.imageEl) {
-      setCropDialogIndex(index);
-      return;
-    }
-    if (!slot.uploadedOriginalUrl) {
-      patchSlot(index, {error: t.errors.cannotEdit});
-      return;
-    }
-    patchSlot(index, {error: null});
-    try {
-      const blob = await fetchRemoteImageAsBlob(slot.uploadedOriginalUrl);
-      const file = new File([blob], `original-${index + 1}`, {
-        type: blob.type || 'image/jpeg',
-      });
-      const loaded = await loadImageFromFile(file);
+  const handleFilePicked = useCallback(
+    async (index: number, file: File) => {
+      markUnapproved();
+      const fileCheck = validatePhotoFile(file);
+      if (!fileCheck.ok) {
+        patchSlot(index, {error: t.errors[fileCheck.reason as string]});
+        return;
+      }
+      let loaded;
+      try {
+        loaded = await loadImageFromFile(file);
+      } catch (err) {
+        console.error('[PhotoCustomizer] loadImageFromFile failed', {
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          err,
+        });
+        patchSlot(index, {error: t.errors.loadFailed});
+        return;
+      }
       if (!mountedRef.current) {
         URL.revokeObjectURL(loaded.objectUrl);
         return;
       }
+      const dimsCheck = validatePhotoDimensions(loaded);
+      if (!dimsCheck.ok) {
+        URL.revokeObjectURL(loaded.objectUrl);
+        patchSlot(index, {error: t.errors[dimsCheck.reason as string]});
+        return;
+      }
+
       setSlots((current) => {
         const next = current.slice();
         const prev = next[index];
         if (prev.imageObjectUrl) URL.revokeObjectURL(prev.imageObjectUrl);
+        if (prev.thumbnailObjectUrl)
+          URL.revokeObjectURL(prev.thumbnailObjectUrl);
         next[index] = {
-          ...prev,
+          ...emptySlot(),
           file,
           imageObjectUrl: loaded.objectUrl,
           imageEl: loaded.image,
           imageDimensions: {width: loaded.width, height: loaded.height},
-          crop: prev.crop ?? getDefaultSquareCrop(loaded),
-          error: null,
+          crop: getDefaultSquareCrop(loaded),
+          dirty: true,
         };
         return next;
       });
       setCropDialogIndex(index);
-    } catch {
-      patchSlot(index, {error: t.errors.loadFailed});
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slots, t]);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    },
+    [t],
+  );
 
-  const handleCropSaved = useCallback(async (cropPixels) => {
-    const index = cropDialogIndex;
-    if (index == null) return;
-    setCropDialogIndex(null);
+  const handleEditCrop = useCallback(
+    async (index: number) => {
+      markUnapproved();
+      const slot = slots[index];
+      if (slot.imageEl) {
+        setCropDialogIndex(index);
+        return;
+      }
+      if (!slot.uploadedOriginalUrl) {
+        patchSlot(index, {error: t.errors.cannotEdit});
+        return;
+      }
+      patchSlot(index, {error: null});
+      try {
+        const blob = await fetchRemoteImageAsBlob(slot.uploadedOriginalUrl);
+        const file = new File([blob], `original-${index + 1}`, {
+          type: blob.type || 'image/jpeg',
+        });
+        const loaded = await loadImageFromFile(file);
+        if (!mountedRef.current) {
+          URL.revokeObjectURL(loaded.objectUrl);
+          return;
+        }
+        setSlots((current) => {
+          const next = current.slice();
+          const prev = next[index];
+          if (prev.imageObjectUrl) URL.revokeObjectURL(prev.imageObjectUrl);
+          next[index] = {
+            ...prev,
+            file,
+            imageObjectUrl: loaded.objectUrl,
+            imageEl: loaded.image,
+            imageDimensions: {width: loaded.width, height: loaded.height},
+            crop: prev.crop ?? getDefaultSquareCrop(loaded),
+            error: null,
+          };
+          return next;
+        });
+        setCropDialogIndex(index);
+      } catch {
+        patchSlot(index, {error: t.errors.loadFailed});
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    },
+    [slots, t],
+  );
 
-    const slot = slots[index];
-    if (!slot.imageEl) return;
+  const handleCropSaved = useCallback(
+    async (cropPixels: CropPixels) => {
+      const index = cropDialogIndex;
+      if (index == null) return;
+      setCropDialogIndex(null);
 
-    let thumbnailBlob;
-    try {
-      thumbnailBlob = await renderCropToJpegBlob(
-        slot.imageEl,
-        cropPixels,
-        PREVIEW_THUMBNAIL_SIZE,
-        0.85,
-      );
-    } catch {
-      patchSlot(index, {error: t.errors.renderFailed});
-      return;
-    }
-    if (!mountedRef.current) return;
+      const slot = slots[index];
+      if (!slot.imageEl) return;
 
-    const thumbnailObjectUrl = URL.createObjectURL(thumbnailBlob);
+      let thumbnailBlob;
+      try {
+        thumbnailBlob = await renderCropToJpegBlob(
+          slot.imageEl,
+          cropPixels,
+          PREVIEW_THUMBNAIL_SIZE,
+          0.85,
+        );
+      } catch {
+        patchSlot(index, {error: t.errors.renderFailed});
+        return;
+      }
+      if (!mountedRef.current) return;
 
-    setSlots((current) => {
-      const next = current.slice();
-      const prev = next[index];
-      if (prev.thumbnailObjectUrl) URL.revokeObjectURL(prev.thumbnailObjectUrl);
-      next[index] = {
-        ...prev,
-        crop: cropPixels,
-        thumbnailObjectUrl,
-        dirty: true,
-        error: null,
-      };
-      return next;
-    });
-    markUnapproved();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cropDialogIndex, slots, t]);
+      const thumbnailObjectUrl = URL.createObjectURL(thumbnailBlob);
+
+      setSlots((current) => {
+        const next = current.slice();
+        const prev = next[index];
+        if (prev.thumbnailObjectUrl)
+          URL.revokeObjectURL(prev.thumbnailObjectUrl);
+        next[index] = {
+          ...prev,
+          crop: cropPixels,
+          thumbnailObjectUrl,
+          dirty: true,
+          error: null,
+        };
+        return next;
+      });
+      markUnapproved();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    },
+    [cropDialogIndex, slots, t],
+  );
 
   const handleCropCancelled = useCallback(() => {
     setCropDialogIndex(null);
   }, []);
 
-  const handleRemove = useCallback((index) => {
+  const handleRemove = useCallback((index: number) => {
     markUnapproved();
     setSlots((current) => {
       const next = current.slice();
@@ -393,7 +443,7 @@ export function PhotoCustomizer({
       });
 
       // 3. Upload, if there is anything to upload.
-      let uploadResult = {
+      let uploadResult: UploadResult = {
         cropped: [null, null, null],
         originals: [null, null, null],
       };
@@ -404,18 +454,20 @@ export function PhotoCustomizer({
           body: form,
         });
         if (!response.ok) {
-          const errBody = await response.json().catch(() => ({}));
+          const errBody = (await response
+            .json()
+            .catch(() => ({}))) as {error?: string};
           throw new Error(errBody.error || `upload-${response.status}`);
         }
-        uploadResult = await response.json();
+        uploadResult = (await response.json()) as UploadResult;
       }
 
       if (!mountedRef.current) return;
 
       // 4. Merge uploaded URLs back into slots and build the attributes array.
-      const finalCroppedUrls = [];
-      const finalOriginalUrls = [];
-      const finalCrops = [];
+      const finalCroppedUrls: Array<string | null> = [];
+      const finalOriginalUrls: Array<string | null> = [];
+      const finalCrops: Array<CropPixels | null> = [];
       const updatedSlots = slots.map((slot, i) => {
         const cropped = uploadResult.cropped[i] || slot.uploadedCroppedUrl;
         const original = uploadResult.originals[i] || slot.uploadedOriginalUrl;
@@ -445,10 +497,10 @@ export function PhotoCustomizer({
         crops: finalCrops,
       });
 
-      const attributes = [
-        {key: 'Photo 1', value: finalCroppedUrls[0]},
-        {key: 'Photo 2', value: finalCroppedUrls[1]},
-        {key: 'Photo 3', value: finalCroppedUrls[2]},
+      const attributes: PhotoAttribute[] = [
+        {key: 'Photo 1', value: finalCroppedUrls[0] as string},
+        {key: 'Photo 2', value: finalCroppedUrls[1] as string},
+        {key: 'Photo 3', value: finalCroppedUrls[2] as string},
       ];
       onApprove(attributes);
     } catch (err) {
@@ -492,7 +544,13 @@ export function PhotoCustomizer({
         onRemove={handleRemove}
       />
 
-      <div className="photo-customizer__surprise" role="group" aria-label={t.surprise?.button ?? 'Pick photos from our gallery'}>
+      <div
+        className="photo-customizer__surprise"
+        role="group"
+        aria-label={
+          t.surprise?.button ?? 'Pick photos from our gallery'
+        }
+      >
         <p className="photo-customizer__surprise-helper">
           {t.surprise?.helper ?? "Don't have photos handy?"}
         </p>
@@ -549,7 +607,9 @@ export function PhotoCustomizer({
   );
 }
 
-function seedSlots(initialState) {
+function seedSlots(
+  initialState: PhotoCustomizerInitialState | null | undefined,
+): PhotoSlotState[] {
   if (initialState && initialState.croppedUrls?.length === SLOT_COUNT) {
     return initialState.croppedUrls.map((croppedUrl, i) => ({
       ...emptySlot(),

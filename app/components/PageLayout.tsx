@@ -1,5 +1,7 @@
 import {Await, Link} from 'react-router';
 import {Suspense, useId} from 'react';
+import type {ReactNode} from 'react';
+import type {CartReturn} from '@shopify/hydrogen';
 import {Aside} from '~/components/Aside';
 import {AccessibilityMenu} from '~/components/AccessibilityMenu';
 import {WhatsAppButton} from '~/components/WhatsAppButton';
@@ -12,17 +14,28 @@ import {
 } from '~/components/SearchFormPredictive';
 import {SearchResultsPredictive} from '~/components/SearchResultsPredictive';
 import {useI18n} from '~/lib/useI18n';
+import type {
+  FooterQuery,
+  HeaderQuery,
+  CartApiQueryFragment,
+} from 'storefrontapi.generated';
 
-/**
- * @param {PageLayoutProps}
- */
+export type PageLayoutProps = {
+  cart: Promise<CartApiQueryFragment | CartReturn | null> | CartReturn | null;
+  footer: Promise<FooterQuery | null>;
+  header: HeaderQuery;
+  isLoggedIn: Promise<boolean>;
+  publicStoreDomain: string;
+  children?: ReactNode;
+};
+
 export function PageLayout({
   cart,
   children = null,
   header,
   isLoggedIn,
   publicStoreDomain,
-}) {
+}: PageLayoutProps) {
   return (
     <Aside.Provider>
       <SkipLink />
@@ -54,13 +67,18 @@ function SkipLink() {
   );
 }
 
-function CartAside({cart}) {
+function CartAside({cart}: {cart: PageLayoutProps['cart']}) {
   const {dict} = useI18n();
   return (
     <Aside type="cart" heading={dict.aside.cart}>
       <Suspense fallback={<p>{dict.cart.loading}</p>}>
         <Await resolve={cart}>
-          {(resolved) => <CartMain cart={resolved} layout="aside" />}
+          {(resolved) => (
+            <CartMain
+              cart={resolved as CartApiQueryFragment | null}
+              layout="aside"
+            />
+          )}
         </Await>
       </Suspense>
     </Aside>
@@ -150,7 +168,13 @@ function SearchAside() {
   );
 }
 
-function MobileMenuAside({header, publicStoreDomain}) {
+function MobileMenuAside({
+  header,
+  publicStoreDomain,
+}: {
+  header: HeaderQuery;
+  publicStoreDomain: string;
+}) {
   const {dict} = useI18n();
   return (
     header.menu &&
@@ -166,17 +190,3 @@ function MobileMenuAside({header, publicStoreDomain}) {
     )
   );
 }
-
-/**
- * @typedef {Object} PageLayoutProps
- * @property {Promise<CartApiQueryFragment|null>} cart
- * @property {Promise<FooterQuery|null>} footer
- * @property {HeaderQuery} header
- * @property {Promise<boolean>} isLoggedIn
- * @property {string} publicStoreDomain
- * @property {React.ReactNode} [children]
- */
-
-/** @typedef {import('storefrontapi.generated').CartApiQueryFragment} CartApiQueryFragment */
-/** @typedef {import('storefrontapi.generated').FooterQuery} FooterQuery */
-/** @typedef {import('storefrontapi.generated').HeaderQuery} HeaderQuery */

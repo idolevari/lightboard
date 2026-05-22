@@ -1,15 +1,27 @@
 import {Pagination} from '@shopify/hydrogen';
+import type {ComponentProps, ReactNode} from 'react';
 import {useI18n} from '~/lib/useI18n';
+
+type PaginationConnection<NodesType> = ComponentProps<
+  typeof Pagination<NodesType>
+>['connection'];
+
+type PaginatedResourceSectionProps<NodesType> = {
+  connection: PaginationConnection<NodesType>;
+  children: (args: {node: NodesType; index: number}) => ReactNode;
+  ariaLabel?: string;
+  resourcesClassName?: string;
+};
 
 /**
  * <PaginatedResourceSection> encapsulates the previous and next pagination behaviors throughout your application.
  */
-export function PaginatedResourceSection({
+export function PaginatedResourceSection<NodesType>({
   connection,
   children,
   ariaLabel,
   resourcesClassName,
-}) {
+}: PaginatedResourceSectionProps<NodesType>) {
   const {dict} = useI18n();
   return (
     <Pagination connection={connection}>

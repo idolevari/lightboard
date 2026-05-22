@@ -1,6 +1,27 @@
-import {createContext, useContext, useEffect, useRef, useState} from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import {useId} from 'react';
+import type {ReactNode} from 'react';
 import {useI18n} from '~/lib/useI18n';
+
+export type AsideType = 'search' | 'cart' | 'mobile' | 'closed';
+
+type AsideContextValue = {
+  type: AsideType;
+  open: (mode: AsideType) => void;
+  close: () => void;
+};
+
+type AsideProps = {
+  children?: ReactNode;
+  type: AsideType;
+  heading: ReactNode;
+};
 
 /**
  * A side bar component with Overlay
@@ -11,19 +32,14 @@ import {useI18n} from '~/lib/useI18n';
  *  ...
  * </Aside>
  * ```
- * @param {{
- *   children?: React.ReactNode;
- *   type: AsideType;
- *   heading: React.ReactNode;
- * }}
  */
-export function Aside({children, heading, type}) {
+export function Aside({children, heading, type}: AsideProps) {
   const {type: activeType, close} = useAside();
   const {dict} = useI18n();
   const expanded = type === activeType;
   const id = useId();
-  const asideRef = useRef(null);
-  const triggerRef = useRef(null);
+  const asideRef = useRef<HTMLElement | null>(null);
+  const triggerRef = useRef<Element | null>(null);
 
   useEffect(() => {
     if (!expanded) return;
@@ -37,7 +53,7 @@ export function Aside({children, heading, type}) {
           return;
         }
         if (event.key !== 'Tab' || !asideRef.current) return;
-        const focusables = asideRef.current.querySelectorAll(
+        const focusables = asideRef.current.querySelectorAll<HTMLElement>(
           'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
         );
         if (focusables.length === 0) return;
@@ -56,7 +72,7 @@ export function Aside({children, heading, type}) {
     );
 
     const focusTimer = setTimeout(() => {
-      const focusables = asideRef.current?.querySelectorAll(
+      const focusables = asideRef.current?.querySelectorAll<HTMLElement>(
         'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
       );
       const target = focusables?.[1] ?? focusables?.[0];
@@ -66,7 +82,7 @@ export function Aside({children, heading, type}) {
     return () => {
       abortController.abort();
       clearTimeout(focusTimer);
-      const trigger = triggerRef.current;
+      const trigger = triggerRef.current as HTMLElement | null;
       if (trigger && typeof trigger.focus === 'function') {
         trigger.focus();
       }
@@ -106,10 +122,10 @@ export function Aside({children, heading, type}) {
   );
 }
 
-const AsideContext = createContext(null);
+const AsideContext = createContext<AsideContextValue | null>(null);
 
-Aside.Provider = function AsideProvider({children}) {
-  const [type, setType] = useState('closed');
+Aside.Provider = function AsideProvider({children}: {children: ReactNode}) {
+  const [type, setType] = useState<AsideType>('closed');
 
   return (
     <AsideContext.Provider
@@ -124,21 +140,10 @@ Aside.Provider = function AsideProvider({children}) {
   );
 };
 
-export function useAside() {
+export function useAside(): AsideContextValue {
   const aside = useContext(AsideContext);
   if (!aside) {
     throw new Error('useAside must be used within an AsideProvider');
   }
   return aside;
 }
-
-/** @typedef {'search' | 'cart' | 'mobile' | 'closed'} AsideType */
-/**
- * @typedef {{
- *   type: AsideType;
- *   open: (mode: AsideType) => void;
- *   close: () => void;
- * }} AsideContextValue
- */
-
-/** @typedef {import('react').ReactNode} ReactNode */

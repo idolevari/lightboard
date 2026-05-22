@@ -1,18 +1,43 @@
 import {useRef} from 'react';
+import type {ChangeEvent, DragEvent} from 'react';
 
 const BOARD_IMAGE_URL =
   'https://cdn.shopify.com/s/files/1/0982/9325/2392/files/lightboard-canvas-empty-v2.png?v=1779485082';
 
+type SlotRect = {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+};
+
 // Percentages of the board image at which the three white photo slots sit.
 // Measured against the 1024x1024 source on Shopify Files; positions scale with
 // the rendered image, so the overlays stay aligned at any size.
-const SLOT_RECTS = [
+const SLOT_RECTS: SlotRect[] = [
   {left: 24.609, top: 42.676, width: 16.016, height: 15.039},
   {left: 44.141, top: 42.969, width: 15.723, height: 14.648},
   {left: 63.086, top: 43.066, width: 15.918, height: 14.355},
 ];
 
 const ACCEPTED_TYPES = 'image/jpeg,image/png,image/webp';
+
+type BoardSlotData = {
+  thumbnailUrl: string | null;
+  error: string | null;
+};
+
+type BoardCanvasProps = {
+  slots: BoardSlotData[];
+  slotLabel: (n: number) => string;
+  pickLabel: string;
+  editLabel: string;
+  removeLabel: string;
+  disabled?: boolean;
+  onFilePicked: (index: number, file: File) => void;
+  onEditCrop: (index: number) => void;
+  onRemove: (index: number) => void;
+};
 
 /**
  * Interactive surfboard preview. Renders the empty Lightboard photo and
@@ -21,18 +46,6 @@ const ACCEPTED_TYPES = 'image/jpeg,image/png,image/webp';
  *
  * Each slot behaves like the old PhotoSlot: empty -> opens the file picker;
  * filled -> shows the user's cropped photo with small edit/remove controls.
- *
- * @param {{
- *   slots: Array<{thumbnailUrl: string | null, error: string | null}>,
- *   slotLabel: (n: number) => string,
- *   pickLabel: string,
- *   editLabel: string,
- *   removeLabel: string,
- *   disabled?: boolean,
- *   onFilePicked: (index: number, file: File) => void,
- *   onEditCrop: (index: number) => void,
- *   onRemove: (index: number) => void,
- * }}
  */
 export function BoardCanvas({
   slots,
@@ -44,7 +57,7 @@ export function BoardCanvas({
   onFilePicked,
   onEditCrop,
   onRemove,
-}) {
+}: BoardCanvasProps) {
   return (
     <div className="board-canvas" role="group" aria-label={slotLabel(0)}>
       <img
@@ -77,6 +90,20 @@ export function BoardCanvas({
   );
 }
 
+type BoardSlotProps = {
+  index: number;
+  rect: SlotRect;
+  slot: BoardSlotData;
+  label: string;
+  pickLabel: string;
+  editLabel: string;
+  removeLabel: string;
+  disabled: boolean;
+  onFilePicked: (file: File) => void;
+  onEditCrop: () => void;
+  onRemove: () => void;
+};
+
 function BoardSlot({
   index,
   rect,
@@ -89,24 +116,24 @@ function BoardSlot({
   onFilePicked,
   onEditCrop,
   onRemove,
-}) {
-  const inputRef = useRef(null);
+}: BoardSlotProps) {
+  const inputRef = useRef<HTMLInputElement | null>(null);
   const filled = !!slot?.thumbnailUrl;
 
-  function handleFileChange(event) {
+  function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (file) onFilePicked(file);
     if (inputRef.current) inputRef.current.value = '';
   }
 
-  function handleDrop(event) {
+  function handleDrop(event: DragEvent<HTMLDivElement>) {
     event.preventDefault();
     if (disabled) return;
     const file = event.dataTransfer.files?.[0];
     if (file) onFilePicked(file);
   }
 
-  function handleDragOver(event) {
+  function handleDragOver(event: DragEvent<HTMLDivElement>) {
     event.preventDefault();
   }
 
@@ -124,7 +151,7 @@ function BoardSlot({
       onDrop={handleDrop}
       onDragOver={handleDragOver}
     >
-      {filled ? (
+      {filled && slot.thumbnailUrl ? (
         <>
           <img
             src={slot.thumbnailUrl}

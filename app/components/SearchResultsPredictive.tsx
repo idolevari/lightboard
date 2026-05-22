@@ -1,19 +1,50 @@
 import {Link, useFetcher} from 'react-router';
+import type {FetcherWithComponents} from 'react-router';
 import {Image, Money} from '@shopify/hydrogen';
 import {useRef, useEffect} from 'react';
+import type {MutableRefObject, ReactNode} from 'react';
 import {
   getEmptyPredictiveSearchResult,
   urlWithTrackingParams,
 } from '~/lib/search';
+import type {PredictiveSearchReturn} from '~/lib/search';
 import {useAside} from './Aside';
 import {useI18n} from '~/lib/useI18n';
 
+type PredictiveSearchItems = PredictiveSearchReturn['result']['items'];
+
+type UsePredictiveSearchReturn = {
+  term: MutableRefObject<string>;
+  total: number;
+  inputRef: MutableRefObject<HTMLInputElement | null>;
+  items: PredictiveSearchItems;
+  fetcher: FetcherWithComponents<PredictiveSearchReturn>;
+};
+
+type SearchResultsPredictiveArgs = Pick<
+  UsePredictiveSearchReturn,
+  'term' | 'total' | 'inputRef' | 'items'
+> & {
+  state: FetcherWithComponents<PredictiveSearchReturn>['state'];
+  closeSearch: () => void;
+};
+
+type PartialPredictiveSearchResult<
+  ItemType extends keyof PredictiveSearchItems,
+  ExtraProps extends keyof SearchResultsPredictiveArgs = 'term' | 'closeSearch',
+> = Pick<PredictiveSearchItems, ItemType> &
+  Pick<SearchResultsPredictiveArgs, ExtraProps>;
+
+type SearchResultsPredictiveProps = {
+  children: (args: SearchResultsPredictiveArgs) => ReactNode;
+};
+
 /**
  * Component that renders predictive search results
- * @param {SearchResultsPredictiveProps}
- * @return {React.ReactNode}
  */
-export function SearchResultsPredictive({children}) {
+export function SearchResultsPredictive({
+  children,
+}: SearchResultsPredictiveProps) {
   const aside = useAside();
   const {term, inputRef, fetcher, total, items} = usePredictiveSearch();
 
@@ -52,10 +83,11 @@ SearchResultsPredictive.Products = SearchResultsPredictiveProducts;
 SearchResultsPredictive.Queries = SearchResultsPredictiveQueries;
 SearchResultsPredictive.Empty = SearchResultsPredictiveEmpty;
 
-/**
- * @param {PartialPredictiveSearchResult<'articles'>}
- */
-function SearchResultsPredictiveArticles({term, articles, closeSearch}) {
+function SearchResultsPredictiveArticles({
+  term,
+  articles,
+  closeSearch,
+}: PartialPredictiveSearchResult<'articles'>) {
   const {dict, to} = useI18n();
   if (!articles.length) return null;
 
@@ -93,10 +125,11 @@ function SearchResultsPredictiveArticles({term, articles, closeSearch}) {
   );
 }
 
-/**
- * @param {PartialPredictiveSearchResult<'collections'>}
- */
-function SearchResultsPredictiveCollections({term, collections, closeSearch}) {
+function SearchResultsPredictiveCollections({
+  term,
+  collections,
+  closeSearch,
+}: PartialPredictiveSearchResult<'collections'>) {
   const {dict, to} = useI18n();
   if (!collections.length) return null;
 
@@ -134,10 +167,11 @@ function SearchResultsPredictiveCollections({term, collections, closeSearch}) {
   );
 }
 
-/**
- * @param {PartialPredictiveSearchResult<'pages'>}
- */
-function SearchResultsPredictivePages({term, pages, closeSearch}) {
+function SearchResultsPredictivePages({
+  term,
+  pages,
+  closeSearch,
+}: PartialPredictiveSearchResult<'pages'>) {
   const {dict, to} = useI18n();
   if (!pages.length) return null;
 
@@ -167,10 +201,11 @@ function SearchResultsPredictivePages({term, pages, closeSearch}) {
   );
 }
 
-/**
- * @param {PartialPredictiveSearchResult<'products'>}
- */
-function SearchResultsPredictiveProducts({term, products, closeSearch}) {
+function SearchResultsPredictiveProducts({
+  term,
+  products,
+  closeSearch,
+}: PartialPredictiveSearchResult<'products'>) {
   const {dict, to} = useI18n();
   if (!products.length) return null;
 
@@ -211,12 +246,12 @@ function SearchResultsPredictiveProducts({term, products, closeSearch}) {
   );
 }
 
-/**
- * @param {PartialPredictiveSearchResult<'queries', never> & {
- *   queriesDatalistId: string;
- * }}
- */
-function SearchResultsPredictiveQueries({queries, queriesDatalistId}) {
+function SearchResultsPredictiveQueries({
+  queries,
+  queriesDatalistId,
+}: PartialPredictiveSearchResult<'queries', never> & {
+  queriesDatalistId: string;
+}) {
   if (!queries.length) return null;
 
   return (
@@ -230,12 +265,11 @@ function SearchResultsPredictiveQueries({queries, queriesDatalistId}) {
   );
 }
 
-/**
- * @param {{
- *   term: React.MutableRefObject<string>;
- * }}
- */
-function SearchResultsPredictiveEmpty({term}) {
+function SearchResultsPredictiveEmpty({
+  term,
+}: {
+  term: MutableRefObject<string>;
+}) {
   const {dict} = useI18n();
   if (!term.current) return null;
   return (
@@ -247,16 +281,11 @@ function SearchResultsPredictiveEmpty({term}) {
 
 /**
  * Hook that returns the predictive search results and fetcher and input ref.
- * @example
- * '''ts
- * const { items, total, inputRef, term, fetcher } = usePredictiveSearch();
- * '''
- * @return {UsePredictiveSearchReturn}
  */
-function usePredictiveSearch() {
-  const fetcher = useFetcher({key: 'search'});
+function usePredictiveSearch(): UsePredictiveSearchReturn {
+  const fetcher = useFetcher<PredictiveSearchReturn>({key: 'search'});
   const term = useRef('');
-  const inputRef = useRef(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   if (fetcher?.state === 'loading') {
     term.current = String(fetcher.formData?.get('q') || '');
@@ -272,39 +301,11 @@ function usePredictiveSearch() {
   const {items, total} =
     fetcher?.data?.result ?? getEmptyPredictiveSearchResult();
 
-  return {items, total, inputRef, term, fetcher};
+  return {
+    items: items as PredictiveSearchItems,
+    total,
+    inputRef,
+    term,
+    fetcher,
+  };
 }
-
-/** @typedef {PredictiveSearchReturn['result']['items']} PredictiveSearchItems */
-/**
- * @typedef {{
- *   term: React.MutableRefObject<string>;
- *   total: number;
- *   inputRef: React.MutableRefObject<HTMLInputElement | null>;
- *   items: PredictiveSearchItems;
- *   fetcher: Fetcher<PredictiveSearchReturn>;
- * }} UsePredictiveSearchReturn
- */
-/**
- * @typedef {Pick<
- *   UsePredictiveSearchReturn,
- *   'term' | 'total' | 'inputRef' | 'items'
- * > & {
- *   state: Fetcher['state'];
- *   closeSearch: () => void;
- * }} SearchResultsPredictiveArgs
- */
-/**
- * @typedef {Pick<PredictiveSearchItems, ItemType> &
- *   Pick<SearchResultsPredictiveArgs, ExtraProps>} PartialPredictiveSearchResult
- * @template {keyof PredictiveSearchItems} ItemType
- * @template {keyof SearchResultsPredictiveArgs} [ExtraProps='term' | 'closeSearch']
- */
-/**
- * @typedef {{
- *   children: (args: SearchResultsPredictiveArgs) => React.ReactNode;
- * }} SearchResultsPredictiveProps
- */
-
-/** @template T @typedef {import('react-router').Fetcher<T>} Fetcher */
-/** @typedef {import('~/lib/search').PredictiveSearchReturn} PredictiveSearchReturn */

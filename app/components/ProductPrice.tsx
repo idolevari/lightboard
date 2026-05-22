@@ -1,12 +1,12 @@
 import {Money} from '@shopify/hydrogen';
+import type {MoneyV2} from '@shopify/hydrogen/storefront-api-types';
 
-/**
- * @param {{
- *   price?: MoneyV2;
- *   compareAtPrice?: MoneyV2 | null;
- * }}
- */
-export function ProductPrice({price, compareAtPrice}) {
+type ProductPriceProps = {
+  price?: MoneyV2 | null;
+  compareAtPrice?: MoneyV2 | null;
+};
+
+export function ProductPrice({price, compareAtPrice}: ProductPriceProps) {
   return (
     <div aria-label="Price" className="product-price" role="group">
       {compareAtPrice ? (
@@ -24,5 +24,3 @@ export function ProductPrice({price, compareAtPrice}) {
     </div>
   );
 }
-
-/** @typedef {import('@shopify/hydrogen/storefront-api-types').MoneyV2} MoneyV2 */

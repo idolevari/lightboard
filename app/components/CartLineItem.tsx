@@ -1,4 +1,10 @@
+import type {ReactNode} from 'react';
 import {CartForm, Image} from '@shopify/hydrogen';
+import type {
+  OptimisticCartLine,
+  CartReturn,
+} from '@shopify/hydrogen';
+import type {CartLineUpdateInput} from '@shopify/hydrogen/storefront-api-types';
 import {useVariantUrl} from '~/lib/variants';
 import {Link} from 'react-router';
 import {ProductPrice} from './ProductPrice';
@@ -8,9 +14,15 @@ import {
   translateOptionName,
   translateOptionValue,
 } from '~/lib/productOptionLabels';
+import type {CartApiQueryFragment} from 'storefrontapi.generated';
+import type {CartLayout, LineItemChildrenMap} from '~/components/CartMain';
+
+export type CartLine = OptimisticCartLine<CartApiQueryFragment | CartReturn>;
 
 const PHOTO_ATTR_KEYS = ['Photo 1', 'Photo 2', 'Photo 3'];
 const TRUSTED_PHOTO_HOST = 'https://cdn.shopify.com/';
+
+type LineAttribute = {key: string; value?: string | null};
 
 /**
  * Pull the three photo URLs out of a cart line's attributes, if present.
@@ -21,29 +33,36 @@ const TRUSTED_PHOTO_HOST = 'https://cdn.shopify.com/';
  * to prevent a crafted cart from turning a line item into a tracking pixel
  * or pulling external content into the page.
  */
-function getLinePhotoUrls(attributes) {
+function getLinePhotoUrls(
+  attributes: ReadonlyArray<LineAttribute> | null | undefined,
+): string[] | null {
   if (!Array.isArray(attributes) || attributes.length === 0) return null;
-  const map = new Map(attributes.map((a) => [a.key, a.value]));
+  const map = new Map(attributes.map((a) => [a.key, a.value ?? '']));
   const urls = PHOTO_ATTR_KEYS.map((k) => map.get(k));
   if (urls.some((u) => !u)) return null;
-  if (!urls.every((u) => typeof u === 'string' && u.startsWith(TRUSTED_PHOTO_HOST))) {
+  if (
+    !urls.every(
+      (u) => typeof u === 'string' && u.startsWith(TRUSTED_PHOTO_HOST),
+    )
+  ) {
     return null;
   }
-  return urls;
+  return urls as string[];
 }
+
+type CartLineItemProps = {
+  layout: CartLayout;
+  line: CartLine;
+  childrenMap: LineItemChildrenMap;
+};
 
 /**
  * A single line item in the cart. It displays the product image, title, price.
  * It also provides controls to update the quantity or remove the line item.
  * If the line is a parent line that has child components (like warranties or gift wrapping), they are
  * rendered nested below the parent line.
- * @param {{
- *   layout: CartLayout;
- *   line: CartLine;
- *   childrenMap: LineItemChildrenMap;
- * }}
  */
-export function CartLineItem({layout, line, childrenMap}) {
+export function CartLineItem({layout, line, childrenMap}: CartLineItemProps) {
   const {id, merchandise, attributes} = line;
   const {product, title, image, selectedOptions} = merchandise;
   const lineItemUrl = useVariantUrl(product.handle, selectedOptions);
@@ -107,8 +126,10 @@ export function CartLineItem({layout, line, childrenMap}) {
                   <img
                     key={i}
                     src={url}
-                    alt={dict.photoCustomizer?.slotLabel
-                      ?.replace('{n}', String(i + 1)) ?? `Photo ${i + 1}`}
+                    alt={
+                      dict.photoCustomizer?.slotLabel
+                        ?.replace('{n}', String(i + 1)) ?? `Photo ${i + 1}`
+                    }
                     className="cart-line-photos__thumb"
                     loading="lazy"
                   />
@@ -157,9 +178,8 @@ export function CartLineItem({layout, line, childrenMap}) {
  * Provides the controls to update the quantity of a line item in the cart.
  * These controls are disabled when the line item is new, and the server
  * hasn't yet responded that it was successfully added to the cart.
- * @param {{line: CartLine}}
  */
-function CartLineQuantity({line}) {
+function CartLineQuantity({line}: {line: CartLine}) {
   const {dict} = useI18n();
   if (!line || typeof line?.quantity === 'undefined') return null;
   const {id: lineId, quantity, isOptimistic} = line;
@@ -200,12 +220,14 @@ function CartLineQuantity({line}) {
  * A button that removes a line item from the cart. It is disabled
  * when the line item is new, and the server hasn't yet responded
  * that it was successfully added to the cart.
- * @param {{
- *   lineIds: string[];
- *   disabled: boolean;
- * }}
  */
-function CartLineRemoveButton({lineIds, disabled}) {
+function CartLineRemoveButton({
+  lineIds,
+  disabled,
+}: {
+  lineIds: string[];
+  disabled: boolean;
+}) {
   const {dict} = useI18n();
   return (
     <CartForm
@@ -221,13 +243,13 @@ function CartLineRemoveButton({lineIds, disabled}) {
   );
 }
 
-/**
- * @param {{
- *   children: React.ReactNode;
- *   lines: CartLineUpdateInput[];
- * }}
- */
-function CartLineUpdateButton({children, lines}) {
+function CartLineUpdateButton({
+  children,
+  lines,
+}: {
+  children: ReactNode;
+  lines: CartLineUpdateInput[];
+}) {
   const lineIds = lines.map((line) => line.id);
 
   return (
@@ -246,18 +268,7 @@ function CartLineUpdateButton({children, lines}) {
  * Returns a unique key for the update action. This is used to make sure actions modifying the same line
  * items are not run concurrently, but cancel each other. For example, if the user clicks "Increase quantity"
  * and "Decrease quantity" in rapid succession, the actions will cancel each other and only the last one will run.
- * @returns
- * @param {string[]} lineIds - line ids affected by the update
  */
-function getUpdateKey(lineIds) {
+function getUpdateKey(lineIds: string[]): string {
   return [CartForm.ACTIONS.LinesUpdate, ...lineIds].join('-');
 }
-
-/** @typedef {OptimisticCartLine<CartApiQueryFragment>} CartLine */
-
-/** @typedef {import('@shopify/hydrogen/storefront-api-types').CartLineUpdateInput} CartLineUpdateInput */
-/** @typedef {import('~/components/CartMain').CartLayout} CartLayout */
-/** @typedef {import('~/components/CartMain').LineItemChildrenMap} LineItemChildrenMap */
-/** @typedef {import('@shopify/hydrogen').OptimisticCartLine} OptimisticCartLine */
-/** @typedef {import('storefrontapi.generated').CartApiQueryFragment} CartApiQueryFragment */
-/** @typedef {import('storefrontapi.generated').CartLineFragment} CartLineFragment */
