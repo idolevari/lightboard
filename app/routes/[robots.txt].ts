@@ -1,7 +1,6 @@
-/**
- * @param {Route.LoaderArgs}
- */
-export function loader({request}) {
+import type {Route} from './+types/[robots.txt]';
+
+export function loader({request}: Route.LoaderArgs) {
   const url = new URL(request.url);
   const body = robotsTxtData({url: url.origin});
 
@@ -15,10 +14,7 @@ export function loader({request}) {
   });
 }
 
-/**
- * @param {{url?: string}}
- */
-function robotsTxtData({url}) {
+function robotsTxtData({url}: {url?: string}) {
   const sitemapUrl = url ? `${url}/sitemap.xml` : undefined;
 
   return `
@@ -55,9 +51,8 @@ Crawl-delay: 1
 /**
  * This function generates disallow rules that generally follow what Shopify's
  * Online Store has as defaults for their robots.txt
- * @param {{sitemapUrl?: string}}
  */
-function generalDisallowRules({sitemapUrl}) {
+function generalDisallowRules({sitemapUrl}: {sitemapUrl?: string}) {
   return `Disallow: /cart
 Disallow: /account
 Disallow: /collections/*sort_by*
@@ -81,6 +76,3 @@ Allow: /search/
 Disallow: /search/?*
 ${sitemapUrl ? `Sitemap: ${sitemapUrl}` : ''}`;
 }
-
-/** @typedef {import('./+types/[robots.txt]').Route} Route */
-/** @typedef {ReturnType<typeof useLoaderData<typeof loader>>} LoaderReturnData */

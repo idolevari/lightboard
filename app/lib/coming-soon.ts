@@ -26,11 +26,9 @@ export function hasPreviewCookie(request: Request): boolean {
     .some((c) => c === `${PREVIEW_COOKIE}=${PREVIEW_COOKIE_VALUE}`);
 }
 
-type LaunchGateEnv = Env & {COMING_SOON?: string; PREVIEW_TOKEN?: string};
-
 export function isLaunchGateActive(
   request: Request,
-  env: LaunchGateEnv,
+  env: Env,
 ): boolean {
   if (env?.COMING_SOON !== 'true') return false;
   if (isLocalhost(request)) return false;
@@ -47,7 +45,7 @@ export function isLaunchGateActive(
  */
 export function enforceLaunchGate(
   request: Request,
-  env: LaunchGateEnv,
+  env: Env,
 ): void {
   if (!isLaunchGateActive(request, env)) return;
   // Strip any nested path so the gate hides what page the visitor was after.

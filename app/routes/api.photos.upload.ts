@@ -1,10 +1,8 @@
 import {data} from 'react-router';
 import {uploadImageToShopifyFiles} from '~/lib/shopify-admin';
-import {
-  ALLOWED_PHOTO_TYPES,
-  MAX_PHOTO_BYTES,
-} from '~/lib/photo-canvas';
+import {ALLOWED_PHOTO_TYPES, MAX_PHOTO_BYTES} from '~/lib/photo-canvas';
 import {isLaunchGateActive} from '~/lib/coming-soon';
+import type {Route} from './+types/api.photos.upload';
 
 /**
  * Photo upload endpoint for the PDP photo customizer.
@@ -20,9 +18,17 @@ import {isLaunchGateActive} from '~/lib/coming-soon';
  * On any failure, returns 4xx/5xx with `{error: string}`.
  */
 
-const SLOTS = [0, 1, 2];
+type UploadKind = 'cropped' | 'original';
 
-export async function action({request, context}) {
+type UploadResultPart = {
+  kind: UploadKind;
+  slot: number;
+  url: string;
+};
+
+const SLOTS = [0, 1, 2] as const;
+
+export async function action({request, context}: Route.ActionArgs) {
   if (request.method !== 'POST') {
     return data({error: 'method-not-allowed'}, {status: 405});
   }
@@ -30,7 +36,7 @@ export async function action({request, context}) {
     return data({error: 'not-found'}, {status: 404});
   }
 
-  let form;
+  let form: FormData;
   try {
     form = await request.formData();
   } catch {
@@ -64,7 +70,7 @@ export async function action({request, context}) {
   }
 
   try {
-    const tasks = [];
+    const tasks: Promise<UploadResultPart>[] = [];
     SLOTS.forEach((i) => {
       const cropped = croppedFiles[i];
       if (cropped instanceof File) {
@@ -79,7 +85,9 @@ export async function action({request, context}) {
             }),
             mimeType: cropped.type || 'image/jpeg',
             alt: `Lightboard photo ${i + 1}`,
-          }).then((res) => ({kind: 'cropped', slot: i, url: res.url})),
+          }).then(
+            (res): UploadResultPart => ({kind: 'cropped', slot: i, url: res.url}),
+          ),
         );
       }
       const original = originalFiles[i];
@@ -95,15 +103,17 @@ export async function action({request, context}) {
             }),
             mimeType: original.type || 'application/octet-stream',
             alt: `Lightboard original ${i + 1}`,
-          }).then((res) => ({kind: 'original', slot: i, url: res.url})),
+          }).then(
+            (res): UploadResultPart => ({kind: 'original', slot: i, url: res.url}),
+          ),
         );
       }
     });
 
     const results = await Promise.all(tasks);
 
-    const cropped = SLOTS.map(() => null);
-    const originals = SLOTS.map(() => null);
+    const cropped: Array<string | null> = SLOTS.map(() => null);
+    const originals: Array<string | null> = SLOTS.map(() => null);
     for (const r of results) {
       if (r.kind === 'cropped') cropped[r.slot] = r.url;
       else originals[r.slot] = r.url;
@@ -120,20 +130,30 @@ export async function loader() {
   return data({error: 'method-not-allowed'}, {status: 405});
 }
 
-function sanitizeCartId(raw) {
+function sanitizeCartId(raw: string): string {
   if (!raw) return 'anon';
   // Cart IDs look like gid://shopify/Cart/abc123. Pull the trailing token.
   const match = raw.match(/[A-Za-z0-9_-]+$/);
   return match ? match[0].slice(0, 32) : 'anon';
 }
 
-function photoFilename({cartId, kind, slot, mimeType}) {
+function photoFilename({
+  cartId,
+  kind,
+  slot,
+  mimeType,
+}: {
+  cartId: string;
+  kind: UploadKind;
+  slot: number;
+  mimeType: string;
+}): string {
   const ext = extensionForMimeType(mimeType);
   const stamp = Date.now();
   return `lightboard-${kind}-${cartId}-${slot + 1}-${stamp}.${ext}`;
 }
 
-function extensionForMimeType(mimeType) {
+function extensionForMimeType(mimeType: string): string {
   switch (mimeType) {
     case 'image/png':
       return 'png';
@@ -157,8 +177,10 @@ function extensionForMimeType(mimeType) {
  * Returns one of 'image/jpeg' | 'image/png' | 'image/webp', or null if the
  * bytes don't match a supported signature.
  */
-async function detectImageType(file) {
-  let head;
+async function detectImageType(
+  file: File,
+): Promise<'image/jpeg' | 'image/png' | 'image/webp' | null> {
+  let head: Uint8Array;
   try {
     head = new Uint8Array(await file.slice(0, 12).arrayBuffer());
   } catch {

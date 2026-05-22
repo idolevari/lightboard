@@ -1,7 +1,6 @@
-/**
- * @param {Route.LoaderArgs}
- */
-export async function loader({request, context}) {
+import type {Route} from './+types/($locale).account_.login';
+
+export async function loader({request, context}: Route.LoaderArgs) {
   const url = new URL(request.url);
   const acrValues = url.searchParams.get('acr_values') || undefined;
   const loginHint = url.searchParams.get('login_hint') || undefined;
@@ -16,6 +15,3 @@ export async function loader({request, context}) {
     locale,
   });
 }
-
-/** @typedef {import('./+types/account_.login').Route} Route */
-/** @typedef {ReturnType<typeof useLoaderData<typeof loader>>} LoaderReturnData */

@@ -2,32 +2,36 @@ import {Link, useLoaderData} from 'react-router';
 import {useI18n} from '~/lib/useI18n';
 import {sanitizeShopifyHtml} from '~/lib/sanitize';
 import {canonicalUrl, pageTitle} from '~/lib/meta';
+import type {Shop} from '@shopify/hydrogen/storefront-api-types';
+import type {Route} from './+types/($locale).policies.$handle';
 
-/**
- * @type {Route.MetaFunction}
- */
-export const meta = ({data, matches, params}) => {
+type SelectedPolicies = keyof Pick<
+  Shop,
+  'privacyPolicy' | 'shippingPolicy' | 'termsOfService' | 'refundPolicy'
+>;
+
+export const meta: Route.MetaFunction = ({data, matches, params}) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- matches helpers in ~/lib/meta accept a narrower MetaMatch type than Route.MetaArgs surfaces
+  const m = matches as any;
   return [
-    {title: pageTitle(matches, data?.policy.title)},
+    {title: pageTitle(m, data?.policy.title)},
     {
       tagName: 'link',
       rel: 'canonical',
-      href: canonicalUrl(matches, `/policies/${params.handle ?? ''}`),
+      href: canonicalUrl(m, `/policies/${params.handle ?? ''}`),
     },
   ];
 };
 
-/**
- * @param {Route.LoaderArgs}
- */
-export async function loader({params, context}) {
+export async function loader({params, context}: Route.LoaderArgs) {
   if (!params.handle) {
     throw new Response('No handle was passed in', {status: 404});
   }
 
-  const policyName = params.handle.replace(/-([a-z])/g, (_, m1) =>
-    m1.toUpperCase(),
-  );
+  const policyName = params.handle.replace(
+    /-([a-z])/g,
+    (_: string, m1: string) => m1.toUpperCase(),
+  ) as SelectedPolicies;
 
   const data = await context.storefront.query(POLICY_CONTENT_QUERY, {
     cache: context.storefront.CacheLong(),
@@ -51,8 +55,7 @@ export async function loader({params, context}) {
 }
 
 export default function Policy() {
-  /** @type {LoaderReturnData} */
-  const {policy} = useLoaderData();
+  const {policy} = useLoaderData<typeof loader>();
   const {dict, to} = useI18n();
 
   return (
@@ -101,14 +104,3 @@ const POLICY_CONTENT_QUERY = `#graphql
     }
   }
 `;
-
-/**
- * @typedef {keyof Pick<
- *   Shop,
- *   'privacyPolicy' | 'shippingPolicy' | 'termsOfService' | 'refundPolicy'
- * >} SelectedPolicies
- */
-
-/** @typedef {import('./+types/policies.$handle').Route} Route */
-/** @typedef {import('@shopify/hydrogen/storefront-api-types').Shop} Shop */
-/** @typedef {ReturnType<typeof useLoaderData<typeof loader>>} LoaderReturnData */

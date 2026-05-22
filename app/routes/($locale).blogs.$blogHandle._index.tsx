@@ -4,21 +4,22 @@ import {PaginatedResourceSection} from '~/components/PaginatedResourceSection';
 import {redirectIfHandleIsLocalized} from '~/lib/redirect';
 import {useI18n} from '~/lib/useI18n';
 import {pageTitle} from '~/lib/meta';
+import type {ArticleItemFragment} from 'storefrontapi.generated';
+import type {Route} from './+types/($locale).blogs.$blogHandle._index';
 
-/**
- * @type {Route.MetaFunction}
- */
-export const meta = ({data, matches}) => {
+export const meta: Route.MetaFunction = ({data, matches}) => {
   const blogTitle = data?.blog.title;
-  return [{title: pageTitle(matches, blogTitle ? `${blogTitle} blog` : null)}];
+  return [
+    {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- matches helpers in ~/lib/meta accept a narrower MetaMatch type than Route.MetaArgs surfaces
+      title: pageTitle(matches as any, blogTitle ? `${blogTitle} blog` : null),
+    },
+  ];
 };
 
-/**
- * @param {Route.LoaderArgs} args
- */
-export async function loader(args) {
+export async function loader(args: Route.LoaderArgs) {
   // Start fetching non-critical data without blocking time to first byte
-  const deferredData = loadDeferredData(args);
+  const deferredData = loadDeferredData();
 
   // Await the critical data required to render initial state of the page
   const criticalData = await loadCriticalData(args);
@@ -29,9 +30,8 @@ export async function loader(args) {
 /**
  * Load data necessary for rendering content above the fold. This is the critical data
  * needed to render the page. If it's unavailable, the whole page should 400 or 500 error.
- * @param {Route.LoaderArgs}
  */
-async function loadCriticalData({context, request, params}) {
+async function loadCriticalData({context, request, params}: Route.LoaderArgs) {
   const paginationVariables = getPaginationVariables(request, {
     pageBy: 4,
   });
@@ -64,15 +64,13 @@ async function loadCriticalData({context, request, params}) {
  * Load data for rendering content below the fold. This data is deferred and will be
  * fetched after the initial page load. If it's unavailable, the page should still 200.
  * Make sure to not throw any errors here, as it will cause the page to 500.
- * @param {Route.LoaderArgs}
  */
 function loadDeferredData() {
   return {};
 }
 
 export default function Blog() {
-  /** @type {LoaderReturnData} */
-  const {blog} = useLoaderData();
+  const {blog} = useLoaderData<typeof loader>();
   const {articles} = blog;
 
   return (
@@ -93,13 +91,13 @@ export default function Blog() {
   );
 }
 
-/**
- * @param {{
- *   article: ArticleItemFragment;
- *   loading?: HTMLImageElement['loading'];
- * }}
- */
-function ArticleItem({article, loading}) {
+function ArticleItem({
+  article,
+  loading,
+}: {
+  article: ArticleItemFragment;
+  loading?: HTMLImageElement['loading'];
+}) {
   const {locale, to} = useI18n();
   const publishedAt = new Intl.DateTimeFormat(
     locale === 'he' ? 'he-IL' : 'en-US',
@@ -184,7 +182,3 @@ const BLOGS_QUERY = `#graphql
     }
   }
 `;
-
-/** @typedef {import('./+types/blogs.$blogHandle._index').Route} Route */
-/** @typedef {import('storefrontapi.generated').ArticleItemFragment} ArticleItemFragment */
-/** @typedef {ReturnType<typeof useLoaderData<typeof loader>>} LoaderReturnData */

@@ -2,32 +2,36 @@ import {useLoaderData} from 'react-router';
 import {getPaginationVariables, Analytics} from '@shopify/hydrogen';
 import {SearchForm} from '~/components/SearchForm';
 import {SearchResults} from '~/components/SearchResults';
-import {getEmptyPredictiveSearchResult} from '~/lib/search';
+import {
+  getEmptyPredictiveSearchResult,
+  type PredictiveSearchReturn,
+  type RegularSearchReturn,
+} from '~/lib/search';
 import {useI18n} from '~/lib/useI18n';
 import {getDictionary} from '~/lib/i18n';
+import type {Route} from './+types/($locale).search';
 
-/**
- * @type {Route.MetaFunction}
- */
-export const meta = ({matches}) => {
-  const root = matches?.find?.((m) => m.id === 'root');
-  const dict = root?.data?.dict ?? getDictionary('he');
+type SearchLoaderArgs = Pick<Route.LoaderArgs, 'request' | 'context'>;
+
+export const meta: Route.MetaFunction = ({matches}) => {
+  const root = matches?.find?.((m) => m?.id === 'root');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- root match data shape is not exposed via generated types
+  const dict = (root?.data as any)?.dict ?? getDictionary('he');
   return [{title: dict.search.metaTitle}];
 };
 
-/**
- * @param {Route.LoaderArgs}
- */
-export async function loader({request, context}) {
+export async function loader({request, context}: Route.LoaderArgs) {
   const url = new URL(request.url);
   const isPredictive = url.searchParams.has('predictive');
-  const searchPromise = isPredictive
-    ? predictiveSearch({request, context})
-    : regularSearch({request, context});
+  const searchPromise: Promise<RegularSearchReturn | PredictiveSearchReturn> =
+    isPredictive
+      ? predictiveSearch({request, context})
+      : regularSearch({request, context});
 
-  searchPromise.catch((error) => {
+  searchPromise.catch((error: unknown) => {
     console.error(error);
-    return {term: '', result: null, error: error.message};
+    const message = error instanceof Error ? error.message : String(error);
+    return {term: '', result: null, error: message};
   });
 
   return await searchPromise;
@@ -37,10 +41,10 @@ export async function loader({request, context}) {
  * Renders the /search route
  */
 export default function SearchPage() {
-  /** @type {LoaderReturnData} */
-  const {type, term, result, error} = useLoaderData();
+  const data = useLoaderData<typeof loader>();
   const {dict} = useI18n();
-  if (type === 'predictive') return null;
+  if (data.type === 'predictive') return null;
+  const {term, result, error} = data;
 
   return (
     <div className="search">
@@ -215,13 +219,11 @@ export const SEARCH_QUERY = `#graphql
 
 /**
  * Regular search fetcher
- * @param {Pick<
- *   Route.LoaderArgs,
- *   'request' | 'context'
- * >}
- * @return {Promise<RegularSearchReturn>}
  */
-async function regularSearch({request, context}) {
+async function regularSearch({
+  request,
+  context,
+}: SearchLoaderArgs): Promise<RegularSearchReturn> {
   const {storefront} = context;
   const url = new URL(request.url);
   const variables = getPaginationVariables(request, {pageBy: 8});
@@ -236,13 +238,15 @@ async function regularSearch({request, context}) {
     throw new Error('No search data returned from Shopify API');
   }
 
-  const total = Object.values(items).reduce(
+  type SearchNodesBucket = {nodes: ReadonlyArray<unknown>};
+  const buckets = Object.values(items) as SearchNodesBucket[];
+  const total = buckets.reduce<number>(
     (acc, {nodes}) => acc + nodes.length,
     0,
   );
 
   const error = errors
-    ? errors.map(({message}) => message).join(', ')
+    ? errors.map(({message}: {message: string}) => message).join(', ')
     : undefined;
 
   return {type: 'regular', term, error, result: {total, items}};
@@ -375,20 +379,25 @@ const PREDICTIVE_SEARCH_QUERY = `#graphql
 
 /**
  * Predictive search fetcher
- * @param {Pick<
- *   Route.ActionArgs,
- *   'request' | 'context'
- * >}
- * @return {Promise<PredictiveSearchReturn>}
  */
-async function predictiveSearch({request, context}) {
+async function predictiveSearch({
+  request,
+  context,
+}: SearchLoaderArgs): Promise<PredictiveSearchReturn> {
   const {storefront} = context;
   const url = new URL(request.url);
   const term = String(url.searchParams.get('q') || '').trim();
   const limit = Number(url.searchParams.get('limit') || 10);
   const type = 'predictive';
 
-  if (!term) return {type, term, result: getEmptyPredictiveSearchResult()};
+  if (!term) {
+    return {
+      type,
+      term,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- empty result reuses shape-only items; runtime contents are empty arrays
+      result: getEmptyPredictiveSearchResult() as any,
+    };
+  }
 
   // Predictively search articles, collections, pages, products, and queries (suggestions)
   const {predictiveSearch: items, errors} = await storefront.query(
@@ -405,7 +414,9 @@ async function predictiveSearch({request, context}) {
 
   if (errors) {
     throw new Error(
-      `Shopify API errors: ${errors.map(({message}) => message).join(', ')}`,
+      `Shopify API errors: ${errors
+        .map(({message}: {message: string}) => message)
+        .join(', ')}`,
     );
   }
 
@@ -413,17 +424,9 @@ async function predictiveSearch({request, context}) {
     throw new Error('No predictive search data returned from Shopify API');
   }
 
-  const total = Object.values(items).reduce(
-    (acc, item) => acc + item.length,
-    0,
-  );
+  type PredictiveListBucket = ReadonlyArray<unknown>;
+  const buckets = Object.values(items) as PredictiveListBucket[];
+  const total = buckets.reduce<number>((acc, item) => acc + item.length, 0);
 
   return {type, term, result: {items, total}};
 }
-
-/** @typedef {import('./+types/search').Route} Route */
-/** @typedef {import('~/lib/search').RegularSearchReturn} RegularSearchReturn */
-/** @typedef {import('~/lib/search').PredictiveSearchReturn} PredictiveSearchReturn */
-/** @typedef {import('storefrontapi.generated').RegularSearchQuery} RegularSearchQuery */
-/** @typedef {import('storefrontapi.generated').PredictiveSearchQuery} PredictiveSearchQuery */
-/** @typedef {ReturnType<typeof useLoaderData<typeof loader>>} LoaderReturnData */

@@ -5,17 +5,16 @@ import {
   Outlet,
   useLoaderData,
 } from 'react-router';
+import type {ShouldRevalidateFunction} from 'react-router';
 import {CUSTOMER_DETAILS_QUERY} from '~/graphql/customer-account/CustomerDetailsQuery';
 import {useI18n} from '~/lib/useI18n';
+import type {Route} from './+types/($locale).account';
 
-export function shouldRevalidate() {
+export const shouldRevalidate: ShouldRevalidateFunction = () => {
   return true;
-}
+};
 
-/**
- * @param {Route.LoaderArgs}
- */
-export async function loader({context}) {
+export async function loader({context}: Route.LoaderArgs) {
   const {customerAccount} = context;
   const {data, errors} = await customerAccount.query(CUSTOMER_DETAILS_QUERY, {
     variables: {
@@ -38,8 +37,7 @@ export async function loader({context}) {
 }
 
 export default function AccountLayout() {
-  /** @type {LoaderReturnData} */
-  const {customer} = useLoaderData();
+  const {customer} = useLoaderData<typeof loader>();
   const {dict} = useI18n();
 
   const heading = customer
@@ -62,7 +60,13 @@ export default function AccountLayout() {
 
 function AccountMenu() {
   const {dict, to} = useI18n();
-  function isActiveStyle({isActive, isPending}) {
+  function isActiveStyle({
+    isActive,
+    isPending,
+  }: {
+    isActive: boolean;
+    isPending: boolean;
+  }) {
     return {
       fontWeight: isActive ? 'bold' : undefined,
       color: isPending ? 'grey' : 'inherit',
@@ -96,6 +100,3 @@ function Logout() {
     </Form>
   );
 }
-
-/** @typedef {import('./+types/account').Route} Route */
-/** @typedef {ReturnType<typeof useLoaderData<typeof loader>>} LoaderReturnData */

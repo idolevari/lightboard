@@ -2,18 +2,14 @@ import {redirect, useLoaderData} from 'react-router';
 import {Money, Image} from '@shopify/hydrogen';
 import {CUSTOMER_ORDER_QUERY} from '~/graphql/customer-account/CustomerOrderQuery';
 import {useI18n} from '~/lib/useI18n';
+import type {OrderLineItemFullFragment} from 'customer-accountapi.generated';
+import type {Route} from './+types/($locale).account.orders.$id';
 
-/**
- * @type {Route.MetaFunction}
- */
-export const meta = ({data}) => {
+export const meta: Route.MetaFunction = ({data}) => {
   return [{title: `Order ${data?.order?.name}`}];
 };
 
-/**
- * @param {Route.LoaderArgs}
- */
-export async function loader({params, context}) {
+export async function loader({params, context}: Route.LoaderArgs) {
   const {customerAccount} = context;
   if (!params.id) {
     return redirect('/account/orders');
@@ -65,14 +61,13 @@ export async function loader({params, context}) {
 }
 
 export default function OrderRoute() {
-  /** @type {LoaderReturnData} */
   const {
     order,
     lineItems,
     discountValue,
     discountPercentage,
     fulfillmentStatus,
-  } = useLoaderData();
+  } = useLoaderData<typeof loader>();
   const {dict, locale} = useI18n();
   const t = dict.account.orderTable;
   const dateString = new Date(order.processedAt).toLocaleDateString(
@@ -130,7 +125,7 @@ export default function OrderRoute() {
                 <p>{t.subtotal}</p>
               </th>
               <td>
-                <Money data={order.subtotal} />
+                {order.subtotal ? <Money data={order.subtotal} /> : null}
               </td>
             </tr>
             <tr>
@@ -141,7 +136,7 @@ export default function OrderRoute() {
                 <p>{t.tax}</p>
               </th>
               <td>
-                <Money data={order.totalTax} />
+                {order.totalTax ? <Money data={order.totalTax} /> : null}
               </td>
             </tr>
             <tr>
@@ -192,10 +187,7 @@ export default function OrderRoute() {
   );
 }
 
-/**
- * @param {{lineItem: OrderLineItemFullFragment}}
- */
-function OrderLineRow({lineItem}) {
+function OrderLineRow({lineItem}: {lineItem: OrderLineItemFullFragment}) {
   return (
     <tr key={lineItem.id}>
       <td>
@@ -212,17 +204,14 @@ function OrderLineRow({lineItem}) {
         </div>
       </td>
       <td>
-        <Money data={lineItem.price} />
+        {lineItem.price ? <Money data={lineItem.price} /> : null}
       </td>
       <td>{lineItem.quantity}</td>
       <td>
-        <Money data={lineItem.totalDiscount} />
+        {lineItem.totalDiscount ? (
+          <Money data={lineItem.totalDiscount} />
+        ) : null}
       </td>
     </tr>
   );
 }
-
-/** @typedef {import('./+types/account.orders.$id').Route} Route */
-/** @typedef {import('customer-accountapi.generated').OrderLineItemFullFragment} OrderLineItemFullFragment */
-/** @typedef {import('customer-accountapi.generated').OrderQuery} OrderQuery */
-/** @typedef {ReturnType<typeof useLoaderData<typeof loader>>} LoaderReturnData */

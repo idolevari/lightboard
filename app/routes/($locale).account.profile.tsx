@@ -8,29 +8,24 @@ import {
 } from 'react-router';
 import {useI18n} from '~/lib/useI18n';
 import {getDictionary} from '~/lib/i18n';
+import type {CustomerFragment} from 'customer-accountapi.generated';
+import type {CustomerUpdateInput} from '@shopify/hydrogen/customer-account-api-types';
+import type {Route} from './+types/($locale).account.profile';
 
-/**
- * @type {Route.MetaFunction}
- */
-export const meta = ({matches}) => {
-  const root = matches?.find?.((m) => m.id === 'root');
-  const dict = root?.data?.dict ?? getDictionary('he');
+export const meta: Route.MetaFunction = ({matches}) => {
+  const root = matches?.find?.((m) => m?.id === 'root');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- root match data shape is not exposed via generated types
+  const dict = (root?.data as any)?.dict ?? getDictionary('he');
   return [{title: dict.account.profile}];
 };
 
-/**
- * @param {Route.LoaderArgs}
- */
-export async function loader({context}) {
+export async function loader({context}: Route.LoaderArgs) {
   await context.customerAccount.handleAuthStatus();
 
   return {};
 }
 
-/**
- * @param {Route.ActionArgs}
- */
-export async function action({request, context}) {
+export async function action({request, context}: Route.ActionArgs) {
   const {customerAccount} = context;
 
   if (request.method !== 'PUT') {
@@ -40,19 +35,19 @@ export async function action({request, context}) {
   const form = await request.formData();
 
   try {
-    const customer = {};
-    const validInputKeys = ['firstName', 'lastName'];
+    const customer: CustomerUpdateInput = {};
+    const validInputKeys = ['firstName', 'lastName'] as const;
     for (const [key, value] of form.entries()) {
-      if (!validInputKeys.includes(key)) {
+      if (!validInputKeys.includes(key as (typeof validInputKeys)[number])) {
         continue;
       }
       if (typeof value === 'string' && value.length) {
-        customer[key] = value;
+        (customer as Record<string, string>)[key] = value;
       }
     }
 
     // update customer and possibly password
-    const {data, errors} = await customerAccount.mutate(
+    const {data: mutationData, errors} = await customerAccount.mutate(
       CUSTOMER_UPDATE_MUTATION,
       {
         variables: {
@@ -66,17 +61,17 @@ export async function action({request, context}) {
       throw new Error(errors[0].message);
     }
 
-    if (!data?.customerUpdate?.customer) {
+    if (!mutationData?.customerUpdate?.customer) {
       throw new Error('Customer profile update failed.');
     }
 
     return {
       error: null,
-      customer: data?.customerUpdate?.customer,
+      customer: mutationData?.customerUpdate?.customer,
     };
   } catch (error) {
     return data(
-      {error: error.message, customer: null},
+      {error: error instanceof Error ? error.message : String(error), customer: null},
       {
         status: 400,
       },
@@ -85,11 +80,14 @@ export async function action({request, context}) {
 }
 
 export default function AccountProfile() {
-  const account = useOutletContext();
+  const account = useOutletContext<{customer: CustomerFragment}>();
   const {state} = useNavigation();
-  /** @type {ActionReturnData} */
-  const action = useActionData();
-  const customer = action?.customer ?? account?.customer;
+  const actionData = useActionData<typeof action>();
+  const customer =
+    (actionData && 'customer' in actionData ? actionData.customer : null) ??
+    account?.customer;
+  const actionError =
+    actionData && 'error' in actionData ? actionData.error : null;
   const {dict} = useI18n();
 
   return (
@@ -122,10 +120,10 @@ export default function AccountProfile() {
             minLength={2}
           />
         </fieldset>
-        {action?.error ? (
+        {actionError ? (
           <p>
             <mark>
-              <small>{action.error}</small>
+              <small>{actionError}</small>
             </mark>
           </p>
         ) : (
@@ -138,16 +136,3 @@ export default function AccountProfile() {
     </div>
   );
 }
-
-/**
- * @typedef {{
- *   error: string | null;
- *   customer: CustomerFragment | null;
- * }} ActionResponse
- */
-
-/** @typedef {import('customer-accountapi.generated').CustomerFragment} CustomerFragment */
-/** @typedef {import('@shopify/hydrogen/customer-account-api-types').CustomerUpdateInput} CustomerUpdateInput */
-/** @typedef {import('./+types/account.profile').Route} Route */
-/** @typedef {ReturnType<typeof useLoaderData<typeof loader>>} LoaderReturnData */
-/** @typedef {ReturnType<typeof useActionData<typeof action>>} ActionReturnData */

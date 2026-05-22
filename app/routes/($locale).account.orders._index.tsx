@@ -15,24 +15,25 @@ import {
   parseOrderFilters,
   ORDER_FILTER_FIELDS,
 } from '~/lib/orderFilters';
+import type {OrderFilterParams} from '~/lib/orderFilters';
 import {CUSTOMER_ORDERS_QUERY} from '~/graphql/customer-account/CustomerOrdersQuery';
 import {PaginatedResourceSection} from '~/components/PaginatedResourceSection';
 import {useI18n} from '~/lib/useI18n';
 import {getDictionary} from '~/lib/i18n';
+import type {
+  CustomerOrdersFragment,
+  OrderItemFragment,
+} from 'customer-accountapi.generated';
+import type {Route} from './+types/($locale).account.orders._index';
 
-/**
- * @type {Route.MetaFunction}
- */
-export const meta = ({matches}) => {
-  const root = matches?.find?.((m) => m.id === 'root');
-  const dict = root?.data?.dict ?? getDictionary('he');
+export const meta: Route.MetaFunction = ({matches}) => {
+  const root = matches?.find?.((m) => m?.id === 'root');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- root match data shape is not exposed via generated types
+  const dict = (root?.data as any)?.dict ?? getDictionary('he');
   return [{title: dict.account.orders}];
 };
 
-/**
- * @param {Route.LoaderArgs}
- */
-export async function loader({request, context}) {
+export async function loader({request, context}: Route.LoaderArgs) {
   const {customerAccount} = context;
   const paginationVariables = getPaginationVariables(request, {
     pageBy: 20,
@@ -58,8 +59,7 @@ export async function loader({request, context}) {
 }
 
 export default function Orders() {
-  /** @type {LoaderReturnData} */
-  const {customer, filters} = useLoaderData();
+  const {customer, filters} = useLoaderData<typeof loader>();
   const {orders} = customer;
 
   return (
@@ -70,13 +70,13 @@ export default function Orders() {
   );
 }
 
-/**
- * @param {{
- *   orders: CustomerOrdersFragment['orders'];
- *   filters: OrderFilterParams;
- * }}
- */
-function OrdersTable({orders, filters}) {
+function OrdersTable({
+  orders,
+  filters,
+}: {
+  orders: CustomerOrdersFragment['orders'];
+  filters: OrderFilterParams;
+}) {
   const hasFilters = !!(filters.name || filters.confirmationNumber);
 
   return (
@@ -92,10 +92,7 @@ function OrdersTable({orders, filters}) {
   );
 }
 
-/**
- * @param {{hasFilters?: boolean}}
- */
-function EmptyOrders({hasFilters = false}) {
+function EmptyOrders({hasFilters = false}: {hasFilters?: boolean}) {
   const {dict, to} = useI18n();
   return (
     <div>
@@ -120,21 +117,20 @@ function EmptyOrders({hasFilters = false}) {
   );
 }
 
-/**
- * @param {{
- *   currentFilters: OrderFilterParams;
- * }}
- */
-function OrderSearchForm({currentFilters}) {
+function OrderSearchForm({
+  currentFilters,
+}: {
+  currentFilters: OrderFilterParams;
+}) {
   const [, setSearchParams] = useSearchParams();
   const navigation = useNavigation();
   const isSearching =
     navigation.state !== 'idle' &&
     navigation.location?.pathname?.includes('orders');
-  const formRef = useRef(null);
+  const formRef = useRef<HTMLFormElement>(null);
   const {dict} = useI18n();
 
-  const handleSubmit = (event) => {
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const params = new URLSearchParams();
@@ -205,10 +201,7 @@ function OrderSearchForm({currentFilters}) {
   );
 }
 
-/**
- * @param {{order: OrderItemFragment}}
- */
-function OrderItem({order}) {
+function OrderItem({order}: {order: OrderItemFragment}) {
   const fulfillmentStatus = flattenConnection(order.fulfillments)[0]?.status;
   const {dict, to, locale} = useI18n();
   const orderHref = to(`/account/orders/${btoa(order.id)}`);
@@ -235,16 +228,3 @@ function OrderItem({order}) {
     </>
   );
 }
-
-/**
- * @typedef {{
- *   customer: CustomerOrdersFragment;
- *   filters: OrderFilterParams;
- * }} OrdersLoaderData
- */
-
-/** @typedef {import('./+types/account.orders._index').Route} Route */
-/** @typedef {import('~/lib/orderFilters').OrderFilterParams} OrderFilterParams */
-/** @typedef {import('customer-accountapi.generated').CustomerOrdersFragment} CustomerOrdersFragment */
-/** @typedef {import('customer-accountapi.generated').OrderItemFragment} OrderItemFragment */
-/** @typedef {ReturnType<typeof useLoaderData<typeof loader>>} LoaderReturnData */

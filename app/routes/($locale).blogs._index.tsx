@@ -3,22 +3,18 @@ import {getPaginationVariables} from '@shopify/hydrogen';
 import {PaginatedResourceSection} from '~/components/PaginatedResourceSection';
 import {useI18n} from '~/lib/useI18n';
 import {getDictionary} from '~/lib/i18n';
+import type {Route} from './+types/($locale).blogs._index';
 
-/**
- * @type {Route.MetaFunction}
- */
-export const meta = ({matches}) => {
-  const root = matches?.find?.((m) => m.id === 'root');
-  const dict = root?.data?.dict ?? getDictionary('he');
+export const meta: Route.MetaFunction = ({matches}) => {
+  const root = matches?.find?.((m) => m?.id === 'root');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- root match data shape is not exposed via generated types
+  const dict = (root?.data as any)?.dict ?? getDictionary('he');
   return [{title: dict.blogs.indexMeta}];
 };
 
-/**
- * @param {Route.LoaderArgs} args
- */
-export async function loader(args) {
+export async function loader(args: Route.LoaderArgs) {
   // Start fetching non-critical data without blocking time to first byte
-  const deferredData = loadDeferredData(args);
+  const deferredData = loadDeferredData();
 
   // Await the critical data required to render initial state of the page
   const criticalData = await loadCriticalData(args);
@@ -29,9 +25,8 @@ export async function loader(args) {
 /**
  * Load data necessary for rendering content above the fold. This is the critical data
  * needed to render the page. If it's unavailable, the whole page should 400 or 500 error.
- * @param {Route.LoaderArgs}
  */
-async function loadCriticalData({context, request}) {
+async function loadCriticalData({context, request}: Route.LoaderArgs) {
   const paginationVariables = getPaginationVariables(request, {
     pageBy: 10,
   });
@@ -53,15 +48,13 @@ async function loadCriticalData({context, request}) {
  * Load data for rendering content below the fold. This data is deferred and will be
  * fetched after the initial page load. If it's unavailable, the page should still 200.
  * Make sure to not throw any errors here, as it will cause the page to 500.
- * @param {Route.LoaderArgs}
  */
 function loadDeferredData() {
   return {};
 }
 
 export default function Blogs() {
-  /** @type {LoaderReturnData} */
-  const {blogs} = useLoaderData();
+  const {blogs} = useLoaderData<typeof loader>();
   const {dict, to} = useI18n();
 
   return (
@@ -118,9 +111,3 @@ const BLOGS_QUERY = `#graphql
     }
   }
 `;
-
-/** @typedef {BlogsQuery['blogs']['nodes'][0]} BlogNode */
-
-/** @typedef {import('./+types/blogs._index').Route} Route */
-/** @typedef {import('storefrontapi.generated').BlogsQuery} BlogsQuery */
-/** @typedef {ReturnType<typeof useLoaderData<typeof loader>>} LoaderReturnData */

@@ -1,20 +1,16 @@
 import {redirect} from 'react-router';
 import {detectLocaleFromRequest, localizedPath} from '~/lib/i18n';
 import {isSameOriginPath} from '~/lib/redirect';
+import type {Route} from './+types/($locale).discount.$code';
 
 /**
- * Automatically applies a discount found on the url
- * If a cart exists it's updated with the discount, otherwise a cart is created with the discount already applied
+ * Automatically applies a discount found on the url.
+ * If a cart exists it's updated with the discount, otherwise a cart is created
+ * with the discount already applied.
  *
- * @example
- * Example path applying a discount and optional redirecting (defaults to the home page)
- * ```js
- * /discount/FREESHIPPING?redirect=/products
- *
- * ```
- * @param {Route.LoaderArgs}
+ * Example: `/discount/FREESHIPPING?redirect=/products`
  */
-export async function loader({request, context, params}) {
+export async function loader({request, context, params}: Route.LoaderArgs) {
   const {cart} = context;
   const {code} = params;
 
@@ -50,6 +46,3 @@ export async function loader({request, context, params}) {
     headers,
   });
 }
-
-/** @typedef {import('./+types/discount.$code').Route} Route */
-/** @typedef {ReturnType<typeof useLoaderData<typeof loader>>} LoaderReturnData */

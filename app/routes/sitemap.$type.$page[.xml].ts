@@ -1,9 +1,11 @@
 import {getSitemap} from '@shopify/hydrogen';
+import type {Route} from './+types/sitemap.$type.$page[.xml]';
 
-/**
- * @param {Route.LoaderArgs}
- */
-export async function loader({request, params, context: {storefront}}) {
+export async function loader({
+  request,
+  params,
+  context: {storefront},
+}: Route.LoaderArgs) {
   const response = await getSitemap({
     storefront,
     request,
@@ -19,6 +21,3 @@ export async function loader({request, params, context: {storefront}}) {
 
   return response;
 }
-
-/** @typedef {import('./+types/sitemap.$type.$page[.xml]').Route} Route */
-/** @typedef {ReturnType<typeof useLoaderData<typeof loader>>} LoaderReturnData */

@@ -5,33 +5,40 @@ import {
   useNavigation,
   useOutletContext,
 } from 'react-router';
+import type {Fetcher} from 'react-router';
 import {
   UPDATE_ADDRESS_MUTATION,
   DELETE_ADDRESS_MUTATION,
   CREATE_ADDRESS_MUTATION,
 } from '~/graphql/customer-account/CustomerAddressMutations';
 import {useI18n} from '~/lib/useI18n';
+import type {
+  AddressFragment,
+  CustomerFragment,
+} from 'customer-accountapi.generated';
+import type {CustomerAddressInput} from '@shopify/hydrogen/customer-account-api-types';
+import type {Route} from './+types/($locale).account.addresses';
 
-/**
- * @type {Route.MetaFunction}
- */
-export const meta = () => {
+type ActionResponse = {
+  addressId?: string | null;
+  createdAddress?: AddressFragment;
+  defaultAddress?: string | null | boolean;
+  deletedAddress?: string | null;
+  error: Record<string, string> | string | null;
+  updatedAddress?: CustomerAddressInput;
+};
+
+export const meta: Route.MetaFunction = () => {
   return [{title: 'Addresses'}];
 };
 
-/**
- * @param {Route.LoaderArgs}
- */
-export async function loader({context}) {
+export async function loader({context}: Route.LoaderArgs) {
   await context.customerAccount.handleAuthStatus();
 
   return {};
 }
 
-/**
- * @param {Route.ActionArgs}
- */
-export async function action({request, context}) {
+export async function action({request, context}: Route.ActionArgs) {
   const {customerAccount} = context;
 
   try {
@@ -58,7 +65,7 @@ export async function action({request, context}) {
     const defaultAddress = form.has('defaultAddress')
       ? String(form.get('defaultAddress')) === 'on'
       : false;
-    const address = {};
+    const address: Record<string, string> = {};
     const keys = [
       'address1',
       'address2',
@@ -70,7 +77,7 @@ export async function action({request, context}) {
       'phoneNumber',
       'zoneCode',
       'zip',
-    ];
+    ] as const;
 
     for (const key of keys) {
       const value = form.get(key);
@@ -83,7 +90,7 @@ export async function action({request, context}) {
       case 'POST': {
         // handle new address creation
         try {
-          const {data, errors} = await customerAccount.mutate(
+          const {data: mutationData, errors} = await customerAccount.mutate(
             CREATE_ADDRESS_MUTATION,
             {
               variables: {
@@ -98,17 +105,19 @@ export async function action({request, context}) {
             throw new Error(errors[0].message);
           }
 
-          if (data?.customerAddressCreate?.userErrors?.length) {
-            throw new Error(data?.customerAddressCreate?.userErrors[0].message);
+          if (mutationData?.customerAddressCreate?.userErrors?.length) {
+            throw new Error(
+              mutationData?.customerAddressCreate?.userErrors[0].message,
+            );
           }
 
-          if (!data?.customerAddressCreate?.customerAddress) {
+          if (!mutationData?.customerAddressCreate?.customerAddress) {
             throw new Error('Customer address create failed.');
           }
 
           return {
             error: null,
-            createdAddress: data?.customerAddressCreate?.customerAddress,
+            createdAddress: mutationData?.customerAddressCreate?.customerAddress,
             defaultAddress,
           };
         } catch (error) {
@@ -121,7 +130,7 @@ export async function action({request, context}) {
             );
           }
           return data(
-            {error: {[addressId]: error}},
+            {error: {[addressId]: String(error)}},
             {
               status: 400,
             },
@@ -132,7 +141,7 @@ export async function action({request, context}) {
       case 'PUT': {
         // handle address updates
         try {
-          const {data, errors} = await customerAccount.mutate(
+          const {data: mutationData, errors} = await customerAccount.mutate(
             UPDATE_ADDRESS_MUTATION,
             {
               variables: {
@@ -148,11 +157,13 @@ export async function action({request, context}) {
             throw new Error(errors[0].message);
           }
 
-          if (data?.customerAddressUpdate?.userErrors?.length) {
-            throw new Error(data?.customerAddressUpdate?.userErrors[0].message);
+          if (mutationData?.customerAddressUpdate?.userErrors?.length) {
+            throw new Error(
+              mutationData?.customerAddressUpdate?.userErrors[0].message,
+            );
           }
 
-          if (!data?.customerAddressUpdate?.customerAddress) {
+          if (!mutationData?.customerAddressUpdate?.customerAddress) {
             throw new Error('Customer address update failed.');
           }
 
@@ -171,7 +182,7 @@ export async function action({request, context}) {
             );
           }
           return data(
-            {error: {[addressId]: error}},
+            {error: {[addressId]: String(error)}},
             {
               status: 400,
             },
@@ -182,7 +193,7 @@ export async function action({request, context}) {
       case 'DELETE': {
         // handles address deletion
         try {
-          const {data, errors} = await customerAccount.mutate(
+          const {data: mutationData, errors} = await customerAccount.mutate(
             DELETE_ADDRESS_MUTATION,
             {
               variables: {
@@ -196,11 +207,13 @@ export async function action({request, context}) {
             throw new Error(errors[0].message);
           }
 
-          if (data?.customerAddressDelete?.userErrors?.length) {
-            throw new Error(data?.customerAddressDelete?.userErrors[0].message);
+          if (mutationData?.customerAddressDelete?.userErrors?.length) {
+            throw new Error(
+              mutationData?.customerAddressDelete?.userErrors[0].message,
+            );
           }
 
-          if (!data?.customerAddressDelete?.deletedAddressId) {
+          if (!mutationData?.customerAddressDelete?.deletedAddressId) {
             throw new Error('Customer address delete failed.');
           }
 
@@ -215,7 +228,7 @@ export async function action({request, context}) {
             );
           }
           return data(
-            {error: {[addressId]: error}},
+            {error: {[addressId]: String(error)}},
             {
               status: 400,
             },
@@ -242,7 +255,7 @@ export async function action({request, context}) {
       );
     }
     return data(
-      {error},
+      {error: String(error)},
       {
         status: 400,
       },
@@ -251,7 +264,7 @@ export async function action({request, context}) {
 }
 
 export default function Addresses() {
-  const {customer} = useOutletContext();
+  const {customer} = useOutletContext<{customer: CustomerFragment}>();
   const {defaultAddress, addresses} = customer;
   const {dict} = useI18n();
 
@@ -282,13 +295,14 @@ export default function Addresses() {
 
 function NewAddressForm() {
   const {dict} = useI18n();
-  const newAddress = {
+  const newAddress: AddressFragment = {
     address1: '',
     address2: '',
     city: '',
     company: '',
-    territoryCode: '',
+    territoryCode: null,
     firstName: '',
+    formatted: [],
     id: 'new',
     lastName: '',
     phoneNumber: '',
@@ -317,10 +331,10 @@ function NewAddressForm() {
   );
 }
 
-/**
- * @param {Pick<CustomerFragment, 'addresses' | 'defaultAddress'>}
- */
-function ExistingAddresses({addresses, defaultAddress}) {
+function ExistingAddresses({
+  addresses,
+  defaultAddress,
+}: Pick<CustomerFragment, 'addresses' | 'defaultAddress'>) {
   const {dict} = useI18n();
   return (
     <div>
@@ -356,21 +370,25 @@ function ExistingAddresses({addresses, defaultAddress}) {
   );
 }
 
-/**
- * @param {{
- *   addressId: AddressFragment['id'];
- *   address: CustomerAddressInput;
- *   defaultAddress: CustomerFragment['defaultAddress'];
- *   children: (props: {
- *     stateForMethod: (method: 'PUT' | 'POST' | 'DELETE') => Fetcher['state'];
- *   }) => React.ReactNode;
- * }}
- */
-export function AddressForm({addressId, address, defaultAddress, children}) {
+export function AddressForm({
+  addressId,
+  address,
+  defaultAddress,
+  children,
+}: {
+  addressId: AddressFragment['id'];
+  address: CustomerAddressInput | AddressFragment;
+  defaultAddress: CustomerFragment['defaultAddress'];
+  children: (props: {
+    stateForMethod: (method: 'PUT' | 'POST' | 'DELETE') => Fetcher['state'];
+  }) => React.ReactNode;
+}) {
   const {state, formMethod} = useNavigation();
-  /** @type {ActionReturnData} */
-  const action = useActionData();
-  const error = action?.error?.[addressId];
+  const action = useActionData<typeof action>() as ActionResponse | undefined;
+  const error =
+    action?.error && typeof action.error === 'object'
+      ? action.error[addressId]
+      : undefined;
   const isDefaultAddress = defaultAddress?.id === addressId;
   const {dict} = useI18n();
   const a = dict.account;
@@ -512,22 +530,3 @@ export function AddressForm({addressId, address, defaultAddress, children}) {
     </Form>
   );
 }
-
-/**
- * @typedef {{
- *   addressId?: string | null;
- *   createdAddress?: AddressFragment;
- *   defaultAddress?: string | null;
- *   deletedAddress?: string | null;
- *   error: Record<AddressFragment['id'], string> | null;
- *   updatedAddress?: AddressFragment;
- * }} ActionResponse
- */
-
-/** @typedef {import('@shopify/hydrogen/customer-account-api-types').CustomerAddressInput} CustomerAddressInput */
-/** @typedef {import('customer-accountapi.generated').AddressFragment} AddressFragment */
-/** @typedef {import('customer-accountapi.generated').CustomerFragment} CustomerFragment */
-/** @template T @typedef {import('react-router').Fetcher<T>} Fetcher */
-/** @typedef {import('./+types/account.addresses').Route} Route */
-/** @typedef {ReturnType<typeof useLoaderData<typeof loader>>} LoaderReturnData */
-/** @typedef {ReturnType<typeof useActionData<typeof action>>} ActionReturnData */

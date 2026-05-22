@@ -1,17 +1,17 @@
 import {useLoaderData, Link} from 'react-router';
 import {useI18n} from '~/lib/useI18n';
 import {getDictionary} from '~/lib/i18n';
+import type {PolicyItemFragment} from 'storefrontapi.generated';
+import type {Route} from './+types/($locale).policies._index';
 
-export const meta = ({matches}) => {
-  const root = matches?.find?.((m) => m.id === 'root');
-  const dict = root?.data?.dict ?? getDictionary('he');
+export const meta: Route.MetaFunction = ({matches}) => {
+  const root = matches?.find?.((m) => m?.id === 'root');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- root match data shape is not exposed via generated types
+  const dict = (root?.data as any)?.dict ?? getDictionary('he');
   return [{title: dict.policies.indexMeta}];
 };
 
-/**
- * @param {Route.LoaderArgs}
- */
-export async function loader({context}) {
+export async function loader({context}: Route.LoaderArgs) {
   const data = await context.storefront.query(POLICIES_QUERY, {
     cache: context.storefront.CacheLong(),
   });
@@ -23,7 +23,7 @@ export async function loader({context}) {
     shopPolicies?.termsOfService,
     shopPolicies?.refundPolicy,
     shopPolicies?.subscriptionPolicy,
-  ].filter((policy) => policy != null);
+  ].filter((policy): policy is PolicyItemFragment => policy != null);
 
   if (!policies.length) {
     throw new Response('No policies found', {status: 404});
@@ -33,11 +33,10 @@ export async function loader({context}) {
 }
 
 export default function Policies() {
-  /** @type {LoaderReturnData} */
-  const {policies} = useLoaderData();
+  const {policies} = useLoaderData<typeof loader>();
   const {dict, to} = useI18n();
 
-  const titleMap = dict.policies.titles ?? {};
+  const titleMap: Record<string, string> = dict.policies.titles ?? {};
   return (
     <article className="policies">
       <h1>{dict.policies.indexTitle}</h1>
@@ -83,8 +82,3 @@ const POLICIES_QUERY = `#graphql
     }
   }
 `;
-
-/** @typedef {import('./+types/policies._index').Route} Route */
-/** @typedef {import('storefrontapi.generated').PoliciesQuery} PoliciesQuery */
-/** @typedef {import('storefrontapi.generated').PolicyItemFragment} PolicyItemFragment */
-/** @typedef {ReturnType<typeof useLoaderData<typeof loader>>} LoaderReturnData */

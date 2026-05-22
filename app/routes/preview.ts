@@ -1,5 +1,6 @@
 import {data} from 'react-router';
 import {buildPreviewCookie, tokensMatch} from '~/lib/coming-soon';
+import type {Route} from './+types/preview';
 
 /**
  * Launch-gate bypass route.
@@ -11,7 +12,7 @@ import {buildPreviewCookie, tokensMatch} from '~/lib/coming-soon';
  * missing token returns 404 — the gate stays in place and the URL surface is
  * indistinguishable from a typo.
  */
-export async function loader({request, context}) {
+export async function loader({request, context}: Route.LoaderArgs) {
   const expected = context.env?.PREVIEW_TOKEN;
   if (!expected) {
     return data({error: 'not-found'}, {status: 404});
