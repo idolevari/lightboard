@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import {useCallback, useEffect, useRef, useState} from 'react';
 import {useI18n} from '~/lib/useI18n';
 import {
   CROPPED_OUTPUT_SIZE,
@@ -10,9 +10,8 @@ import {
   validatePhotoFile,
 } from '~/lib/photo-canvas';
 import {pickThreeFromGallery} from '~/lib/surprise-gallery';
-import {PhotoSlot} from './PhotoSlot';
+import {BoardCanvas} from './BoardCanvas';
 import {CropDialog} from './CropDialog';
-import {PreviewBoard} from './PreviewBoard';
 
 const SLOT_COUNT = 3;
 const PREVIEW_THUMBNAIL_SIZE = 480;
@@ -460,11 +459,6 @@ export function PhotoCustomizer({
     }
   }
 
-  const previewPhotos = useMemo(
-    () => slots.map((slot) => ({thumbnailUrl: previewUrlFor(slot)})),
-    [slots],
-  );
-
   const cropDialogSlot = cropDialogIndex == null ? null : slots[cropDialogIndex];
 
   const approveLabel = uploading
@@ -483,24 +477,20 @@ export function PhotoCustomizer({
         <p className="photo-customizer__subtitle">{t.subheading}</p>
       </header>
 
-      <div className="photo-customizer__slots">
-        {slots.map((slot, i) => (
-          <PhotoSlot
-            key={i}
-            index={i}
-            slotLabel={t.slotLabel.replace('{n}', String(i + 1))}
-            thumbnailUrl={previewUrlFor(slot)}
-            error={slot.error}
-            pickLabel={t.pick}
-            editLabel={t.editCrop}
-            removeLabel={t.remove}
-            disabled={uploading}
-            onFilePicked={(file) => handleFilePicked(i, file)}
-            onEditCrop={() => handleEditCrop(i)}
-            onRemove={() => handleRemove(i)}
-          />
-        ))}
-      </div>
+      <BoardCanvas
+        slots={slots.map((slot) => ({
+          thumbnailUrl: previewUrlFor(slot),
+          error: slot.error,
+        }))}
+        slotLabel={(n) => t.slotLabel.replace('{n}', String(n))}
+        pickLabel={t.pick}
+        editLabel={t.editCrop}
+        removeLabel={t.remove}
+        disabled={uploading}
+        onFilePicked={handleFilePicked}
+        onEditCrop={handleEditCrop}
+        onRemove={handleRemove}
+      />
 
       <div className="photo-customizer__surprise" role="group" aria-label={t.surprise?.button ?? 'Pick photos from our gallery'}>
         <p className="photo-customizer__surprise-helper">
@@ -516,14 +506,6 @@ export function PhotoCustomizer({
             ? (t.surprise?.swap ?? 'Surprise me again')
             : (t.surprise?.button ?? 'Surprise me from the gallery')}
         </button>
-      </div>
-
-      <div className="photo-customizer__preview">
-        <h4 className="photo-customizer__preview-title">{t.previewTitle}</h4>
-        <PreviewBoard
-          photos={previewPhotos}
-          placeholderLabel={t.placeholder}
-        />
       </div>
 
       {uploadError ? (

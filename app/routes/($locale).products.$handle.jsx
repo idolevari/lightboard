@@ -1,3 +1,4 @@
+import {useState} from 'react';
 import {useLoaderData, useRouteError, isRouteErrorResponse, Link} from 'react-router';
 import {
   getSelectedProductOptions,
@@ -8,8 +9,8 @@ import {
   useSelectedOptionInUrlParam,
 } from '@shopify/hydrogen';
 import {ProductPrice} from '~/components/ProductPrice';
-import {ProductImage} from '~/components/ProductImage';
-import {ProductForm} from '~/components/ProductForm';
+import {ProductOptions, ProductCartAction} from '~/components/ProductForm';
+import {PhotoCustomizer} from '~/components/PhotoCustomizer/PhotoCustomizer';
 import {redirectIfHandleIsLocalized} from '~/lib/redirect';
 import {useI18n} from '~/lib/useI18n';
 import {sanitizeShopifyHtml} from '~/lib/sanitize';
@@ -158,6 +159,14 @@ function loadDeferredData() {
  * merchant-visible order line only carries the three Photo URLs.
  * @param {Array<{key: string, value: string}>} attributes
  */
+function buildAttributesFromInitial(initial) {
+  return [
+    {key: 'Photo 1', value: initial.croppedUrls[0]},
+    {key: 'Photo 2', value: initial.croppedUrls[1]},
+    {key: 'Photo 3', value: initial.croppedUrls[2]},
+  ];
+}
+
 function parsePhotoStateFromAttributes(attributes) {
   if (!Array.isArray(attributes)) return null;
   const map = new Map(attributes.map((a) => [a.key, a.value]));
@@ -181,7 +190,6 @@ export default function Product() {
     initialPhotoState,
     cartId,
   } = useLoaderData();
-  const {dict} = useI18n();
 
   // Optimistically selects a variant with given available variant information
   const selectedVariant = useOptimisticVariant(
@@ -201,36 +209,43 @@ export default function Product() {
 
   const {title, descriptionHtml} = product;
   const isEditing = Boolean(editLineId && initialPhotoState);
+  const [photoAttributes, setPhotoAttributes] = useState(
+    initialPhotoState && !isEditing
+      ? buildAttributesFromInitial(initialPhotoState)
+      : null,
+  );
 
   return (
     <div className="product">
-      <ProductImage image={selectedVariant?.image} />
+      {requiresPhotos ? (
+        <PhotoCustomizer
+          cartId={cartId}
+          initialState={initialPhotoState}
+          isEditing={isEditing}
+          onApprove={setPhotoAttributes}
+          onUnapprove={() => setPhotoAttributes(null)}
+        />
+      ) : null}
       <div className="product-main">
         <h1>{title}</h1>
         <ProductPrice
           price={selectedVariant?.price}
           compareAtPrice={selectedVariant?.compareAtPrice}
         />
-        <br />
-        <ProductForm
-          productOptions={productOptions}
+        {descriptionHtml ? (
+          <div
+            className="product-description"
+            dangerouslySetInnerHTML={{__html: sanitizeShopifyHtml(descriptionHtml)}}
+          />
+        ) : null}
+        <ProductOptions productOptions={productOptions} />
+        <ProductCartAction
           selectedVariant={selectedVariant}
           requiresPhotos={requiresPhotos}
           isEditing={isEditing}
           editLineId={editLineId}
-          initialPhotoState={initialPhotoState}
-          cartId={cartId}
+          photoAttributes={photoAttributes}
         />
-        <br />
-        <br />
-        <p>
-          <strong>{dict.product.description}</strong>
-        </p>
-        <br />
-        <div
-          dangerouslySetInnerHTML={{__html: sanitizeShopifyHtml(descriptionHtml)}}
-        />
-        <br />
       </div>
       <Analytics.ProductView
         data={{

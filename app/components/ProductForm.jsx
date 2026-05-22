@@ -1,4 +1,3 @@
-import {useState} from 'react';
 import {Link, useNavigate} from 'react-router';
 import {CartForm} from '@shopify/hydrogen';
 import {AddToCartButton} from './AddToCartButton';
@@ -9,184 +8,173 @@ import {
   translateOptionValue,
   getOptionValueHex,
 } from '~/lib/productOptionLabels';
-import {PhotoCustomizer} from './PhotoCustomizer/PhotoCustomizer';
 
 /**
+ * Variant option swatches for the PDP. Pure UI — no shared state with the
+ * customizer/cart pieces, so it can be rendered above the product description
+ * while the customize + add-to-cart panel lives further down.
+ *
  * @param {{
  *   productOptions: MappedProductOptions[];
- *   selectedVariant: ProductFragment['selectedOrFirstAvailableVariant'];
- *   requiresPhotos?: boolean;
- *   isEditing?: boolean;
- *   editLineId?: string | null;
- *   initialPhotoState?: {
- *     croppedUrls: string[],
- *     originalUrls: string[],
- *     crops: Array<{x: number, y: number, width: number, height: number}>,
- *   } | null;
- *   cartId?: string | null;
  * }}
  */
-export function ProductForm({
-  productOptions,
-  selectedVariant,
-  requiresPhotos = false,
-  isEditing = false,
-  editLineId = null,
-  initialPhotoState = null,
-  cartId = null,
-}) {
+export function ProductOptions({productOptions}) {
   const navigate = useNavigate();
-  const {open} = useAside();
   const {dict, to} = useI18n();
-  const [photoAttributes, setPhotoAttributes] = useState(
-    initialPhotoState && !isEditing
-      ? buildAttributesFromInitial(initialPhotoState)
-      : null,
-  );
 
   return (
     <div className="product-form">
       {productOptions.map((option) => {
-        // If there is only a single value in the option values, don't display the option
         if (option.optionValues.length === 1) return null;
+
+        const selectedValue = option.optionValues.find((v) => v.selected);
+        const selectedDisplay = selectedValue
+          ? translateOptionValue(dict, selectedValue.name)
+          : '';
 
         return (
           <div className="product-options" key={option.name}>
-            <h5>{translateOptionName(dict, option.name)}</h5>
-            <div className="product-options-grid">
+            <div className="feat3-picker-head">
+              <span>{translateOptionName(dict, option.name)}</span>
+              {selectedDisplay && (
+                <span className="current">{selectedDisplay}</span>
+              )}
+            </div>
+            <div className="feat3-swatches">
               {option.optionValues.map((value) => {
                 const {
                   name,
                   handle,
                   variantUriQuery,
                   selected,
-                  available,
                   exists,
                   isDifferentProduct,
                   swatch,
                 } = value;
                 const displayName = translateOptionValue(dict, name);
+                const hex = swatch?.color ?? getOptionValueHex(name);
+                const hasDot = Boolean(hex || swatch?.image?.previewImage?.url);
+                const swatchImage = swatch?.image?.previewImage?.url;
+
+                const inner = (
+                  <>
+                    {hasDot && (
+                      <span
+                        className="dot"
+                        aria-hidden="true"
+                        style={{background: hex ?? 'transparent'}}
+                      >
+                        {swatchImage && <img src={swatchImage} alt="" />}
+                      </span>
+                    )}
+                    <span>{displayName}</span>
+                  </>
+                );
 
                 if (isDifferentProduct) {
-                  // SEO
-                  // When the variant is a combined listing child product
-                  // that leads to a different url, we need to render it
-                  // as an anchor tag
                   return (
                     <Link
-                      className="product-options-item"
+                      className={`feat3-swatch${selected ? ' on' : ''}`}
                       key={option.name + name}
                       prefetch="intent"
                       preventScrollReset
                       replace
                       to={`${to(`/products/${handle}`)}?${variantUriQuery}`}
-                      style={{
-                        border: selected
-                          ? '1px solid black'
-                          : '1px solid transparent',
-                        opacity: available ? 1 : 0.3,
-                      }}
+                      aria-pressed={selected}
                     >
-                      <ProductOptionSwatch
-                        swatch={swatch ?? {color: getOptionValueHex(name)}}
-                        name={displayName}
-                      />
+                      {inner}
                     </Link>
                   );
-                } else {
-                  // SEO
-                  // When the variant is an update to the search param,
-                  // render it as a button with javascript navigating to
-                  // the variant so that SEO bots do not index these as
-                  // duplicated links
-                  return (
-                    <button
-                      type="button"
-                      className={`product-options-item${exists && !selected ? ' link' : ''}`}
-                      key={option.name + name}
-                      style={{
-                        border: selected
-                          ? '1px solid black'
-                          : '1px solid transparent',
-                        opacity: available ? 1 : 0.3,
-                      }}
-                      disabled={!exists}
-                      onClick={() => {
-                        if (!selected) {
-                          void navigate(`?${variantUriQuery}`, {
-                            replace: true,
-                            preventScrollReset: true,
-                          });
-                        }
-                      }}
-                    >
-                      <ProductOptionSwatch
-                        swatch={swatch ?? {color: getOptionValueHex(name)}}
-                        name={displayName}
-                      />
-                    </button>
-                  );
                 }
+
+                return (
+                  <button
+                    type="button"
+                    className={`feat3-swatch${selected ? ' on' : ''}`}
+                    key={option.name + name}
+                    disabled={!exists}
+                    aria-pressed={selected}
+                    onClick={() => {
+                      if (!selected) {
+                        void navigate(`?${variantUriQuery}`, {
+                          replace: true,
+                          preventScrollReset: true,
+                        });
+                      }
+                    }}
+                  >
+                    {inner}
+                  </button>
+                );
               })}
             </div>
-            <br />
           </div>
         );
       })}
-
-      {requiresPhotos ? (
-        <PhotoCustomizer
-          cartId={cartId}
-          initialState={initialPhotoState}
-          isEditing={isEditing}
-          onApprove={(attrs) => {
-            setPhotoAttributes(attrs);
-            if (isEditing) {
-              // Trigger the hidden form submission via state — see UpdateCartForm.
-            }
-          }}
-          onUnapprove={() => setPhotoAttributes(null)}
-        />
-      ) : null}
-
-      {isEditing && editLineId ? (
-        <UpdateCartLineForm
-          lineId={editLineId}
-          attributes={photoAttributes}
-          label={dict.photoCustomizer?.saveAndReturn ?? dict.common.save}
-          to={to}
-        />
-      ) : (
-        <AddToCartButton
-          disabled={
-            !selectedVariant ||
-            !selectedVariant.availableForSale ||
-            (requiresPhotos && !photoAttributes)
-          }
-          onClick={() => {
-            open('cart');
-          }}
-          lines={
-            selectedVariant
-              ? [
-                  {
-                    merchandiseId: selectedVariant.id,
-                    quantity: 1,
-                    selectedVariant,
-                    ...(photoAttributes
-                      ? {attributes: photoAttributes}
-                      : {}),
-                  },
-                ]
-              : []
-          }
-        >
-          {selectedVariant?.availableForSale
-            ? dict.product.addToCart
-            : dict.product.soldOut}
-        </AddToCartButton>
-      )}
     </div>
+  );
+}
+
+/**
+ * Cart submission panel. Renders the AddToCart button (or the line-update form
+ * when editing an existing cart line). Reads photoAttributes from the parent
+ * route because the photo customizer that produces them lives in a separate
+ * subtree on the PDP.
+ *
+ * @param {{
+ *   selectedVariant: ProductFragment['selectedOrFirstAvailableVariant'];
+ *   requiresPhotos?: boolean;
+ *   isEditing?: boolean;
+ *   editLineId?: string | null;
+ *   photoAttributes?: Array<{key: string, value: string}> | null;
+ * }}
+ */
+export function ProductCartAction({
+  selectedVariant,
+  requiresPhotos = false,
+  isEditing = false,
+  editLineId = null,
+  photoAttributes = null,
+}) {
+  const {open} = useAside();
+  const {dict, to} = useI18n();
+
+  if (isEditing && editLineId) {
+    return (
+      <UpdateCartLineForm
+        lineId={editLineId}
+        attributes={photoAttributes}
+        label={dict.photoCustomizer?.saveAndReturn ?? dict.common.save}
+        to={to}
+      />
+    );
+  }
+
+  return (
+    <AddToCartButton
+      disabled={
+        !selectedVariant ||
+        !selectedVariant.availableForSale ||
+        (requiresPhotos && !photoAttributes)
+      }
+      onClick={() => open('cart')}
+      lines={
+        selectedVariant
+          ? [
+              {
+                merchandiseId: selectedVariant.id,
+                quantity: 1,
+                selectedVariant,
+                ...(photoAttributes ? {attributes: photoAttributes} : {}),
+              },
+            ]
+          : []
+      }
+    >
+      {selectedVariant?.availableForSale
+        ? dict.product.addToCart
+        : dict.product.soldOut}
+    </AddToCartButton>
   );
 }
 
@@ -217,40 +205,5 @@ function UpdateCartLineForm({lineId, attributes, label, to}) {
   );
 }
 
-function buildAttributesFromInitial(initial) {
-  return [
-    {key: 'Photo 1', value: initial.croppedUrls[0]},
-    {key: 'Photo 2', value: initial.croppedUrls[1]},
-    {key: 'Photo 3', value: initial.croppedUrls[2]},
-  ];
-}
-
-/**
- * @param {{
- *   swatch?: Maybe<ProductOptionValueSwatch> | undefined;
- *   name: string;
- * }}
- */
-function ProductOptionSwatch({swatch, name}) {
-  const image = swatch?.image?.previewImage?.url;
-  const color = swatch?.color;
-
-  if (!image && !color) return name;
-
-  return (
-    <div
-      aria-label={name}
-      className="product-option-label-swatch"
-      style={{
-        backgroundColor: color || 'transparent',
-      }}
-    >
-      {!!image && <img src={image} alt={name} />}
-    </div>
-  );
-}
-
 /** @typedef {import('@shopify/hydrogen').MappedProductOptions} MappedProductOptions */
-/** @typedef {import('@shopify/hydrogen/storefront-api-types').Maybe} Maybe */
-/** @typedef {import('@shopify/hydrogen/storefront-api-types').ProductOptionValueSwatch} ProductOptionValueSwatch */
 /** @typedef {import('storefrontapi.generated').ProductFragment} ProductFragment */
