@@ -14,3 +14,4 @@ node_modules
 scripts/
 policies/
 .shopify-files-app/
+tsconfig.tsbuildinfo

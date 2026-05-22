@@ -315,6 +315,11 @@ export type ShopFragment = Pick<
       image?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Image, 'url'>>;
     }>;
   }>;
+  phone?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+  email?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+  instagram?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+  legalName?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+  businessAddress?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
 };
 
 export type HeaderQueryVariables = StorefrontAPI.Exact<{
@@ -331,6 +336,13 @@ export type HeaderQuery = {
         image?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Image, 'url'>>;
       }>;
     }>;
+    phone?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+    email?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+    instagram?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+    legalName?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+    businessAddress?: StorefrontAPI.Maybe<
+      Pick<StorefrontAPI.Metafield, 'value'>
+    >;
   };
   menu?: StorefrontAPI.Maybe<
     Pick<StorefrontAPI.Menu, 'id'> & {
@@ -439,6 +451,62 @@ export type FeaturedProductQuery = {
               >;
             }
           >;
+          eyebrow_he?: StorefrontAPI.Maybe<
+            Pick<StorefrontAPI.Metafield, 'value'>
+          >;
+          eyebrow_en?: StorefrontAPI.Maybe<
+            Pick<StorefrontAPI.Metafield, 'value'>
+          >;
+          headline_he?: StorefrontAPI.Maybe<
+            Pick<StorefrontAPI.Metafield, 'value'>
+          >;
+          headline_en?: StorefrontAPI.Maybe<
+            Pick<StorefrontAPI.Metafield, 'value'>
+          >;
+          description_he?: StorefrontAPI.Maybe<
+            Pick<StorefrontAPI.Metafield, 'value'>
+          >;
+          description_en?: StorefrontAPI.Maybe<
+            Pick<StorefrontAPI.Metafield, 'value'>
+          >;
+          tagMadeToOrder_he?: StorefrontAPI.Maybe<
+            Pick<StorefrontAPI.Metafield, 'value'>
+          >;
+          tagMadeToOrder_en?: StorefrontAPI.Maybe<
+            Pick<StorefrontAPI.Metafield, 'value'>
+          >;
+          tagDimensions?: StorefrontAPI.Maybe<
+            Pick<StorefrontAPI.Metafield, 'value'>
+          >;
+          shipNote_he?: StorefrontAPI.Maybe<
+            Pick<StorefrontAPI.Metafield, 'value'>
+          >;
+          shipNote_en?: StorefrontAPI.Maybe<
+            Pick<StorefrontAPI.Metafield, 'value'>
+          >;
+          specs?: StorefrontAPI.Maybe<{
+            references?: StorefrontAPI.Maybe<{
+              nodes: Array<
+                Pick<StorefrontAPI.Metaobject, 'id'> & {
+                  label_he?: StorefrontAPI.Maybe<
+                    Pick<StorefrontAPI.MetaobjectField, 'value'>
+                  >;
+                  label_en?: StorefrontAPI.Maybe<
+                    Pick<StorefrontAPI.MetaobjectField, 'value'>
+                  >;
+                  value_he?: StorefrontAPI.Maybe<
+                    Pick<StorefrontAPI.MetaobjectField, 'value'>
+                  >;
+                  value_en?: StorefrontAPI.Maybe<
+                    Pick<StorefrontAPI.MetaobjectField, 'value'>
+                  >;
+                  position?: StorefrontAPI.Maybe<
+                    Pick<StorefrontAPI.MetaobjectField, 'value'>
+                  >;
+                }
+              >;
+            }>;
+          }>;
         }
       >;
     }>;
@@ -493,6 +561,110 @@ export type HeroSlidesQuery = {
         >;
       }
     >;
+  };
+};
+
+export type HomepageSectionsQueryVariables = StorefrontAPI.Exact<{
+  [key: string]: never;
+}>;
+
+export type HomepageSectionsQuery = {
+  shop: {
+    hero?: StorefrontAPI.Maybe<{
+      reference?: StorefrontAPI.Maybe<{
+        eyebrow_he?: StorefrontAPI.Maybe<
+          Pick<StorefrontAPI.MetaobjectField, 'value'>
+        >;
+        eyebrow_en?: StorefrontAPI.Maybe<
+          Pick<StorefrontAPI.MetaobjectField, 'value'>
+        >;
+        title_line_1_he?: StorefrontAPI.Maybe<
+          Pick<StorefrontAPI.MetaobjectField, 'value'>
+        >;
+        title_line_1_en?: StorefrontAPI.Maybe<
+          Pick<StorefrontAPI.MetaobjectField, 'value'>
+        >;
+        title_line_2_he?: StorefrontAPI.Maybe<
+          Pick<StorefrontAPI.MetaobjectField, 'value'>
+        >;
+        title_line_2_en?: StorefrontAPI.Maybe<
+          Pick<StorefrontAPI.MetaobjectField, 'value'>
+        >;
+        kicker_he?: StorefrontAPI.Maybe<
+          Pick<StorefrontAPI.MetaobjectField, 'value'>
+        >;
+        kicker_en?: StorefrontAPI.Maybe<
+          Pick<StorefrontAPI.MetaobjectField, 'value'>
+        >;
+        cta_he?: StorefrontAPI.Maybe<
+          Pick<StorefrontAPI.MetaobjectField, 'value'>
+        >;
+        cta_en?: StorefrontAPI.Maybe<
+          Pick<StorefrontAPI.MetaobjectField, 'value'>
+        >;
+        tape_items_he?: StorefrontAPI.Maybe<
+          Pick<StorefrontAPI.MetaobjectField, 'value'>
+        >;
+        tape_items_en?: StorefrontAPI.Maybe<
+          Pick<StorefrontAPI.MetaobjectField, 'value'>
+        >;
+      }>;
+    }>;
+    story?: StorefrontAPI.Maybe<{
+      reference?: StorefrontAPI.Maybe<{
+        tag?: StorefrontAPI.Maybe<Pick<StorefrontAPI.MetaobjectField, 'value'>>;
+        eyebrow_he?: StorefrontAPI.Maybe<
+          Pick<StorefrontAPI.MetaobjectField, 'value'>
+        >;
+        eyebrow_en?: StorefrontAPI.Maybe<
+          Pick<StorefrontAPI.MetaobjectField, 'value'>
+        >;
+        title_line_1_he?: StorefrontAPI.Maybe<
+          Pick<StorefrontAPI.MetaobjectField, 'value'>
+        >;
+        title_line_1_en?: StorefrontAPI.Maybe<
+          Pick<StorefrontAPI.MetaobjectField, 'value'>
+        >;
+        title_line_2_he?: StorefrontAPI.Maybe<
+          Pick<StorefrontAPI.MetaobjectField, 'value'>
+        >;
+        title_line_2_en?: StorefrontAPI.Maybe<
+          Pick<StorefrontAPI.MetaobjectField, 'value'>
+        >;
+        p1_he?: StorefrontAPI.Maybe<
+          Pick<StorefrontAPI.MetaobjectField, 'value'>
+        >;
+        p1_en?: StorefrontAPI.Maybe<
+          Pick<StorefrontAPI.MetaobjectField, 'value'>
+        >;
+        p2_he?: StorefrontAPI.Maybe<
+          Pick<StorefrontAPI.MetaobjectField, 'value'>
+        >;
+        p2_en?: StorefrontAPI.Maybe<
+          Pick<StorefrontAPI.MetaobjectField, 'value'>
+        >;
+        stats?: StorefrontAPI.Maybe<{
+          references?: StorefrontAPI.Maybe<{
+            nodes: Array<
+              Pick<StorefrontAPI.Metaobject, 'id'> & {
+                value?: StorefrontAPI.Maybe<
+                  Pick<StorefrontAPI.MetaobjectField, 'value'>
+                >;
+                label_he?: StorefrontAPI.Maybe<
+                  Pick<StorefrontAPI.MetaobjectField, 'value'>
+                >;
+                label_en?: StorefrontAPI.Maybe<
+                  Pick<StorefrontAPI.MetaobjectField, 'value'>
+                >;
+                position?: StorefrontAPI.Maybe<
+                  Pick<StorefrontAPI.MetaobjectField, 'value'>
+                >;
+              }
+            >;
+          }>;
+        }>;
+      }>;
+    }>;
   };
 };
 
@@ -894,6 +1066,9 @@ export type ProductFragment = Pick<
   | 'encodedVariantExistence'
   | 'encodedVariantAvailability'
 > & {
+  featuredImage?: StorefrontAPI.Maybe<
+    Pick<StorefrontAPI.Image, 'url' | 'altText' | 'width' | 'height'>
+  >;
   options: Array<
     Pick<StorefrontAPI.ProductOption, 'name'> & {
       optionValues: Array<
@@ -1009,6 +1184,9 @@ export type ProductQuery = {
       | 'encodedVariantExistence'
       | 'encodedVariantAvailability'
     > & {
+      featuredImage?: StorefrontAPI.Maybe<
+        Pick<StorefrontAPI.Image, 'url' | 'altText' | 'width' | 'height'>
+      >;
       options: Array<
         Pick<StorefrontAPI.ProductOption, 'name'> & {
           optionValues: Array<
@@ -1322,7 +1500,7 @@ export type PredictiveSearchQuery = {
 };
 
 interface GeneratedQueryTypes {
-  '#graphql\n  fragment Shop on Shop {\n    id\n    name\n    description\n    primaryDomain {\n      url\n    }\n    brand {\n      logo {\n        image {\n          url\n        }\n      }\n    }\n  }\n  query Header(\n    $country: CountryCode\n    $headerMenuHandle: String!\n    $language: LanguageCode\n  ) @inContext(language: $language, country: $country) {\n    shop {\n      ...Shop\n    }\n    menu(handle: $headerMenuHandle) {\n      ...Menu\n    }\n  }\n  #graphql\n  fragment MenuItem on MenuItem {\n    id\n    resourceId\n    tags\n    title\n    type\n    url\n  }\n  fragment ChildMenuItem on MenuItem {\n    ...MenuItem\n  }\n  fragment ParentMenuItem on MenuItem {\n    ...MenuItem\n    items {\n      ...ChildMenuItem\n    }\n  }\n  fragment Menu on Menu {\n    id\n    items {\n      ...ParentMenuItem\n    }\n  }\n\n': {
+  '#graphql\n  fragment Shop on Shop {\n    id\n    name\n    description\n    primaryDomain {\n      url\n    }\n    brand {\n      logo {\n        image {\n          url\n        }\n      }\n    }\n    phone: metafield(namespace: "business", key: "phone") { value }\n    email: metafield(namespace: "business", key: "email") { value }\n    instagram: metafield(namespace: "business", key: "instagram") { value }\n    legalName: metafield(namespace: "business", key: "legal_name") { value }\n    businessAddress: metafield(namespace: "business", key: "address") { value }\n  }\n  query Header(\n    $country: CountryCode\n    $headerMenuHandle: String!\n    $language: LanguageCode\n  ) @inContext(language: $language, country: $country) {\n    shop {\n      ...Shop\n    }\n    menu(handle: $headerMenuHandle) {\n      ...Menu\n    }\n  }\n  #graphql\n  fragment MenuItem on MenuItem {\n    id\n    resourceId\n    tags\n    title\n    type\n    url\n  }\n  fragment ChildMenuItem on MenuItem {\n    ...MenuItem\n  }\n  fragment ParentMenuItem on MenuItem {\n    ...MenuItem\n    items {\n      ...ChildMenuItem\n    }\n  }\n  fragment Menu on Menu {\n    id\n    items {\n      ...ParentMenuItem\n    }\n  }\n\n': {
     return: HeaderQuery;
     variables: HeaderQueryVariables;
   };
@@ -1334,7 +1512,7 @@ interface GeneratedQueryTypes {
     return: FeaturedCollectionQuery;
     variables: FeaturedCollectionQueryVariables;
   };
-  '#graphql\n  query FeaturedProduct($country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    shop {\n      featured: metafield(namespace: "custom", key: "featured_product") {\n        reference {\n          ... on Product {\n            id\n            title\n            handle\n            priceRange {\n              minVariantPrice { amount currencyCode }\n            }\n            featuredImage { id url altText width height }\n            options {\n              id\n              name\n              optionValues {\n                id\n                name\n                swatch { color }\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n': {
+  '#graphql\n  query FeaturedProduct($country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    shop {\n      featured: metafield(namespace: "custom", key: "featured_product") {\n        reference {\n          ... on Product {\n            id\n            title\n            handle\n            priceRange {\n              minVariantPrice { amount currencyCode }\n            }\n            featuredImage { id url altText width height }\n            options {\n              id\n              name\n              optionValues {\n                id\n                name\n                swatch { color }\n              }\n            }\n            eyebrow_he: metafield(namespace: "marketing", key: "eyebrow_he") { value }\n            eyebrow_en: metafield(namespace: "marketing", key: "eyebrow_en") { value }\n            headline_he: metafield(namespace: "marketing", key: "headline_he") { value }\n            headline_en: metafield(namespace: "marketing", key: "headline_en") { value }\n            description_he: metafield(namespace: "marketing", key: "description_he") { value }\n            description_en: metafield(namespace: "marketing", key: "description_en") { value }\n            tagMadeToOrder_he: metafield(namespace: "marketing", key: "tag_made_to_order_he") { value }\n            tagMadeToOrder_en: metafield(namespace: "marketing", key: "tag_made_to_order_en") { value }\n            tagDimensions: metafield(namespace: "marketing", key: "tag_dimensions") { value }\n            shipNote_he: metafield(namespace: "marketing", key: "ship_note_he") { value }\n            shipNote_en: metafield(namespace: "marketing", key: "ship_note_en") { value }\n            specs: metafield(namespace: "marketing", key: "specs") {\n              references(first: 20) {\n                nodes {\n                  ... on Metaobject {\n                    id\n                    label_he: field(key: "label_he") { value }\n                    label_en: field(key: "label_en") { value }\n                    value_he: field(key: "value_he") { value }\n                    value_en: field(key: "value_en") { value }\n                    position: field(key: "position") { value }\n                  }\n                }\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n': {
     return: FeaturedProductQuery;
     variables: FeaturedProductQueryVariables;
   };
@@ -1349,6 +1527,10 @@ interface GeneratedQueryTypes {
   '#graphql\n  query HeroSlides {\n    metaobjects(type: "hero_slide", first: 10, sortKey: "position") {\n      nodes {\n        id\n        handle\n        fields {\n          key\n          value\n          reference {\n            ... on MediaImage {\n              image { url altText width height }\n            }\n          }\n        }\n      }\n    }\n  }\n': {
     return: HeroSlidesQuery;
     variables: HeroSlidesQueryVariables;
+  };
+  '#graphql\n  query HomepageSections {\n    shop {\n      hero: metafield(namespace: "homepage", key: "hero") {\n        reference {\n          ... on Metaobject {\n            eyebrow_he: field(key: "eyebrow_he") { value }\n            eyebrow_en: field(key: "eyebrow_en") { value }\n            title_line_1_he: field(key: "title_line_1_he") { value }\n            title_line_1_en: field(key: "title_line_1_en") { value }\n            title_line_2_he: field(key: "title_line_2_he") { value }\n            title_line_2_en: field(key: "title_line_2_en") { value }\n            kicker_he: field(key: "kicker_he") { value }\n            kicker_en: field(key: "kicker_en") { value }\n            cta_he: field(key: "cta_he") { value }\n            cta_en: field(key: "cta_en") { value }\n            tape_items_he: field(key: "tape_items_he") { value }\n            tape_items_en: field(key: "tape_items_en") { value }\n          }\n        }\n      }\n      story: metafield(namespace: "homepage", key: "story") {\n        reference {\n          ... on Metaobject {\n            tag: field(key: "tag") { value }\n            eyebrow_he: field(key: "eyebrow_he") { value }\n            eyebrow_en: field(key: "eyebrow_en") { value }\n            title_line_1_he: field(key: "title_line_1_he") { value }\n            title_line_1_en: field(key: "title_line_1_en") { value }\n            title_line_2_he: field(key: "title_line_2_he") { value }\n            title_line_2_en: field(key: "title_line_2_en") { value }\n            p1_he: field(key: "p1_he") { value }\n            p1_en: field(key: "p1_en") { value }\n            p2_he: field(key: "p2_he") { value }\n            p2_en: field(key: "p2_en") { value }\n            stats: field(key: "stats") {\n              references(first: 10) {\n                nodes {\n                  ... on Metaobject {\n                    id\n                    value: field(key: "value") { value }\n                    label_he: field(key: "label_he") { value }\n                    label_en: field(key: "label_en") { value }\n                    position: field(key: "position") { value }\n                  }\n                }\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n': {
+    return: HomepageSectionsQuery;
+    variables: HomepageSectionsQueryVariables;
   };
   '#graphql\n  query Article(\n    $articleHandle: String!\n    $blogHandle: String!\n    $country: CountryCode\n    $language: LanguageCode\n  ) @inContext(language: $language, country: $country) {\n    blog(handle: $blogHandle) {\n      handle\n      articleByHandle(handle: $articleHandle) {\n        handle\n        title\n        contentHtml\n        publishedAt\n        author: authorV2 {\n          name\n        }\n        image {\n          id\n          altText\n          url\n          width\n          height\n        }\n        seo {\n          description\n          title\n        }\n      }\n    }\n  }\n': {
     return: ArticleQuery;
@@ -1386,7 +1568,7 @@ interface GeneratedQueryTypes {
     return: PoliciesQuery;
     variables: PoliciesQueryVariables;
   };
-  '#graphql\n  query Product(\n    $country: CountryCode\n    $handle: String!\n    $language: LanguageCode\n    $selectedOptions: [SelectedOptionInput!]!\n  ) @inContext(country: $country, language: $language) {\n    product(handle: $handle) {\n      ...Product\n    }\n  }\n  #graphql\n  fragment Product on Product {\n    id\n    title\n    vendor\n    handle\n    descriptionHtml\n    description\n    tags\n    encodedVariantExistence\n    encodedVariantAvailability\n    options {\n      name\n      optionValues {\n        name\n        firstSelectableVariant {\n          ...ProductVariant\n        }\n        swatch {\n          color\n          image {\n            previewImage {\n              url\n            }\n          }\n        }\n      }\n    }\n    selectedOrFirstAvailableVariant(selectedOptions: $selectedOptions, ignoreUnknownOptions: true, caseInsensitiveMatch: true) {\n      ...ProductVariant\n    }\n    adjacentVariants (selectedOptions: $selectedOptions) {\n      ...ProductVariant\n    }\n    seo {\n      description\n      title\n    }\n  }\n  #graphql\n  fragment ProductVariant on ProductVariant {\n    availableForSale\n    compareAtPrice {\n      amount\n      currencyCode\n    }\n    id\n    image {\n      __typename\n      id\n      url\n      altText\n      width\n      height\n    }\n    price {\n      amount\n      currencyCode\n    }\n    product {\n      title\n      handle\n    }\n    selectedOptions {\n      name\n      value\n    }\n    sku\n    title\n    unitPrice {\n      amount\n      currencyCode\n    }\n  }\n\n\n': {
+  '#graphql\n  query Product(\n    $country: CountryCode\n    $handle: String!\n    $language: LanguageCode\n    $selectedOptions: [SelectedOptionInput!]!\n  ) @inContext(country: $country, language: $language) {\n    product(handle: $handle) {\n      ...Product\n    }\n  }\n  #graphql\n  fragment Product on Product {\n    id\n    title\n    vendor\n    handle\n    descriptionHtml\n    description\n    tags\n    featuredImage {\n      url\n      altText\n      width\n      height\n    }\n    encodedVariantExistence\n    encodedVariantAvailability\n    options {\n      name\n      optionValues {\n        name\n        firstSelectableVariant {\n          ...ProductVariant\n        }\n        swatch {\n          color\n          image {\n            previewImage {\n              url\n            }\n          }\n        }\n      }\n    }\n    selectedOrFirstAvailableVariant(selectedOptions: $selectedOptions, ignoreUnknownOptions: true, caseInsensitiveMatch: true) {\n      ...ProductVariant\n    }\n    adjacentVariants (selectedOptions: $selectedOptions) {\n      ...ProductVariant\n    }\n    seo {\n      description\n      title\n    }\n  }\n  #graphql\n  fragment ProductVariant on ProductVariant {\n    availableForSale\n    compareAtPrice {\n      amount\n      currencyCode\n    }\n    id\n    image {\n      __typename\n      id\n      url\n      altText\n      width\n      height\n    }\n    price {\n      amount\n      currencyCode\n    }\n    product {\n      title\n      handle\n    }\n    selectedOptions {\n      name\n      value\n    }\n    sku\n    title\n    unitPrice {\n      amount\n      currencyCode\n    }\n  }\n\n\n': {
     return: ProductQuery;
     variables: ProductQueryVariables;
   };
