@@ -26,12 +26,14 @@ export default async function handleRequest(
     // Photo customizer creates blob: URLs for in-browser cropping/preview, and
     // pulls Google Fonts stylesheets configured in root.jsx. Both need explicit
     // CSP allowances since Hydrogen's defaults don't include them.
+    // Note: 'data:' is intentionally NOT in imgSrc — data URIs can be abused
+    // as an XSS vector via injected HTML.
     imgSrc: [
       "'self'",
       'blob:',
-      'data:',
       'https://cdn.shopify.com',
       'https://shopify.com',
+      'https://www.facebook.com',
       ...(isDev ? ['http://localhost:*'] : []),
     ],
     styleSrc: [
@@ -46,6 +48,17 @@ export default async function handleRequest(
       'data:',
       'https://fonts.gstatic.com',
       'https://cdn.shopify.com',
+    ],
+    scriptSrc: [
+      "'self'",
+      'https://cdn.shopify.com',
+      'https://connect.facebook.net',
+      ...(isDev ? ['http://localhost:*'] : []),
+    ],
+    connectSrc: [
+      "'self'",
+      'https://www.facebook.com',
+      ...(isDev ? ['http://localhost:*', 'ws://localhost:*'] : []),
     ],
   });
 

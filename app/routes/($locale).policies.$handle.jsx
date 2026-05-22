@@ -1,11 +1,20 @@
 import {Link, useLoaderData} from 'react-router';
 import {useI18n} from '~/lib/useI18n';
+import {sanitizeShopifyHtml} from '~/lib/sanitize';
+import {canonicalUrl, pageTitle} from '~/lib/meta';
 
 /**
  * @type {Route.MetaFunction}
  */
-export const meta = ({data}) => {
-  return [{title: `Lightboard | ${data?.policy.title ?? ''}`}];
+export const meta = ({data, matches, params}) => {
+  return [
+    {title: pageTitle(matches, data?.policy.title)},
+    {
+      tagName: 'link',
+      rel: 'canonical',
+      href: canonicalUrl(matches, `/policies/${params.handle ?? ''}`),
+    },
+  ];
 };
 
 /**
@@ -21,6 +30,7 @@ export async function loader({params, context}) {
   );
 
   const data = await context.storefront.query(POLICY_CONTENT_QUERY, {
+    cache: context.storefront.CacheLong(),
     variables: {
       privacyPolicy: false,
       shippingPolicy: false,
@@ -50,7 +60,10 @@ export default function Policy() {
       <div className="policy-back">
         <Link to={to('/policies')}>{dict.policies.back}</Link>
       </div>
-      <div className="policy-body" dangerouslySetInnerHTML={{__html: policy.body}} />
+      <div
+        className="policy-body"
+        dangerouslySetInnerHTML={{__html: sanitizeShopifyHtml(policy.body)}}
+      />
     </article>
   );
 }

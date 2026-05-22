@@ -185,13 +185,20 @@ export async function cropFileToJpegBlob(file, crop, outputSize) {
   }
 }
 
+const TRUSTED_REMOTE_HOST = 'https://cdn.shopify.com/';
+
 /**
  * Fetch a remote image (e.g. an existing Shopify CDN URL during edit-from-cart)
  * into a Blob so it can be re-cropped without re-uploading the original.
+ * Restricted to Shopify CDN — the URL can come from localStorage or cart
+ * attributes, both of which are buyer-mutable.
  * @param {string} url
  * @returns {Promise<Blob>}
  */
 export async function fetchRemoteImageAsBlob(url) {
+  if (typeof url !== 'string' || !url.startsWith(TRUSTED_REMOTE_HOST)) {
+    throw new Error('untrusted-image-host');
+  }
   const response = await fetch(url, {credentials: 'omit', mode: 'cors'});
   if (!response.ok) {
     throw new Error(`failed-to-fetch-${response.status}`);

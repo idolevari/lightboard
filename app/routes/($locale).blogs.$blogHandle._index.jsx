@@ -3,12 +3,14 @@ import {Image, getPaginationVariables} from '@shopify/hydrogen';
 import {PaginatedResourceSection} from '~/components/PaginatedResourceSection';
 import {redirectIfHandleIsLocalized} from '~/lib/redirect';
 import {useI18n} from '~/lib/useI18n';
+import {pageTitle} from '~/lib/meta';
 
 /**
  * @type {Route.MetaFunction}
  */
-export const meta = ({data}) => {
-  return [{title: `Lightboard | ${data?.blog.title ?? ''} blog`}];
+export const meta = ({data, matches}) => {
+  const blogTitle = data?.blog.title;
+  return [{title: pageTitle(matches, blogTitle ? `${blogTitle} blog` : null)}];
 };
 
 /**
@@ -40,6 +42,7 @@ async function loadCriticalData({context, request, params}) {
 
   const [{blog}] = await Promise.all([
     context.storefront.query(BLOGS_QUERY, {
+      cache: context.storefront.CacheLong(),
       variables: {
         blogHandle: params.blogHandle,
         ...paginationVariables,

@@ -4,6 +4,11 @@ import {CartForm} from '@shopify/hydrogen';
 import {AddToCartButton} from './AddToCartButton';
 import {useAside} from './Aside';
 import {useI18n} from '~/lib/useI18n';
+import {
+  translateOptionName,
+  translateOptionValue,
+  getOptionValueHex,
+} from '~/lib/productOptionLabels';
 import {PhotoCustomizer} from './PhotoCustomizer/PhotoCustomizer';
 
 /**
@@ -47,7 +52,7 @@ export function ProductForm({
 
         return (
           <div className="product-options" key={option.name}>
-            <h5>{option.name}</h5>
+            <h5>{translateOptionName(dict, option.name)}</h5>
             <div className="product-options-grid">
               {option.optionValues.map((value) => {
                 const {
@@ -60,6 +65,7 @@ export function ProductForm({
                   isDifferentProduct,
                   swatch,
                 } = value;
+                const displayName = translateOptionValue(dict, name);
 
                 if (isDifferentProduct) {
                   // SEO
@@ -81,7 +87,10 @@ export function ProductForm({
                         opacity: available ? 1 : 0.3,
                       }}
                     >
-                      <ProductOptionSwatch swatch={swatch} name={name} />
+                      <ProductOptionSwatch
+                        swatch={swatch ?? {color: getOptionValueHex(name)}}
+                        name={displayName}
+                      />
                     </Link>
                   );
                 } else {
@@ -111,7 +120,10 @@ export function ProductForm({
                         }
                       }}
                     >
-                      <ProductOptionSwatch swatch={swatch} name={name} />
+                      <ProductOptionSwatch
+                        swatch={swatch ?? {color: getOptionValueHex(name)}}
+                        name={displayName}
+                      />
                     </button>
                   );
                 }

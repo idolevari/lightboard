@@ -1,4 +1,4 @@
-import {useLoaderData} from 'react-router';
+import {useLoaderData, useRouteError, isRouteErrorResponse, Link} from 'react-router';
 import {
   getSelectedProductOptions,
   Analytics,
@@ -12,20 +12,65 @@ import {ProductImage} from '~/components/ProductImage';
 import {ProductForm} from '~/components/ProductForm';
 import {redirectIfHandleIsLocalized} from '~/lib/redirect';
 import {useI18n} from '~/lib/useI18n';
+import {sanitizeShopifyHtml} from '~/lib/sanitize';
+import {canonicalUrl, pageTitle, siteOrigin} from '~/lib/meta';
 
 const REQUIRES_PHOTOS_TAG = 'requires-photos';
 
 /**
  * @type {Route.MetaFunction}
  */
-export const meta = ({data}) => {
-  return [
-    {title: `Lightboard | ${data?.product.title ?? ''}`},
-    {
-      rel: 'canonical',
-      href: `/products/${data?.product.handle}`,
-    },
+export const meta = ({data, matches}) => {
+  const product = data?.product;
+  if (!product) return [];
+  const title = pageTitle(matches, product.seo?.title || product.title);
+  const description =
+    product.seo?.description || product.description || '';
+  const path = `/products/${product.handle}`;
+  const href = canonicalUrl(matches, path);
+  const image = product.featuredImage?.url;
+  const origin = siteOrigin(matches);
+  const tags = [
+    {title},
+    {name: 'description', content: description},
+    {tagName: 'link', rel: 'canonical', href},
+    {property: 'og:type', content: 'product'},
+    {property: 'og:title', content: title},
+    {property: 'og:description', content: description},
+    {property: 'og:url', content: href},
+    {name: 'twitter:card', content: 'summary_large_image'},
   ];
+  if (image) {
+    tags.push({property: 'og:image', content: image});
+    tags.push({name: 'twitter:image', content: image});
+  }
+  // Product JSON-LD for rich-result eligibility (price + availability).
+  const variant = product.selectedOrFirstAvailableVariant;
+  if (variant) {
+    const ld = {
+      '@context': 'https://schema.org/',
+      '@type': 'Product',
+      name: product.title,
+      description,
+      image: image ? [image] : undefined,
+      url: origin ? href : undefined,
+      sku: variant.sku || undefined,
+      brand: product.vendor ? {'@type': 'Brand', name: product.vendor} : undefined,
+      offers: {
+        '@type': 'Offer',
+        priceCurrency: variant.price?.currencyCode,
+        price: variant.price?.amount,
+        availability: variant.availableForSale
+          ? 'https://schema.org/InStock'
+          : 'https://schema.org/OutOfStock',
+        url: origin ? href : undefined,
+      },
+    };
+    tags.push({
+      'script:ld+json': ld,
+    });
+  }
+  return tags;
 };
 
 /**
@@ -59,6 +104,7 @@ async function loadCriticalData({context, params, request}) {
 
   const [{product}, cartData] = await Promise.all([
     storefront.query(PRODUCT_QUERY, {
+      cache: storefront.CacheShort(),
       variables: {handle, selectedOptions: getSelectedProductOptions(request)},
     }),
     editLineId ? cart.get() : Promise.resolve(null),
@@ -144,7 +190,7 @@ export default function Product() {
   );
 
   // Sets the search param to the selected variant without navigation
-  // only when no search params are set in the url
+  // only when no search params are set in the url.
   useSelectedOptionInUrlParam(selectedVariant.selectedOptions);
 
   // Get the product options array
@@ -181,7 +227,9 @@ export default function Product() {
           <strong>{dict.product.description}</strong>
         </p>
         <br />
-        <div dangerouslySetInnerHTML={{__html: descriptionHtml}} />
+        <div
+          dangerouslySetInnerHTML={{__html: sanitizeShopifyHtml(descriptionHtml)}}
+        />
         <br />
       </div>
       <Analytics.ProductView
@@ -249,6 +297,12 @@ const PRODUCT_FRAGMENT = `#graphql
     descriptionHtml
     description
     tags
+    featuredImage {
+      url
+      altText
+      width
+      height
+    }
     encodedVariantExistence
     encodedVariantAvailability
     options {
@@ -295,6 +349,22 @@ const PRODUCT_QUERY = `#graphql
   }
   ${PRODUCT_FRAGMENT}
 `;
+
+export function ErrorBoundary() {
+  const error = useRouteError();
+  const {dict, to} = useI18n();
+  const isNotFound = isRouteErrorResponse(error) && error.status === 404;
+  return (
+    <div className="product-error" style={{padding: '80px 24px', textAlign: 'center'}}>
+      <h1>{isNotFound ? dict.notFound.title : 'Oops'}</h1>
+      {isNotFound && <p>{dict.notFound.kicker}</p>}
+      <Link to={to('/collections')} className="hero-cta">
+        <span>{dict.notFound.cta}</span>
+        <span className="arrow" aria-hidden="true">→</span>
+      </Link>
+    </div>
+  );
+}
 
 /** @typedef {import('./+types/products.$handle').Route} Route */
 /** @typedef {ReturnType<typeof useLoaderData<typeof loader>>} LoaderReturnData */

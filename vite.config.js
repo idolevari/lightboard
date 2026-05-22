@@ -24,6 +24,7 @@ export default defineConfig({
        * @see https://vitejs.dev/config/dep-optimization-options
        */
       include: [
+        'sanitize-html',
         'normalize-wheel',
         'react-router > set-cookie-parser',
         'react-router > cookie',

@@ -1,13 +1,11 @@
 import {useI18n} from '~/lib/useI18n';
-
-const PHONE = '972557209448';
+import {useBusiness, whatsappHref} from '~/lib/brand';
 
 export function WhatsAppButton() {
   const {dict} = useI18n();
   const w = dict.whatsapp ?? {};
-  const href = `https://wa.me/${PHONE}${
-    w.prefill ? `?text=${encodeURIComponent(w.prefill)}` : ''
-  }`;
+  const href = whatsappHref(useBusiness(), w.prefill);
+  if (!href) return null;
 
   return (
     <a

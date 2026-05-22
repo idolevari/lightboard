@@ -1,5 +1,10 @@
-import {useLoaderData, data} from 'react-router';
-import {CartForm} from '@shopify/hydrogen';
+import {
+  useLoaderData,
+  useRouteError,
+  isRouteErrorResponse,
+  data,
+} from 'react-router';
+import {Analytics, CartForm} from '@shopify/hydrogen';
 import {CartMain} from '~/components/CartMain';
 import {useI18n} from '~/lib/useI18n';
 import {getDictionary} from '~/lib/i18n';
@@ -121,6 +126,24 @@ export default function Cart() {
     <div className="cart">
       <h1>{dict.cart.pageTitle}</h1>
       <CartMain layout="page" cart={cart} />
+      <Analytics.CartView />
+    </div>
+  );
+}
+
+export function ErrorBoundary() {
+  const error = useRouteError();
+  const {dict} = useI18n();
+  const status = isRouteErrorResponse(error) ? error.status : 500;
+  const message = isRouteErrorResponse(error)
+    ? error.statusText
+    : 'Something went wrong loading your cart.';
+  return (
+    <div className="cart">
+      <h1>{dict.cart.pageTitle}</h1>
+      <p role="alert">
+        {status}: {message}
+      </p>
     </div>
   );
 }

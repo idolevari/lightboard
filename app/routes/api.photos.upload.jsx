@@ -4,6 +4,7 @@ import {
   ALLOWED_PHOTO_TYPES,
   MAX_PHOTO_BYTES,
 } from '~/lib/photo-canvas';
+import {isLaunchGateActive} from '~/lib/coming-soon';
 
 /**
  * Photo upload endpoint for the PDP photo customizer.
@@ -24,6 +25,9 @@ const SLOTS = [0, 1, 2];
 export async function action({request, context}) {
   if (request.method !== 'POST') {
     return data({error: 'method-not-allowed'}, {status: 405});
+  }
+  if (isLaunchGateActive(request, context.env)) {
+    return data({error: 'not-found'}, {status: 404});
   }
 
   let form;
@@ -48,6 +52,13 @@ export async function action({request, context}) {
       }
       if (file.type && !ALLOWED_PHOTO_TYPES.includes(file.type)) {
         return data({error: 'unsupported-type'}, {status: 415});
+      }
+      const detected = await detectImageType(file);
+      if (!detected) {
+        return data({error: 'unsupported-content'}, {status: 415});
+      }
+      if (file.type && detected !== file.type) {
+        return data({error: 'content-type-mismatch'}, {status: 415});
       }
     }
   }
@@ -135,4 +146,51 @@ function extensionForMimeType(mimeType) {
     default:
       return 'jpg';
   }
+}
+
+/**
+ * Sniff the first bytes of an uploaded file to confirm it actually is an
+ * image of an allowed type. The buyer-provided `Content-Type` header is
+ * trivially spoofed in a multipart body, so we never trust it alone before
+ * forwarding the bytes to Shopify Files.
+ *
+ * Returns one of 'image/jpeg' | 'image/png' | 'image/webp', or null if the
+ * bytes don't match a supported signature.
+ */
+async function detectImageType(file) {
+  let head;
+  try {
+    head = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+  } catch {
+    return null;
+  }
+  if (head.length < 4) return null;
+  // JPEG: FF D8 FF
+  if (head[0] === 0xff && head[1] === 0xd8 && head[2] === 0xff) {
+    return 'image/jpeg';
+  }
+  // PNG: 89 50 4E 47 0D 0A 1A 0A
+  if (
+    head[0] === 0x89 &&
+    head[1] === 0x50 &&
+    head[2] === 0x4e &&
+    head[3] === 0x47
+  ) {
+    return 'image/png';
+  }
+  // WebP: 'RIFF' .... 'WEBP'
+  if (
+    head.length >= 12 &&
+    head[0] === 0x52 &&
+    head[1] === 0x49 &&
+    head[2] === 0x46 &&
+    head[3] === 0x46 &&
+    head[8] === 0x57 &&
+    head[9] === 0x45 &&
+    head[10] === 0x42 &&
+    head[11] === 0x50
+  ) {
+    return 'image/webp';
+  }
+  return null;
 }

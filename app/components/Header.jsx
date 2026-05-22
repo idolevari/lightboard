@@ -29,9 +29,7 @@ export function Header({isLoggedIn, cart}) {
 
   const menu = [
     {to: to('/'), label: dict.nav.home, end: true},
-    {to: to('/collections'), label: dict.nav.shop},
-    {to: to('/pages/about'), label: dict.nav.about},
-    {to: to('/blogs/journal'), label: dict.nav.journal},
+    {to: to('/#story'), label: dict.nav.about},
   ];
   const rightMenu = [{to: to('/pages/contact'), label: dict.nav.contact}];
 

@@ -23,6 +23,8 @@ import {
   localizedPath,
   parseLocaleFromPath,
 } from '~/lib/i18n';
+import {isLaunchGateActive} from '~/lib/coming-soon';
+import {MetaPixel, MetaPixelScript} from '~/lib/meta-pixel';
 
 /**
  * This is important to avoid re-fetching root queries on sub-navigations
@@ -92,13 +94,24 @@ export function links() {
  */
 export async function loader(args) {
   const {env} = args.context;
-  const showComingSoon = env.COMING_SOON === 'true';
-
   const locale = detectLocaleFromRequest(args.request);
   const dict = getDictionary(locale);
   const localeConfig = getLocaleConfig(locale);
   const url = new URL(args.request.url);
   const {rest: pathnameNoLocale} = parseLocaleFromPath(url.pathname);
+
+  // When the launch gate is active we render <ComingSoon /> only — no
+  // header/footer/cart/shop/consent data leaves the server. Child route
+  // loaders are also blocked by the locale layout gate.
+  if (isLaunchGateActive(args.request, env)) {
+    return {
+      showComingSoon: true,
+      locale,
+      localeConfig,
+      dict,
+      pathnameNoLocale,
+    };
+  }
 
   // Start fetching non-critical data without blocking time to first byte
   const deferredData = loadDeferredData(args);
@@ -109,12 +122,13 @@ export async function loader(args) {
   return {
     ...deferredData,
     ...criticalData,
-    showComingSoon,
+    showComingSoon: false,
     locale,
     localeConfig,
     dict,
     pathnameNoLocale,
     publicStoreDomain: env.PUBLIC_STORE_DOMAIN,
+    metaPixelId: env.META_PIXEL_ID || null,
     shop: getShopAnalytics({
       storefront: args.context.storefront,
       publicStorefrontId: env.PUBLIC_STOREFRONT_ID,
@@ -212,6 +226,7 @@ export function Layout({children}) {
         />
         <Meta />
         <Links />
+        <MetaPixelScript pixelId={data?.metaPixelId} nonce={nonce} />
       </head>
       <body>
         {children}
@@ -240,6 +255,7 @@ export default function App() {
       shop={data.shop}
       consent={data.consent}
     >
+      <MetaPixel />
       <PageLayout {...data}>
         <Outlet />
       </PageLayout>

@@ -212,6 +212,11 @@ export const HEADER_QUERY = `#graphql
         }
       }
     }
+    phone: metafield(namespace: "business", key: "phone") { value }
+    email: metafield(namespace: "business", key: "email") { value }
+    instagram: metafield(namespace: "business", key: "instagram") { value }
+    legalName: metafield(namespace: "business", key: "legal_name") { value }
+    businessAddress: metafield(namespace: "business", key: "address") { value }
   }
   query Header(
     $country: CountryCode
