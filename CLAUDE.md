@@ -47,6 +47,102 @@ When the launch gate is on, public visitors see `app/components/ComingSoon.jsx` 
 - **Logo:** `public/favicon.png` (teal LIGHT / lime BOARD with sun rays — from the original WordPress site)
 - **Tagline:** "living · design · surfing"
 
+## Content architecture
+
+Guiding rule: anything a merchant edits without a code deploy lives in Shopify. i18n holds UI plumbing only. Use this section to know where to look or write before editing copy.
+
+### Decision tree
+
+```
+1. Would a merchant ever edit this from Shopify Admin?
+       YES → Shopify (metafield / metaobject / page / policy / product field)
+       NO  → go to step 2
+
+2. Must it vary per locale by design (UI labels)?
+       YES → i18n JSON (app/lib/i18n/{he,en}.json)
+       NO  → go to step 3
+
+3. Is it a programmatic value (hex code, MIME signature, regex)?
+       YES → hardcoded constant in code
+       NO  → re-check step 1 — it probably belongs in Shopify
+```
+
+### Shopify-managed content inventory
+
+**Shop metafields** (Settings → Custom data → Shop):
+
+| Namespace.key | Type | What |
+|---|---|---|
+| `business.phone` | text | `+972-55-720-9448` |
+| `business.email` | text | `lightboardshop@gmail.com` |
+| `business.instagram` | url | Instagram URL |
+| `business.legal_name` | text | "Lightboard" |
+| `business.address` | text | "הוד השרון, ישראל" |
+| `custom.featured_product` | product reference | Which product shows on the homepage hero card |
+| `homepage.hero` | metaobject reference (`homepage_hero`) | Hero section copy |
+| `homepage.story` | metaobject reference (`homepage_story`) | Story section copy |
+
+**Product metafields on Lightboard** (namespace `marketing`):
+
+- `eyebrow_he` / `eyebrow_en`, `headline_he` / `headline_en` (HTML, sanitized), `description_he` / `description_en`, `tag_made_to_order_he` / `tag_made_to_order_en`, `tag_dimensions`, `ship_note_he` / `ship_note_en`
+- `specs` (list reference → `product_spec` metaobjects)
+
+**Metaobject types** (Content → Metaobjects):
+
+| Type | Purpose | Linked from |
+|---|---|---|
+| `faq` | FAQ items with `question_*`, `answer_*` (HE+EN), position | Queried by homepage |
+| `testimonial` | Customer quotes with `body_*`, `attribution_*` (HE+EN), position | Queried by homepage |
+| `hero_slide` | Background slides with image + label + mobile_position + position | Queried by homepage |
+| `product_spec` | Single key/value spec entry — `label_*`, `value_*` (HE+EN), position | Linked from Lightboard product `marketing.specs` |
+| `homepage_hero` | Hero copy: eyebrow, title lines, kicker, CTA, tape (HE+EN) | Linked from shop `homepage.hero` |
+| `homepage_story` | Story copy: tag, eyebrow, titles, paragraphs (HE+EN) + list of `story_stat` | Linked from shop `homepage.story` |
+| `story_stat` | Single stat: value + label_he/label_en + position | Linked from `homepage_story.stats` |
+
+**Notes on bilingual content:** Metaobjects use `_he`/`_en` paired fields. The Hebrew is canonical; English falls back to Hebrew when empty so the storefront never renders blank. Shopify Markets / Translate & Adapt is **not** set up. The paired-field pattern is intentional for our scale (one editor, two locales, hand-crafted parallel copy). If a third locale is added, or product/policy/page bodies need EN, switch to T&A.
+
+### What stays in i18n JSON
+
+`app/lib/i18n/{he,en}.json` — only UI plumbing:
+
+- Navigation labels (`nav`)
+- Common button labels (`common`: save, cancel, load more, ...)
+- Cart/account/search/photo-customizer form labels (`cart`, `account`, `search`, `photoCustomizer`)
+- ARIA labels and accessibility menu (`a11y`)
+- 404 page copy (`notFound`)
+- Section-header eyebrow labels (`faq.eyebrow`, `testify.eyebrow`)
+- Product UI labels (`product.optionLabels`, `product.optionValues` for HE display of Shopify variant names like Color → צבע)
+- Footer meta-row labels ("Address:", "Phone:")
+
+### Hardcoded in code (intentional)
+
+- `app/lib/productOptionLabels.js` — `OPTION_VALUE_HEX` swatch hex fallback map
+- `app/lib/photo-canvas.js` — ALLOWED_PHOTO_TYPES, MAX_PHOTO_BYTES
+- `app/routes/api.photos.upload.jsx` — magic-byte signatures (JPEG/PNG/WebP)
+- `app/lib/brand.js` — `formatPhoneDisplay()` Israeli phone format helper
+- `app/lib/coming-soon.js` — gate cookie name, TTL constants
+- `app/routes/($locale)._index.jsx` — `HERO_SLIDES` constant as fallback when no `hero_slide` metaobjects are configured
+
+## Environment variables
+
+| Variable | Purpose | Required |
+|---|---|---|
+| `PUBLIC_STORE_DOMAIN` | `kqyxee-us.myshopify.com` | Yes |
+| `PUBLIC_STOREFRONT_ID` | `1000130179` | Yes |
+| `PUBLIC_STOREFRONT_API_TOKEN` | Storefront API public token | Yes |
+| `PRIVATE_STOREFRONT_API_TOKEN` | Server-only storefront token | Yes |
+| `PRIVATE_SHOPIFY_ADMIN_API_TOKEN` | Used by `api.photos.upload.jsx` for Files upload | Yes |
+| `PUBLIC_CHECKOUT_DOMAIN` | Checkout subdomain | Yes |
+| `PUBLIC_CUSTOMER_ACCOUNT_API_CLIENT_ID` | Customer Account API | Yes |
+| `PUBLIC_CUSTOMER_ACCOUNT_API_URL` | Customer Account API | Yes |
+| `SESSION_SECRET` | Session cookie signing | Yes |
+| `SHOP_ID` | Shopify shop ID | Yes |
+| `COMING_SOON` | `'true'` enables launch gate | No (off by default) |
+| `PREVIEW_TOKEN` | Token for `/preview?token=...` bypass | Required when `COMING_SOON=true` |
+| `META_PIXEL_ID` | Enables Meta Pixel when set | Optional |
+
+`.env` (gitignored) is populated by `npx shopify hydrogen link`. After running link, restart `npm run dev` to pick up the new env. Set the same variables in the Oxygen dashboard for production.
+
 ## WordPress Backup
 
 Original WordPress site backup — DB dump, uploads, themes, plugins — is at:
@@ -76,6 +172,3 @@ Migration CSV generator is kept locally at `scripts/woo-to-shopify.py` (gitignor
 - **Flat repo structure** — app is at the root, not in a subdirectory (keeps CI and Shopify CLI assumptions aligned)
 - **Gitignored:** `.env`, `.shopify/`, `.claude/`, `.idea/`, `.cursor/`, `scripts/`, `node_modules/`, build artifacts
 
-## Environment
-
-`.env` (gitignored) is populated by `npx shopify hydrogen link`. After running link, restart `npm run dev` to pick up the new env.
