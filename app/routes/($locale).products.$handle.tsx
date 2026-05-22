@@ -11,27 +11,30 @@ import {
 import {ProductPrice} from '~/components/ProductPrice';
 import {ProductOptions, ProductCartAction} from '~/components/ProductForm';
 import {PhotoCustomizer} from '~/components/PhotoCustomizer/PhotoCustomizer';
+import type {PhotoCustomizerInitialState} from '~/components/PhotoCustomizer/PhotoCustomizer';
 import {redirectIfHandleIsLocalized} from '~/lib/redirect';
 import {useI18n} from '~/lib/useI18n';
 import {sanitizeShopifyHtml} from '~/lib/sanitize';
 import {canonicalUrl, pageTitle, siteOrigin} from '~/lib/meta';
+import type {Route} from './+types/($locale).products.$handle';
 
 const REQUIRES_PHOTOS_TAG = 'requires-photos';
 
-/**
- * @type {Route.MetaFunction}
- */
-export const meta = ({data, matches}) => {
+type CartLineAttribute = {key: string; value?: string | null};
+
+export const meta: Route.MetaFunction = ({data, matches}) => {
   const product = data?.product;
   if (!product) return [];
-  const title = pageTitle(matches, product.seo?.title || product.title);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ~/lib/meta accepts a narrower MetaMatch type than Route.MetaArgs["matches"]
+  const m = matches as any;
+  const title = pageTitle(m, product.seo?.title || product.title);
   const description =
     product.seo?.description || product.description || '';
   const path = `/products/${product.handle}`;
-  const href = canonicalUrl(matches, path);
+  const href = canonicalUrl(m, path);
   const image = product.featuredImage?.url;
-  const origin = siteOrigin(matches);
-  const tags = [
+  const origin = siteOrigin(m);
+  const tags: Route.MetaDescriptors = [
     {title},
     {name: 'description', content: description},
     {tagName: 'link', rel: 'canonical', href},
@@ -74,12 +77,9 @@ export const meta = ({data, matches}) => {
   return tags;
 };
 
-/**
- * @param {Route.LoaderArgs} args
- */
-export async function loader(args) {
+export async function loader(args: Route.LoaderArgs) {
   // Start fetching non-critical data without blocking time to first byte
-  const deferredData = loadDeferredData(args);
+  const deferredData = loadDeferredData();
 
   // Await the critical data required to render initial state of the page
   const criticalData = await loadCriticalData(args);
@@ -90,9 +90,8 @@ export async function loader(args) {
 /**
  * Load data necessary for rendering content above the fold. This is the critical data
  * needed to render the page. If it's unavailable, the whole page should 400 or 500 error.
- * @param {Route.LoaderArgs}
  */
-async function loadCriticalData({context, params, request}) {
+async function loadCriticalData({context, params, request}: Route.LoaderArgs) {
   const {handle} = params;
   const {storefront, cart} = context;
 
@@ -121,10 +120,12 @@ async function loadCriticalData({context, params, request}) {
   const requiresPhotos =
     Array.isArray(product.tags) && product.tags.includes(REQUIRES_PHOTOS_TAG);
 
-  let initialPhotoState = null;
-  let resolvedEditLineId = null;
+  let initialPhotoState: PhotoCustomizerInitialState | null = null;
+  let resolvedEditLineId: string | null = null;
   if (editLineId && cartData?.lines?.nodes) {
-    const line = cartData.lines.nodes.find((n) => n.id === editLineId);
+    const line = cartData.lines.nodes.find(
+      (n: {id: string}) => n.id === editLineId,
+    );
     if (line) {
       initialPhotoState = parsePhotoStateFromAttributes(line.attributes);
       if (initialPhotoState) resolvedEditLineId = editLineId;
@@ -144,7 +145,6 @@ async function loadCriticalData({context, params, request}) {
  * Load data for rendering content below the fold. This data is deferred and will be
  * fetched after the initial page load. If it's unavailable, the page should still 200.
  * Make sure to not throw any errors here, as it will cause the page to 500.
- * @param {Route.LoaderArgs}
  */
 function loadDeferredData() {
   // Put any API calls that is not critical to be available on first page render
@@ -157,9 +157,8 @@ function loadDeferredData() {
  * Pull the cropped photo URLs off a cart line's attributes. Originals and
  * crop rects are persisted in the buyer's localStorage on approve, so the
  * merchant-visible order line only carries the three Photo URLs.
- * @param {Array<{key: string, value: string}>} attributes
  */
-function buildAttributesFromInitial(initial) {
+function buildAttributesFromInitial(initial: PhotoCustomizerInitialState) {
   return [
     {key: 'Photo 1', value: initial.croppedUrls[0]},
     {key: 'Photo 2', value: initial.croppedUrls[1]},
@@ -167,7 +166,9 @@ function buildAttributesFromInitial(initial) {
   ];
 }
 
-function parsePhotoStateFromAttributes(attributes) {
+function parsePhotoStateFromAttributes(
+  attributes: Array<CartLineAttribute> | null | undefined,
+): PhotoCustomizerInitialState | null {
   if (!Array.isArray(attributes)) return null;
   const map = new Map(attributes.map((a) => [a.key, a.value]));
   const photo1 = map.get('Photo 1');
@@ -182,14 +183,13 @@ function parsePhotoStateFromAttributes(attributes) {
 }
 
 export default function Product() {
-  /** @type {LoaderReturnData} */
   const {
     product,
     requiresPhotos,
     editLineId,
     initialPhotoState,
     cartId,
-  } = useLoaderData();
+  } = useLoaderData<typeof loader>();
 
   // Optimistically selects a variant with given available variant information
   const selectedVariant = useOptimisticVariant(
@@ -380,6 +380,3 @@ export function ErrorBoundary() {
     </div>
   );
 }
-
-/** @typedef {import('./+types/products.$handle').Route} Route */
-/** @typedef {ReturnType<typeof useLoaderData<typeof loader>>} LoaderReturnData */

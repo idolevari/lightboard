@@ -3,17 +3,17 @@ import {getPaginationVariables, Image} from '@shopify/hydrogen';
 import {PaginatedResourceSection} from '~/components/PaginatedResourceSection';
 import {useI18n} from '~/lib/useI18n';
 import {pageTitle} from '~/lib/meta';
+import type {CollectionFragment} from 'storefrontapi.generated';
+import type {Route} from './+types/($locale).collections._index';
 
-export const meta = ({matches}) => {
-  return [{title: pageTitle(matches, 'Collections')}];
+export const meta: Route.MetaFunction = ({matches}) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ~/lib/meta accepts a narrower MetaMatch type than Route.MetaArgs["matches"]
+  return [{title: pageTitle(matches as any, 'Collections')}];
 };
 
-/**
- * @param {Route.LoaderArgs} args
- */
-export async function loader(args) {
+export async function loader(args: Route.LoaderArgs) {
   // Start fetching non-critical data without blocking time to first byte
-  const deferredData = loadDeferredData(args);
+  const deferredData = loadDeferredData();
 
   // Await the critical data required to render initial state of the page
   const criticalData = await loadCriticalData(args);
@@ -24,9 +24,8 @@ export async function loader(args) {
 /**
  * Load data necessary for rendering content above the fold. This is the critical data
  * needed to render the page. If it's unavailable, the whole page should 400 or 500 error.
- * @param {Route.LoaderArgs}
  */
-async function loadCriticalData({context, request}) {
+async function loadCriticalData({context, request}: Route.LoaderArgs) {
   const paginationVariables = getPaginationVariables(request, {
     pageBy: 4,
   });
@@ -46,15 +45,13 @@ async function loadCriticalData({context, request}) {
  * Load data for rendering content below the fold. This data is deferred and will be
  * fetched after the initial page load. If it's unavailable, the page should still 200.
  * Make sure to not throw any errors here, as it will cause the page to 500.
- * @param {Route.LoaderArgs}
  */
 function loadDeferredData() {
   return {};
 }
 
 export default function Collections() {
-  /** @type {LoaderReturnData} */
-  const {collections} = useLoaderData();
+  const {collections} = useLoaderData<typeof loader>();
   const {dict} = useI18n();
 
   return (
@@ -76,13 +73,13 @@ export default function Collections() {
   );
 }
 
-/**
- * @param {{
- *   collection: CollectionFragment;
- *   index: number;
- * }}
- */
-function CollectionItem({collection, index}) {
+function CollectionItem({
+  collection,
+  index,
+}: {
+  collection: CollectionFragment;
+  index: number;
+}) {
   const {to} = useI18n();
   return (
     <Link
@@ -144,7 +141,3 @@ const COLLECTIONS_QUERY = `#graphql
     }
   }
 `;
-
-/** @typedef {import('./+types/collections._index').Route} Route */
-/** @typedef {import('storefrontapi.generated').CollectionFragment} CollectionFragment */
-/** @typedef {ReturnType<typeof useLoaderData<typeof loader>>} LoaderReturnData */

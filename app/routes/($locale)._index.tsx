@@ -11,12 +11,127 @@ import {
 import {isLaunchGateActive} from '~/lib/coming-soon';
 import {canonicalUrl} from '~/lib/meta';
 import {sanitizeShopifyHtml} from '~/lib/sanitize';
+import type {Route} from './+types/($locale)._index';
 
-export const meta = ({data, matches}) => {
+// ---- Local shape types for the GraphQL responses on this route ----
+
+type AliasedField = {value: string | null} | null | undefined;
+
+type HeroAliasedNode = {
+  eyebrow_he?: AliasedField;
+  eyebrow_en?: AliasedField;
+  title_line_1_he?: AliasedField;
+  title_line_1_en?: AliasedField;
+  title_line_2_he?: AliasedField;
+  title_line_2_en?: AliasedField;
+  kicker_he?: AliasedField;
+  kicker_en?: AliasedField;
+  cta_he?: AliasedField;
+  cta_en?: AliasedField;
+  tape_items_he?: AliasedField;
+  tape_items_en?: AliasedField;
+};
+
+type StoryStatNode = {
+  id: string;
+  value?: AliasedField;
+  label_he?: AliasedField;
+  label_en?: AliasedField;
+  position?: AliasedField;
+};
+
+type StoryAliasedNode = {
+  tag?: AliasedField;
+  eyebrow_he?: AliasedField;
+  eyebrow_en?: AliasedField;
+  title_line_1_he?: AliasedField;
+  title_line_1_en?: AliasedField;
+  title_line_2_he?: AliasedField;
+  title_line_2_en?: AliasedField;
+  p1_he?: AliasedField;
+  p1_en?: AliasedField;
+  p2_he?: AliasedField;
+  p2_en?: AliasedField;
+  stats?: {references?: {nodes?: Array<StoryStatNode>}} | null;
+};
+
+type ProductSpecNode = {
+  id: string;
+  label_he?: AliasedField;
+  label_en?: AliasedField;
+  value_he?: AliasedField;
+  value_en?: AliasedField;
+  position?: AliasedField;
+};
+
+type HeroSlideField = {
+  key: string;
+  value: string | null;
+  reference?: {image?: {url: string} | null} | null;
+};
+
+type HeroSlideNode = {
+  id: string;
+  handle?: string;
+  fields?: Array<HeroSlideField>;
+};
+
+type SimpleMetaobjectField = {key: string; value: string | null};
+
+type SimpleMetaobjectNode = {
+  id: string;
+  handle?: string;
+  fields?: Array<SimpleMetaobjectField>;
+};
+
+type FieldMapping = {target: string; heKey: string; enKey: string};
+
+type HeroSection = {
+  eyebrow: string;
+  titleLine1: string;
+  titleLine2: string;
+  kicker: string;
+  cta: string;
+  tape: Array<string>;
+};
+
+type StorySectionStat = {
+  id: string;
+  n: string;
+  k: string;
+  position: number;
+};
+
+type StorySection = {
+  tag: string;
+  eyebrow: string;
+  titleLine1: string;
+  titleLine2: string;
+  p1: string;
+  p2: string;
+  stats: Array<StorySectionStat>;
+};
+
+type HeroSlide = {
+  id: string;
+  img: string | null;
+  label: string;
+  mobilePos: string | undefined;
+  position: number;
+};
+
+type MetaobjectFieldRecord = {
+  id: string;
+  position: number;
+  [key: string]: string | number;
+};
+
+export const meta: Route.MetaFunction = ({data, matches}) => {
   const dict = data?.dict ?? getDictionary('he');
-  const href = canonicalUrl(matches, '/');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ~/lib/meta accepts a narrower MetaMatch type than Route.MetaArgs["matches"]
+  const href = canonicalUrl(matches as any, '/');
   const image = data?.featuredProduct?.featuredImage?.url;
-  const tags = [
+  const tags: Route.MetaDescriptors = [
     {title: dict.meta.title},
     {name: 'description', content: dict.meta.description},
     {tagName: 'link', rel: 'canonical', href},
@@ -33,8 +148,7 @@ export const meta = ({data, matches}) => {
   return tags;
 };
 
-/** @param {Route.LoaderArgs} args */
-export async function loader(args) {
+export async function loader(args: Route.LoaderArgs) {
   // Launch-gate: do not fetch products/collections when the public site is
   // closed; the root layout renders <ComingSoon /> instead.
   if (isLaunchGateActive(args.request, args.context.env)) {
@@ -43,11 +157,11 @@ export async function loader(args) {
       isShopLinked: false,
       featuredCollection: null,
       featuredProduct: null,
-      faqs: [],
-      testimonials: [],
-      heroSlides: [],
-      hero: null,
-      story: null,
+      faqs: [] as Array<MetaobjectFieldRecord>,
+      testimonials: [] as Array<MetaobjectFieldRecord>,
+      heroSlides: [] as Array<HeroSlide>,
+      hero: null as HeroSection | null,
+      story: null as StorySection | null,
       dict: getDictionary(locale),
       locale,
     };
@@ -55,7 +169,7 @@ export async function loader(args) {
   return await loadCriticalData(args);
 }
 
-async function loadCriticalData({context, request}) {
+async function loadCriticalData({context, request}: Route.LoaderArgs) {
   const locale = detectLocaleFromRequest(request);
   const dict = getDictionary(locale);
   const {storefront} = context;
@@ -130,36 +244,49 @@ async function loadCriticalData({context, request}) {
  * pair on a metaobject reference response. Falls back to Hebrew when the
  * English value is empty so the storefront never renders a blank.
  */
-function pickField(node, base, locale) {
+function pickField(
+  node: Record<string, AliasedField> | null | undefined,
+  base: string,
+  locale: string,
+): string {
   const he = node?.[`${base}_he`]?.value;
   const en = node?.[`${base}_en`]?.value;
   return locale === 'en' ? en || he || '' : he || '';
 }
 
-function extractHeroSection(node, locale) {
+function extractHeroSection(
+  node: HeroAliasedNode | null | undefined,
+  locale: string,
+): HeroSection | null {
   if (!node) return null;
-  let tapeItems = [];
-  const tapeRaw = node?.[`tape_items_${locale === 'en' ? 'en' : 'he'}`]?.value;
-  const tapeFallback = node?.tape_items_he?.value;
+  let tapeItems: Array<string> = [];
+  const tapeRaw = (
+    node as Record<string, AliasedField>
+  )[`tape_items_${locale === 'en' ? 'en' : 'he'}`]?.value;
+  const tapeFallback = node.tape_items_he?.value;
   try {
-    tapeItems = JSON.parse(tapeRaw ?? tapeFallback ?? '[]');
+    const parsed: unknown = JSON.parse(tapeRaw ?? tapeFallback ?? '[]');
+    tapeItems = Array.isArray(parsed) ? (parsed as Array<string>) : [];
   } catch {
     tapeItems = [];
   }
   return {
-    eyebrow: pickField(node, 'eyebrow', locale),
-    titleLine1: pickField(node, 'title_line_1', locale),
-    titleLine2: pickField(node, 'title_line_2', locale),
-    kicker: pickField(node, 'kicker', locale),
-    cta: pickField(node, 'cta', locale),
-    tape: Array.isArray(tapeItems) ? tapeItems : [],
+    eyebrow: pickField(node as Record<string, AliasedField>, 'eyebrow', locale),
+    titleLine1: pickField(node as Record<string, AliasedField>, 'title_line_1', locale),
+    titleLine2: pickField(node as Record<string, AliasedField>, 'title_line_2', locale),
+    kicker: pickField(node as Record<string, AliasedField>, 'kicker', locale),
+    cta: pickField(node as Record<string, AliasedField>, 'cta', locale),
+    tape: tapeItems,
   };
 }
 
-function extractStorySection(node, locale) {
+function extractStorySection(
+  node: StoryAliasedNode | null | undefined,
+  locale: string,
+): StorySection | null {
   if (!node) return null;
   const statRefs = node?.stats?.references?.nodes ?? [];
-  const stats = statRefs
+  const stats: Array<StorySectionStat> = statRefs
     .map((s) => ({
       id: s.id,
       n: s.value?.value ?? '',
@@ -172,11 +299,11 @@ function extractStorySection(node, locale) {
     .sort((a, b) => a.position - b.position);
   return {
     tag: node?.tag?.value ?? '',
-    eyebrow: pickField(node, 'eyebrow', locale),
-    titleLine1: pickField(node, 'title_line_1', locale),
-    titleLine2: pickField(node, 'title_line_2', locale),
-    p1: pickField(node, 'p1', locale),
-    p2: pickField(node, 'p2', locale),
+    eyebrow: pickField(node as Record<string, AliasedField>, 'eyebrow', locale),
+    titleLine1: pickField(node as Record<string, AliasedField>, 'title_line_1', locale),
+    titleLine2: pickField(node as Record<string, AliasedField>, 'title_line_2', locale),
+    p1: pickField(node as Record<string, AliasedField>, 'p1', locale),
+    p2: pickField(node as Record<string, AliasedField>, 'p2', locale),
     stats,
   };
 }
@@ -186,22 +313,26 @@ function extractStorySection(node, locale) {
  * the <Hero> component expects. Returns empty when no entries exist so the
  * component can fall back to the in-code defaults.
  */
-function extractHeroSlides(nodes) {
+function extractHeroSlides(
+  nodes: Array<HeroSlideNode> | null | undefined,
+): Array<HeroSlide> {
   if (!Array.isArray(nodes) || nodes.length === 0) return [];
-  const items = nodes.map((node) => {
-    const byKey = Object.fromEntries(
-      (node.fields ?? []).map((f) => [f.key, f]),
-    );
-    const imageField = byKey.image;
-    const url = imageField?.reference?.image?.url ?? null;
-    return {
-      id: node.id,
-      img: url,
-      label: byKey.label?.value ?? '',
-      mobilePos: byKey.mobile_position?.value ?? undefined,
-      position: parseInt(byKey.position?.value ?? '0', 10) || 0,
-    };
-  }).filter((s) => s.img);
+  const items: Array<HeroSlide> = nodes
+    .map((node) => {
+      const byKey: Record<string, HeroSlideField> = Object.fromEntries(
+        (node.fields ?? []).map((f) => [f.key, f]),
+      );
+      const imageField = byKey.image;
+      const url = imageField?.reference?.image?.url ?? null;
+      return {
+        id: node.id,
+        img: url,
+        label: byKey.label?.value ?? '',
+        mobilePos: byKey.mobile_position?.value ?? undefined,
+        position: parseInt(byKey.position?.value ?? '0', 10) || 0,
+      };
+    })
+    .filter((s) => s.img);
   items.sort((a, b) => a.position - b.position);
   return items;
 }
@@ -211,13 +342,20 @@ function extractHeroSlides(nodes) {
  * locale's text. Falls back to the Hebrew variant when an English value is
  * empty so the storefront never renders a blank.
  */
-function extractMetaobjectFields(nodes, locale, mapping) {
+function extractMetaobjectFields(
+  nodes: Array<SimpleMetaobjectNode> | null | undefined,
+  locale: string,
+  mapping: Array<FieldMapping>,
+): Array<MetaobjectFieldRecord> {
   if (!Array.isArray(nodes)) return [];
-  const items = nodes.map((node) => {
-    const byKey = Object.fromEntries(
+  const items: Array<MetaobjectFieldRecord> = nodes.map((node) => {
+    const byKey: Record<string, string | null> = Object.fromEntries(
       (node.fields ?? []).map((f) => [f.key, f.value]),
     );
-    const result = {id: node.id, position: parseInt(byKey.position, 10) || 0};
+    const result: MetaobjectFieldRecord = {
+      id: node.id,
+      position: parseInt(byKey.position ?? '0', 10) || 0,
+    };
     for (const {target, heKey, enKey} of mapping) {
       const he = byKey[heKey] ?? '';
       const en = byKey[enKey] ?? '';
@@ -230,7 +368,7 @@ function extractMetaobjectFields(nodes, locale, mapping) {
 }
 
 export default function Homepage() {
-  const data = useLoaderData();
+  const data = useLoaderData<typeof loader>();
   return (
     <>
       <Hero slides={data.heroSlides} content={data.hero} />
@@ -244,8 +382,15 @@ export default function Homepage() {
 
 /* ---------------- MOTION HELPERS ---------------- */
 
-function Reveal({className = '', delay = 0, children, style}) {
-  const [ref, inView] = useInView();
+type RevealProps = {
+  className?: string;
+  delay?: number;
+  children: React.ReactNode;
+  style?: React.CSSProperties;
+};
+
+function Reveal({className = '', delay = 0, children, style}: RevealProps) {
+  const [ref, inView] = useInView<HTMLDivElement>();
   return (
     <div
       ref={ref}
@@ -257,7 +402,13 @@ function Reveal({className = '', delay = 0, children, style}) {
   );
 }
 
-function CountUp({value, active, duration = 1400}) {
+type CountUpProps = {
+  value: string | number;
+  active: boolean;
+  duration?: number;
+};
+
+function CountUp({value, active, duration = 1400}: CountUpProps) {
   const match = /^(\D*)([\d,]+)(.*)$/.exec(String(value));
   const target = match ? parseInt(match[2].replace(/,/g, ''), 10) : 0;
   const hasMatch = Boolean(match);
@@ -271,9 +422,9 @@ function CountUp({value, active, duration = 1400}) {
       setN(target);
       return undefined;
     }
-    let raf;
+    let raf = 0;
     const start = performance.now();
-    const tick = (now) => {
+    const tick = (now: number) => {
       const t = Math.min((now - start) / duration, 1);
       const eased = 1 - Math.pow(1 - t, 3);
       setN(Math.round(target * eased));
@@ -282,7 +433,7 @@ function CountUp({value, active, duration = 1400}) {
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, [hasMatch, active, target, duration]);
-  if (!match) return value;
+  if (!match) return <>{value}</>;
   const [, prefix, num, suffix] = match;
   const display = num.includes(',') ? n.toLocaleString('en-US') : String(n);
   // Split the suffix at the first whitespace so a trailing word (e.g.
@@ -303,8 +454,8 @@ function CountUp({value, active, duration = 1400}) {
   );
 }
 
-function StoryStat({n, k, delay}) {
-  const [ref, inView] = useInView();
+function StoryStat({n, k, delay}: {n: string; k: string; delay: number}) {
+  const [ref, inView] = useInView<HTMLDivElement>();
   return (
     <div
       ref={ref}
@@ -321,7 +472,14 @@ function StoryStat({n, k, delay}) {
 
 /* ---------------- HERO ---------------- */
 
-const HERO_SLIDES = [
+type HeroSlideForRender = {
+  id?: string;
+  img: string;
+  label?: string;
+  mobilePos?: string;
+};
+
+const HERO_SLIDES: Array<HeroSlideForRender> = [
   {
     img: 'https://cdn.shopify.com/s/files/1/0982/9325/2392/files/mikail-mcverry-6WRjFofNhPs-unsplash.jpg?v=1777136172',
     label: 'VAN LIFE · BEACH PARK',
@@ -354,7 +512,7 @@ const HERO_SLIDES = [
 
 const HERO_SRCSET_WIDTHS = [900, 1400, 2000, 2800];
 
-function heroSrcSet(url) {
+function heroSrcSet(url: string): string {
   const sep = url.includes('?') ? '&' : '?';
   return HERO_SRCSET_WIDTHS.map(
     (w) => `${url}${sep}width=${w} ${w}w`,
@@ -364,14 +522,29 @@ function heroSrcSet(url) {
 const STORY_IMAGE =
   'https://cdn.shopify.com/s/files/1/0982/9325/2392/files/paulina-herpel-NYsnCI23XJc-unsplash.jpg?v=1777141874';
 
-function Hero({slides, content}) {
+function Hero({
+  slides,
+  content,
+}: {
+  slides: Array<HeroSlide>;
+  content: HeroSection | null;
+}) {
   const {dict} = useI18n();
   // Slides + section copy both live in Shopify (metaobjects + shop metafield).
   // The slides have a code fallback so the page never renders empty; the
   // section copy renders only when the merchant has configured the
   // `homepage.hero` metafield.
-  const activeSlides =
-    Array.isArray(slides) && slides.length > 0 ? slides : HERO_SLIDES;
+  const activeSlides: Array<HeroSlideForRender> =
+    Array.isArray(slides) && slides.length > 0
+      ? slides
+          .filter((s): s is HeroSlide & {img: string} => Boolean(s.img))
+          .map((s) => ({
+            id: s.id,
+            img: s.img,
+            label: s.label,
+            mobilePos: s.mobilePos,
+          }))
+      : HERO_SLIDES;
   const tape = content?.tape ?? [];
   const [i, setI] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -394,16 +567,18 @@ function Hero({slides, content}) {
         <div
           key={s.id ?? s.img}
           className="hero-media"
-          style={{
-            opacity: j === i ? 1 : 0,
-            transform: j === i ? 'scale(1.02)' : 'scale(1)',
-            transitionProperty: 'opacity, transform',
-            transitionDuration: '1.2s, 6s',
-            transitionTimingFunction: 'ease',
-            // Per-slide horizontal crop point used by the mobile media
-            // query in app.css. Desktop stays centered.
-            '--hero-pos-mobile': s.mobilePos ?? '50%',
-          }}
+          style={
+            {
+              opacity: j === i ? 1 : 0,
+              transform: j === i ? 'scale(1.02)' : 'scale(1)',
+              transitionProperty: 'opacity, transform',
+              transitionDuration: '1.2s, 6s',
+              transitionTimingFunction: 'ease',
+              // Per-slide horizontal crop point used by the mobile media
+              // query in app.css. Desktop stays centered.
+              '--hero-pos-mobile': s.mobilePos ?? '50%',
+            } as React.CSSProperties
+          }
         >
           <img
             src={`${s.img}${s.img.includes('?') ? '&' : '?'}width=2000`}
@@ -497,14 +672,30 @@ function Hero({slides, content}) {
  * the Hebrew value when the English one is empty so the storefront never
  * renders a blank.
  */
-function localizedMetafield(node, base, locale) {
+function localizedMetafield(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- featured product reference's per-metafield aliases aren't surfaced as a single discriminated type by storefrontapi.generated
+  node: any,
+  base: string,
+  locale: string,
+): string {
   const he = node?.[`${base}_he`]?.value;
   const en = node?.[`${base}_en`]?.value;
   return locale === 'en' ? en || he || '' : he || '';
 }
 
-function extractProductSpecs(node, locale) {
-  const refs = node?.specs?.references?.nodes ?? [];
+type ProductSpecRendered = {
+  id: string;
+  k: string;
+  v: string;
+  position: number;
+};
+
+function extractProductSpecs(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- specs come from a metafield with reference list; concrete inline type isn't generated
+  node: any,
+  locale: string,
+): Array<ProductSpecRendered> {
+  const refs: Array<ProductSpecNode> = node?.specs?.references?.nodes ?? [];
   return refs
     .map((spec) => ({
       id: spec.id,
@@ -521,15 +712,26 @@ function extractProductSpecs(node, locale) {
     .sort((a, b) => a.position - b.position);
 }
 
-function FeaturedLightboard({featuredProduct}) {
+function FeaturedLightboard({
+  featuredProduct,
+}: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- featured product reference comes via shop.metafield.reference; no single generated fragment captures all aliased metafields
+  featuredProduct: any;
+}) {
   const {dict, locale} = useI18n();
   const f = dict.featured;
   // Drive the swatch picker from the live Shopify variant data so the merchant
   // can add/rename/recolor variants in admin without a code deploy.
   const colorOption =
-    featuredProduct?.options?.find((o) => o.name === 'Color') ?? null;
-  const colorValues = colorOption?.optionValues ?? [];
-  const [selectedColor, setSelectedColor] = useState(
+    featuredProduct?.options?.find(
+      (o: {name: string}) => o.name === 'Color',
+    ) ?? null;
+  const colorValues: Array<{
+    id: string;
+    name: string;
+    swatch?: {color?: string | null} | null;
+  }> = colorOption?.optionValues ?? [];
+  const [selectedColor, setSelectedColor] = useState<string | null>(
     colorValues[0]?.name ?? null,
   );
   const productImage = featuredProduct?.featuredImage;
@@ -608,7 +810,7 @@ function FeaturedLightboard({featuredProduct}) {
               <div className="feat3-picker-head">
                 <span>{f.finishLabel}</span>
                 <span className="current">
-                  {translateOptionValue(dict, selectedColor)}
+                  {translateOptionValue(dict, selectedColor ?? '')}
                 </span>
               </div>
               <div className="feat3-swatches">
@@ -654,7 +856,23 @@ function FeaturedLightboard({featuredProduct}) {
   );
 }
 
-function BuyBar({price, currencyCode, note, ctaPrimary, handle, variantColor}) {
+type BuyBarProps = {
+  price?: string | null;
+  currencyCode?: string | null;
+  note?: string;
+  ctaPrimary: string;
+  handle: string;
+  variantColor: string | null;
+};
+
+function BuyBar({
+  price,
+  currencyCode,
+  note,
+  ctaPrimary,
+  handle,
+  variantColor,
+}: BuyBarProps) {
   const {to} = useI18n();
   const base = to(`/products/${handle}`);
   const href = variantColor
@@ -680,7 +898,7 @@ function BuyBar({price, currencyCode, note, ctaPrimary, handle, variantColor}) {
   );
 }
 
-function currencySymbol(code) {
+function currencySymbol(code: string | null | undefined): string {
   switch (code) {
     case 'ILS':
       return '₪';
@@ -695,7 +913,7 @@ function currencySymbol(code) {
 
 /* ---------------- STORY ---------------- */
 
-function Story({content}) {
+function Story({content}: {content: StorySection | null}) {
   // All story copy comes from the `homepage_story` metaobject linked via the
   // `homepage.story` shop metafield. The merchant edits everything (paragraph
   // text, stats, eyebrow, title) from Shopify Admin → Content → Metaobjects.
@@ -761,7 +979,7 @@ function Story({content}) {
 
 /* ---------------- FAQ ---------------- */
 
-function Faq({items}) {
+function Faq({items}: {items: Array<MetaobjectFieldRecord>}) {
   const {dict} = useI18n();
   const f = dict.faq;
   const [open, setOpen] = useState(0);
@@ -816,7 +1034,7 @@ function Faq({items}) {
 
 /* ---------------- TESTIMONIALS ---------------- */
 
-function Testimonials({items}) {
+function Testimonials({items}: {items: Array<MetaobjectFieldRecord>}) {
   const {dict} = useI18n();
   const t = dict.testify;
   const quotes = Array.isArray(items) ? items : [];
@@ -1051,5 +1269,3 @@ const HOMEPAGE_SECTIONS_QUERY = `#graphql
     }
   }
 `;
-
-/** @typedef {import('./+types/($locale)._index').Route} Route */

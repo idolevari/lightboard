@@ -4,37 +4,35 @@ import {PaginatedResourceSection} from '~/components/PaginatedResourceSection';
 import {redirectIfHandleIsLocalized} from '~/lib/redirect';
 import {ProductItem} from '~/components/ProductItem';
 import {canonicalUrl, pageTitle} from '~/lib/meta';
+import type {Route} from './+types/($locale).collections.$handle';
 
-/**
- * @type {Route.MetaFunction}
- */
-export const meta = ({data, matches, params}) => {
+export const meta: Route.MetaFunction = ({data, matches, params}) => {
   const collection = data?.collection;
   const collectionTitle = collection?.title;
-  return [
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ~/lib/meta accepts a narrower MetaMatch type than Route.MetaArgs["matches"]
+  const m = matches as any;
+  const tags: Route.MetaDescriptors = [
     {
       title: pageTitle(
-        matches,
+        m,
         collectionTitle ? `${collectionTitle} Collection` : null,
       ),
     },
     {
       tagName: 'link',
       rel: 'canonical',
-      href: canonicalUrl(matches, `/collections/${params.handle ?? ''}`),
+      href: canonicalUrl(m, `/collections/${params.handle ?? ''}`),
     },
-    ...(collection?.description
-      ? [{name: 'description', content: collection.description}]
-      : []),
   ];
+  if (collection?.description) {
+    tags.push({name: 'description', content: collection.description});
+  }
+  return tags;
 };
 
-/**
- * @param {Route.LoaderArgs} args
- */
-export async function loader(args) {
+export async function loader(args: Route.LoaderArgs) {
   // Start fetching non-critical data without blocking time to first byte
-  const deferredData = loadDeferredData(args);
+  const deferredData = loadDeferredData();
 
   // Await the critical data required to render initial state of the page
   const criticalData = await loadCriticalData(args);
@@ -45,9 +43,8 @@ export async function loader(args) {
 /**
  * Load data necessary for rendering content above the fold. This is the critical data
  * needed to render the page. If it's unavailable, the whole page should 400 or 500 error.
- * @param {Route.LoaderArgs}
  */
-async function loadCriticalData({context, params, request}) {
+async function loadCriticalData({context, params, request}: Route.LoaderArgs) {
   const {handle} = params;
   const {storefront} = context;
   const paginationVariables = getPaginationVariables(request, {
@@ -84,15 +81,13 @@ async function loadCriticalData({context, params, request}) {
  * Load data for rendering content below the fold. This data is deferred and will be
  * fetched after the initial page load. If it's unavailable, the page should still 200.
  * Make sure to not throw any errors here, as it will cause the page to 500.
- * @param {Route.LoaderArgs}
  */
 function loadDeferredData() {
   return {};
 }
 
 export default function Collection() {
-  /** @type {LoaderReturnData} */
-  const {collection} = useLoaderData();
+  const {collection} = useLoaderData<typeof loader>();
 
   return (
     <div className="collection">
@@ -185,7 +180,3 @@ const COLLECTION_QUERY = `#graphql
     }
   }
 `;
-
-/** @typedef {import('./+types/collections.$handle').Route} Route */
-/** @typedef {import('storefrontapi.generated').ProductItemFragment} ProductItemFragment */
-/** @typedef {ReturnType<typeof useLoaderData<typeof loader>>} LoaderReturnData */

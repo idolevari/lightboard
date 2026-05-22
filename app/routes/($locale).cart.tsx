@@ -9,25 +9,18 @@ import {CartMain} from '~/components/CartMain';
 import {useI18n} from '~/lib/useI18n';
 import {getDictionary} from '~/lib/i18n';
 import {isSameOriginPath} from '~/lib/redirect';
+import type {Route} from './+types/($locale).cart';
 
-/**
- * @type {Route.MetaFunction}
- */
-export const meta = ({matches}) => {
-  const root = matches?.find?.((m) => m.id === 'root');
-  const dict = root?.data?.dict ?? getDictionary('he');
+export const meta: Route.MetaFunction = ({matches}) => {
+  const root = matches?.find?.((m) => m?.id === 'root');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- root match data shape is not exposed via generated types
+  const dict = (root?.data as any)?.dict ?? getDictionary('he');
   return [{title: dict.cart.metaTitle}];
 };
 
-/**
- * @type {HeadersFunction}
- */
-export const headers = ({actionHeaders}) => actionHeaders;
+export const headers: Route.HeadersFunction = ({actionHeaders}) => actionHeaders;
 
-/**
- * @param {Route.ActionArgs}
- */
-export async function action({request, context}) {
+export async function action({request, context}: Route.ActionArgs) {
   const {cart} = context;
 
   const formData = await request.formData();
@@ -39,7 +32,8 @@ export async function action({request, context}) {
   }
 
   let status = 200;
-  let result;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- CartForm result is a discriminated union by action; per-branch narrowing is verbose and downstream code already accesses .cart/.errors/.warnings
+  let result: any;
 
   switch (action) {
     case CartForm.ACTIONS.LinesAdd:
@@ -55,10 +49,12 @@ export async function action({request, context}) {
       const formDiscountCode = inputs.discountCode;
 
       // User inputted discount code
-      const discountCodes = formDiscountCode ? [formDiscountCode] : [];
+      const discountCodes = (
+        formDiscountCode ? [formDiscountCode] : []
+      ) as string[];
 
       // Combine discount codes already applied on cart
-      discountCodes.push(...inputs.discountCodes);
+      discountCodes.push(...(inputs.discountCodes as string[]));
 
       result = await cart.updateDiscountCodes(discountCodes);
       break;
@@ -66,7 +62,9 @@ export async function action({request, context}) {
     case CartForm.ACTIONS.GiftCardCodesAdd: {
       const formGiftCardCode = inputs.giftCardCode;
 
-      const giftCardCodes = formGiftCardCode ? [formGiftCardCode] : [];
+      const giftCardCodes = (
+        formGiftCardCode ? [formGiftCardCode] : []
+      ) as string[];
 
       result = await cart.addGiftCardCodes(giftCardCodes);
       break;
@@ -91,7 +89,7 @@ export async function action({request, context}) {
   const {cart: cartResult, errors, warnings} = result;
 
   const redirectTo = formData.get('redirectTo');
-  if (isSameOriginPath(redirectTo, request)) {
+  if (typeof redirectTo === 'string' && isSameOriginPath(redirectTo, request)) {
     status = 303;
     headers.set('Location', redirectTo);
   }
@@ -109,17 +107,13 @@ export async function action({request, context}) {
   );
 }
 
-/**
- * @param {Route.LoaderArgs}
- */
-export async function loader({context}) {
+export async function loader({context}: Route.LoaderArgs) {
   const {cart} = context;
   return await cart.get();
 }
 
 export default function Cart() {
-  /** @type {LoaderReturnData} */
-  const cart = useLoaderData();
+  const cart = useLoaderData<typeof loader>();
   const {dict} = useI18n();
 
   return (
@@ -147,9 +141,3 @@ export function ErrorBoundary() {
     </div>
   );
 }
-
-/** @typedef {import('react-router').HeadersFunction} HeadersFunction */
-/** @typedef {import('./+types/cart').Route} Route */
-/** @typedef {import('@shopify/hydrogen').CartQueryDataReturn} CartQueryDataReturn */
-/** @typedef {ReturnType<typeof useLoaderData<typeof loader>>} LoaderReturnData */
-/** @typedef {ReturnType<typeof useActionData<typeof action>>} ActionReturnData */

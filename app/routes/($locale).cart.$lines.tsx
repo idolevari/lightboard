@@ -1,4 +1,5 @@
 import {redirect} from 'react-router';
+import type {Route} from './+types/($locale).cart.$lines';
 
 /**
  * Automatically creates a new cart based on the URL and redirects straight to checkout.
@@ -17,9 +18,8 @@ import {redirect} from 'react-router';
  * /cart/41007289663544:1,41007289696312:2?discount=HYDROBOARD
  *
  * ```
- * @param {Route.LoaderArgs}
  */
-export async function loader({request, context, params}) {
+export async function loader({request, context, params}: Route.LoaderArgs) {
   const {cart} = context;
   const {lines} = params;
   if (!lines) return redirect('/cart');
@@ -68,6 +68,3 @@ export async function loader({request, context, params}) {
 export default function Component() {
   return null;
 }
-
-/** @typedef {import('./+types/cart.$lines').Route} Route */
-/** @typedef {ReturnType<typeof useLoaderData<typeof loader>>} LoaderReturnData */
