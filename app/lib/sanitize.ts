@@ -75,7 +75,7 @@ const SANITIZE_OPTIONS = {
   },
 };
 
-export function sanitizeShopifyHtml(html) {
+export function sanitizeShopifyHtml(html: unknown): string {
   if (typeof html !== 'string' || html.length === 0) return '';
   return sanitizeHtml(html, SANITIZE_OPTIONS);
 }

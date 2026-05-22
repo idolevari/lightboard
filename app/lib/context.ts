@@ -10,19 +10,18 @@ const additionalContext = {
   // Example of complex objects that could be added:
   // cms: await createCMSClient(env),
   // reviews: await createReviewsClient(env),
-};
+} as const;
+
+export type AdditionalContextType = typeof additionalContext;
 
 /**
  * Creates Hydrogen context for React Router 7.9.x
  * Returns HydrogenRouterContextProvider with hybrid access patterns
- * @param {Request} request
- * @param {Env} env
- * @param {ExecutionContext} executionContext
  */
 export async function createHydrogenRouterContext(
-  request,
-  env,
-  executionContext,
+  request: Request,
+  env: Env,
+  executionContext: ExecutionContext,
 ) {
   /**
    * Open a cache instance in the worker and a custom session instance.
@@ -58,5 +57,3 @@ export async function createHydrogenRouterContext(
 
   return hydrogenContext;
 }
-
-/** @typedef {Class<additionalContext>} AdditionalContextType */

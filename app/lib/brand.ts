@@ -11,7 +11,16 @@
  */
 import {useRouteLoaderData} from 'react-router';
 
-function digits(value) {
+export type Business = {
+  phone: string;
+  phoneDisplay: string;
+  email: string;
+  instagram: string;
+  legalName: string;
+  address: string;
+};
+
+function digits(value: string | null | undefined): string {
   return String(value ?? '').replace(/\D/g, '');
 }
 
@@ -20,7 +29,7 @@ function digits(value) {
  * Israeli local format ("055-7209448"). For non-IL numbers, returns the
  * stored value unchanged.
  */
-export function formatPhoneDisplay(phone) {
+export function formatPhoneDisplay(phone: string | null | undefined): string {
   const d = digits(phone);
   if (d.startsWith('972') && d.length === 12) {
     // 972 55 7209448 → 055-7209448
@@ -32,8 +41,9 @@ export function formatPhoneDisplay(phone) {
 /**
  * Returns a unified business object reading from shop metafields.
  */
-export function useBusiness() {
-  const root = useRouteLoaderData('root');
+export function useBusiness(): Business {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- root loader shape is awkward to thread through; narrowed via optional chaining
+  const root = useRouteLoaderData('root') as any;
   const shop = root?.header?.shop;
   const phone = shop?.phone?.value ?? '';
   return {
@@ -46,7 +56,10 @@ export function useBusiness() {
   };
 }
 
-export function whatsappHref(business, prefillText) {
+export function whatsappHref(
+  business: Pick<Business, 'phone'> | null | undefined,
+  prefillText?: string,
+): string | null {
   const number = digits(business?.phone);
   if (!number) return null;
   const query = prefillText
@@ -55,11 +68,15 @@ export function whatsappHref(business, prefillText) {
   return `https://wa.me/${number}${query}`;
 }
 
-export function telHref(business) {
+export function telHref(
+  business: Pick<Business, 'phone'> | null | undefined,
+): string | null {
   const number = digits(business?.phone);
   return number ? `tel:+${number}` : null;
 }
 
-export function mailtoHref(business) {
+export function mailtoHref(
+  business: Pick<Business, 'email'> | null | undefined,
+): string | null {
   return business?.email ? `mailto:${business.email}` : null;
 }

@@ -13,12 +13,12 @@ const PREVIEW_COOKIE = 'lb_preview';
 const PREVIEW_COOKIE_VALUE = '1';
 const PREVIEW_COOKIE_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
 
-export function isLocalhost(request) {
+export function isLocalhost(request: Request): boolean {
   const host = new URL(request.url).hostname;
   return host === 'localhost' || host === '127.0.0.1';
 }
 
-export function hasPreviewCookie(request) {
+export function hasPreviewCookie(request: Request): boolean {
   const cookie = request.headers.get('cookie') ?? '';
   return cookie
     .split(';')
@@ -26,7 +26,12 @@ export function hasPreviewCookie(request) {
     .some((c) => c === `${PREVIEW_COOKIE}=${PREVIEW_COOKIE_VALUE}`);
 }
 
-export function isLaunchGateActive(request, env) {
+type LaunchGateEnv = Env & {COMING_SOON?: string; PREVIEW_TOKEN?: string};
+
+export function isLaunchGateActive(
+  request: Request,
+  env: LaunchGateEnv,
+): boolean {
   if (env?.COMING_SOON !== 'true') return false;
   if (isLocalhost(request)) return false;
   if (hasPreviewCookie(request)) return false;
@@ -40,7 +45,10 @@ export function isLaunchGateActive(request, env) {
  * to short-circuit without leaking their own data. We throw a 200 redirect
  * to "/" so the root layout can run normally and render ComingSoon.
  */
-export function enforceLaunchGate(request, env) {
+export function enforceLaunchGate(
+  request: Request,
+  env: LaunchGateEnv,
+): void {
   if (!isLaunchGateActive(request, env)) return;
   // Strip any nested path so the gate hides what page the visitor was after.
   const url = new URL(request.url);
@@ -48,7 +56,7 @@ export function enforceLaunchGate(request, env) {
   throw redirectToRoot(url);
 }
 
-function redirectToRoot(url) {
+function redirectToRoot(url: URL): Response {
   return new Response(null, {
     status: 302,
     headers: {Location: '/' + url.search},
@@ -58,7 +66,7 @@ function redirectToRoot(url) {
 /**
  * Constant-time string compare. Both inputs must be strings.
  */
-export function tokensMatch(a, b) {
+export function tokensMatch(a: unknown, b: unknown): boolean {
   if (typeof a !== 'string' || typeof b !== 'string') return false;
   if (a.length !== b.length) return false;
   let mismatch = 0;
@@ -68,7 +76,7 @@ export function tokensMatch(a, b) {
   return mismatch === 0;
 }
 
-export function buildPreviewCookie() {
+export function buildPreviewCookie(): string {
   const parts = [
     `${PREVIEW_COOKIE}=${PREVIEW_COOKIE_VALUE}`,
     'Path=/',

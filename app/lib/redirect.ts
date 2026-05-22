@@ -6,12 +6,11 @@ import {redirect} from 'react-router';
  * any value containing a backslash (browsers normalize '\' to '/' in http(s)
  * URLs, turning '/\host' into protocol-relative '//host'), and any value that
  * resolves to a different origin than the request.
- *
- * @param {unknown} value
- * @param {Request | string} request
- * @returns {boolean}
  */
-export function isSameOriginPath(value, request) {
+export function isSameOriginPath(
+  value: unknown,
+  request: Request | string,
+): boolean {
   if (typeof value !== 'string' || value.length === 0) return false;
   if (!value.startsWith('/') || value.startsWith('//')) return false;
   if (value.includes('\\')) return false;
@@ -25,14 +24,15 @@ export function isSameOriginPath(value, request) {
   }
 }
 
-/**
- * @param {Request} request
- * @param {...Array<{
- *     handle: string;
- *     data: {handle: string} & unknown;
- *   }>} [localizedResources]
- */
-export function redirectIfHandleIsLocalized(request, ...localizedResources) {
+type LocalizedResource = {
+  handle: string;
+  data: {handle: string} & unknown;
+};
+
+export function redirectIfHandleIsLocalized(
+  request: Request,
+  ...localizedResources: Array<LocalizedResource>
+): void {
   const url = new URL(request.url);
   let shouldRedirect = false;
 

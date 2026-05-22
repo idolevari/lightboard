@@ -1,3 +1,4 @@
+import type {Session, SessionStorage} from 'react-router';
 import {createCookieSessionStorage} from 'react-router';
 
 /**
@@ -6,30 +7,20 @@ import {createCookieSessionStorage} from 'react-router';
  * swap out the cookie-based implementation with something else!
  */
 export class AppSession {
-  /**
-   * @public
-   * @default false
-   */
   isPending = false;
 
-  #sessionStorage;
-  #session;
+  #sessionStorage: SessionStorage;
+  #session: Session;
 
-  /**
-   * @param {SessionStorage} sessionStorage
-   * @param {Session} session
-   */
-  constructor(sessionStorage, session) {
+  constructor(sessionStorage: SessionStorage, session: Session) {
     this.#sessionStorage = sessionStorage;
     this.#session = session;
   }
 
-  /**
-   * @static
-   * @param {Request} request
-   * @param {string[]} secrets
-   */
-  static async init(request, secrets) {
+  static async init(
+    request: Request,
+    secrets: Array<string>,
+  ): Promise<AppSession> {
     const storage = createCookieSessionStorage({
       cookie: {
         name: 'session',
@@ -78,7 +69,3 @@ export class AppSession {
     return this.#sessionStorage.commitSession(this.#session);
   }
 }
-
-/** @typedef {import('@shopify/hydrogen').HydrogenSession} HydrogenSession */
-/** @typedef {import('react-router').SessionStorage} SessionStorage */
-/** @typedef {import('react-router').Session} Session */

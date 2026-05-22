@@ -14,27 +14,26 @@
 
 const ADMIN_API_VERSION = '2026-04';
 
-/**
- * @typedef {Object} AdminEnv
- * @property {string} PRIVATE_SHOPIFY_ADMIN_API_TOKEN
- * @property {string} PUBLIC_STORE_DOMAIN  e.g. kqyxee-us.myshopify.com
- */
+export type AdminEnv = {
+  PRIVATE_SHOPIFY_ADMIN_API_TOKEN: string;
+  /** e.g. kqyxee-us.myshopify.com */
+  PUBLIC_STORE_DOMAIN: string;
+};
 
-/**
- * @param {AdminEnv} env
- */
-function adminEndpoint(env) {
+function adminEndpoint(env: AdminEnv): string {
   return `https://${env.PUBLIC_STORE_DOMAIN}/admin/api/${ADMIN_API_VERSION}/graphql.json`;
 }
 
 /**
  * Run an Admin GraphQL query/mutation. Throws on transport failure or top-level
  * `errors`. Returns the `data` object.
- * @param {AdminEnv} env
- * @param {string} query
- * @param {Record<string, unknown>} [variables]
  */
-async function adminGraphql(env, query, variables) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Shopify Admin GraphQL response shapes vary per query; callers narrow as needed
+async function adminGraphql(
+  env: AdminEnv,
+  query: string,
+  variables?: Record<string, unknown>,
+): Promise<any> {
   if (!env.PRIVATE_SHOPIFY_ADMIN_API_TOKEN) {
     throw new Error('PRIVATE_SHOPIFY_ADMIN_API_TOKEN is not set');
   }
@@ -49,7 +48,10 @@ async function adminGraphql(env, query, variables) {
   if (!response.ok) {
     throw new Error(`admin-api-${response.status}`);
   }
-  const json = await response.json();
+  const json = (await response.json()) as {
+    data?: unknown;
+    errors?: Array<unknown>;
+  };
   if (json.errors?.length) {
     throw new Error(`admin-api-errors: ${JSON.stringify(json.errors)}`);
   }
@@ -114,28 +116,28 @@ const FILE_NODE_QUERY = `
   }
 `;
 
-/**
- * @typedef {Object} UploadInput
- * @property {Blob} blob
- * @property {string} filename
- * @property {string} mimeType
- * @property {string} [alt]
- */
+export type UploadInput = {
+  blob: Blob;
+  filename: string;
+  mimeType: string;
+  alt?: string;
+};
 
-/**
- * @typedef {Object} UploadResult
- * @property {string} id   gid://shopify/MediaImage/...
- * @property {string} url  CDN URL (https://cdn.shopify.com/...)
- */
+export type UploadResult = {
+  /** gid://shopify/MediaImage/... */
+  id: string;
+  /** CDN URL (https://cdn.shopify.com/...) */
+  url: string;
+};
 
 /**
  * Upload a single image blob to Shopify Files. Resolves with the public CDN
  * URL once the file is processed. Polls up to ~15s for processing.
- * @param {AdminEnv} env
- * @param {UploadInput} input
- * @returns {Promise<UploadResult>}
  */
-export async function uploadImageToShopifyFiles(env, input) {
+export async function uploadImageToShopifyFiles(
+  env: AdminEnv,
+  input: UploadInput,
+): Promise<UploadResult> {
   const {blob, filename, mimeType, alt} = input;
 
   // 1. Create a staged upload target.
@@ -200,11 +202,11 @@ export async function uploadImageToShopifyFiles(env, input) {
 /**
  * Poll a Shopify File node until fileStatus === READY and image.url is set.
  * Times out after ~15s, then throws.
- * @param {AdminEnv} env
- * @param {string} fileId
- * @returns {Promise<UploadResult>}
  */
-async function pollFileUntilReady(env, fileId) {
+async function pollFileUntilReady(
+  env: AdminEnv,
+  fileId: string,
+): Promise<UploadResult> {
   const maxAttempts = 30;
   const intervalMs = 500;
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
@@ -221,7 +223,6 @@ async function pollFileUntilReady(env, fileId) {
   throw new Error(`file-poll-timeout-${fileId}`);
 }
 
-/** @param {number} ms */
-function sleep(ms) {
+function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }

@@ -16,11 +16,11 @@
 const SHOPIFY_CDN_PREFIX =
   'https://cdn.shopify.com/s/files/1/0982/9325/2392/files/';
 
-function squareUrl(filename) {
+function squareUrl(filename: string): string {
   return `${SHOPIFY_CDN_PREFIX}${filename}?width=1200&height=1200&crop=center`;
 }
 
-export const SURPRISE_GALLERY = [
+export const SURPRISE_GALLERY: ReadonlyArray<string> = [
   squareUrl('paulina-herpel-NYsnCI23XJc-unsplash.jpg'),
   squareUrl('john-o-nelio-czM5xBzedXA-unsplash.jpg'),
   squareUrl('leo_visions-SzJo8G7BP8E-unsplash.jpg'),
@@ -37,13 +37,13 @@ export const SURPRISE_GALLERY = [
  *
  * Optionally pass `excludeUrls` so the user re-rolling gets a fresh
  * set instead of a near-identical one.
- *
- * @param {string[]} [excludeUrls]
- * @returns {string[]}
  */
-export function pickThreeFromGallery(excludeUrls = []) {
+export function pickThreeFromGallery(
+  excludeUrls: ReadonlyArray<string> = [],
+): Array<string> {
   const pool = SURPRISE_GALLERY.filter((u) => !excludeUrls.includes(u));
-  const source = pool.length >= 3 ? pool : SURPRISE_GALLERY.slice();
+  const source: Array<string> =
+    pool.length >= 3 ? [...pool] : [...SURPRISE_GALLERY];
   // Fisher–Yates shuffle, just enough randomness for "feels different each time".
   for (let i = source.length - 1; i > 0; i -= 1) {
     const j = Math.floor(Math.random() * (i + 1));

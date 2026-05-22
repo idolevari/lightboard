@@ -1,11 +1,11 @@
+import type {SelectedOption} from '@shopify/hydrogen/storefront-api-types';
 import {useLocation} from 'react-router';
 import {useMemo} from 'react';
 
-/**
- * @param {string} handle
- * @param {SelectedOption[]} [selectedOptions]
- */
-export function useVariantUrl(handle, selectedOptions) {
+export function useVariantUrl(
+  handle: string,
+  selectedOptions?: Array<SelectedOption>,
+): string {
   const {pathname} = useLocation();
 
   return useMemo(() => {
@@ -18,20 +18,17 @@ export function useVariantUrl(handle, selectedOptions) {
   }, [handle, selectedOptions, pathname]);
 }
 
-/**
- * @param {{
- *   handle: string;
- *   pathname: string;
- *   searchParams: URLSearchParams;
- *   selectedOptions?: SelectedOption[];
- * }}
- */
 export function getVariantUrl({
   handle,
   pathname,
   searchParams,
   selectedOptions,
-}) {
+}: {
+  handle: string;
+  pathname: string;
+  searchParams: URLSearchParams;
+  selectedOptions?: Array<SelectedOption>;
+}): string {
   // Preserve a Shopify market-style locale (e.g. /en-us/) if present, OR the
   // app's own locale prefix (e.g. /en/) so deep links don't lose locale.
   const marketMatch = /(\/[a-zA-Z]{2}-[a-zA-Z]{2}\/)/g.exec(pathname);
@@ -54,5 +51,3 @@ export function getVariantUrl({
 
   return path + (searchString ? '?' + searchString : '');
 }
-
-/** @typedef {import('@shopify/hydrogen/storefront-api-types').SelectedOption} SelectedOption */

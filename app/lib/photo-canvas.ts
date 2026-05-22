@@ -7,40 +7,44 @@
  * Everything here assumes a DOM (window, Image, document.createElement).
  */
 
-export const ALLOWED_PHOTO_TYPES = [
+export const ALLOWED_PHOTO_TYPES: ReadonlyArray<string> = [
   'image/jpeg',
   'image/png',
   'image/webp',
 ];
 
-const HEIC_TYPES = ['image/heic', 'image/heif'];
+const HEIC_TYPES: ReadonlyArray<string> = ['image/heic', 'image/heif'];
 
 export const MAX_PHOTO_BYTES = 15 * 1024 * 1024; // 15 MB
 export const MIN_PHOTO_DIMENSION = 1200;
 export const CROPPED_OUTPUT_SIZE = 1200;
 export const CROPPED_OUTPUT_QUALITY = 0.9;
 
-/**
- * @typedef {Object} CropPixels
- * @property {number} x
- * @property {number} y
- * @property {number} width
- * @property {number} height
- */
+export type CropPixels = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
 
-/**
- * @typedef {Object} ValidationResult
- * @property {boolean} ok
- * @property {string} [reason]   i18n key under photoCustomizer.errors
- */
+export type ValidationResult = {
+  ok: boolean;
+  /** i18n key under photoCustomizer.errors */
+  reason?: string;
+};
+
+export type LoadedImage = {
+  image: HTMLImageElement;
+  objectUrl: string;
+  width: number;
+  height: number;
+};
 
 /**
  * Validate file type and size. Dimensions are checked separately after the
  * image loads, since they need an HTMLImageElement.
- * @param {File} file
- * @returns {ValidationResult}
  */
-export function validatePhotoFile(file) {
+export function validatePhotoFile(file: File | null | undefined): ValidationResult {
   if (!file) return {ok: false, reason: 'noFile'};
   // HEIC/HEIF photos from iPhones can't be decoded in most desktop browsers,
   // so we reject them up-front with a clear message rather than letting the
@@ -64,10 +68,14 @@ export function validatePhotoFile(file) {
 
 /**
  * Validate already-loaded image dimensions.
- * @param {{width: number, height: number}} dims
- * @returns {ValidationResult}
  */
-export function validatePhotoDimensions({width, height}) {
+export function validatePhotoDimensions({
+  width,
+  height,
+}: {
+  width: number;
+  height: number;
+}): ValidationResult {
   if (width < MIN_PHOTO_DIMENSION || height < MIN_PHOTO_DIMENSION) {
     return {ok: false, reason: 'tooSmall'};
   }
@@ -78,10 +86,10 @@ export function validatePhotoDimensions({width, height}) {
  * Load a File into an HTMLImageElement so we can read dimensions and draw it
  * to a canvas. Caller is responsible for revoking the returned objectUrl when
  * done with the image (e.g. on component unmount or when replacing the file).
- * @param {File | Blob} fileOrBlob
- * @returns {Promise<{image: HTMLImageElement, objectUrl: string, width: number, height: number}>}
  */
-export function loadImageFromFile(fileOrBlob) {
+export function loadImageFromFile(
+  fileOrBlob: File | Blob,
+): Promise<LoadedImage> {
   return new Promise((resolve, reject) => {
     const objectUrl = URL.createObjectURL(fileOrBlob);
     const image = new Image();
@@ -103,10 +111,14 @@ export function loadImageFromFile(fileOrBlob) {
 
 /**
  * Default centered square crop in pixel coordinates.
- * @param {{width: number, height: number}} dims
- * @returns {CropPixels}
  */
-export function getDefaultSquareCrop({width, height}) {
+export function getDefaultSquareCrop({
+  width,
+  height,
+}: {
+  width: number;
+  height: number;
+}): CropPixels {
   const size = Math.min(width, height);
   return {
     x: Math.round((width - size) / 2),
@@ -119,18 +131,13 @@ export function getDefaultSquareCrop({width, height}) {
 /**
  * Draw the crop rectangle of an image to a square canvas, then export to a
  * JPEG Blob at the configured output size.
- * @param {HTMLImageElement} image
- * @param {CropPixels} crop pixel-space crop rectangle on the source image
- * @param {number} [outputSize] edge length of the square output, in px
- * @param {number} [quality] JPEG quality 0..1
- * @returns {Promise<Blob>}
  */
 export function renderCropToJpegBlob(
-  image,
-  crop,
-  outputSize = CROPPED_OUTPUT_SIZE,
-  quality = CROPPED_OUTPUT_QUALITY,
-) {
+  image: HTMLImageElement,
+  crop: CropPixels,
+  outputSize: number = CROPPED_OUTPUT_SIZE,
+  quality: number = CROPPED_OUTPUT_QUALITY,
+): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const canvas = document.createElement('canvas');
     canvas.width = outputSize;
@@ -171,12 +178,12 @@ export function renderCropToJpegBlob(
 /**
  * Convenience: read a File, default-crop or use supplied crop, return blob.
  * Frees the intermediate object URL.
- * @param {File} file
- * @param {CropPixels} crop
- * @param {number} [outputSize]
- * @returns {Promise<Blob>}
  */
-export async function cropFileToJpegBlob(file, crop, outputSize) {
+export async function cropFileToJpegBlob(
+  file: File,
+  crop: CropPixels,
+  outputSize?: number,
+): Promise<Blob> {
   const {image, objectUrl} = await loadImageFromFile(file);
   try {
     return await renderCropToJpegBlob(image, crop, outputSize);
@@ -192,10 +199,8 @@ const TRUSTED_REMOTE_HOST = 'https://cdn.shopify.com/';
  * into a Blob so it can be re-cropped without re-uploading the original.
  * Restricted to Shopify CDN — the URL can come from localStorage or cart
  * attributes, both of which are buyer-mutable.
- * @param {string} url
- * @returns {Promise<Blob>}
  */
-export async function fetchRemoteImageAsBlob(url) {
+export async function fetchRemoteImageAsBlob(url: string): Promise<Blob> {
   if (typeof url !== 'string' || !url.startsWith(TRUSTED_REMOTE_HOST)) {
     throw new Error('untrusted-image-host');
   }
