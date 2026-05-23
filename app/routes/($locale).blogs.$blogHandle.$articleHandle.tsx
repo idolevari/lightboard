@@ -1,20 +1,14 @@
 import {useLoaderData} from 'react-router';
-import {Image} from '@shopify/hydrogen';
+import {Image, getSeoMeta} from '@shopify/hydrogen';
 import {redirectIfHandleIsLocalized} from '~/lib/.server/redirect.server';
 import {useI18n} from '~/lib/useI18n';
 import {sanitizeShopifyHtml} from '~/lib/sanitize';
-import {pageTitle} from '~/lib/meta';
+import {detectLocaleFromRequest} from '~/lib/i18n';
+import {absoluteUrl, articleSeo} from '~/lib/.server/seo.server';
 import type {Route} from './+types/($locale).blogs.$blogHandle.$articleHandle';
 
-export const meta: Route.MetaFunction = ({data, matches}) => {
-  const articleTitle = data?.article.title;
-  return [
-    {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- matches helpers in ~/lib/meta accept a narrower MetaMatch type than Route.MetaArgs surfaces
-      title: pageTitle(matches as any, articleTitle ? `${articleTitle} article` : null),
-    },
-  ];
-};
+export const meta: Route.MetaFunction = ({data, matches}) =>
+  getSeoMeta(matches[0]?.data?.seo as Parameters<typeof getSeoMeta>[0], data?.seo as Parameters<typeof getSeoMeta>[0]) ?? [];
 
 export async function loader(args: Route.LoaderArgs) {
   // Start fetching non-critical data without blocking time to first byte
@@ -63,7 +57,17 @@ async function loadCriticalData({context, request, params}: Route.LoaderArgs) {
 
   const article = blog.articleByHandle;
 
-  return {article};
+  const locale = detectLocaleFromRequest(request);
+  const seo = articleSeo({
+    title: article.seo?.title || article.title,
+    description: article.seo?.description || '',
+    url: absoluteUrl(`/blogs/${blogHandle}/${article.handle}`, locale),
+    imageUrl: article.image?.url ?? null,
+    publishedAt: article.publishedAt,
+    authorName: article.author?.name ?? null,
+  });
+
+  return {article, seo};
 }
 
 /**

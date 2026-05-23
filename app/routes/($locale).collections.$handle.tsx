@@ -1,34 +1,14 @@
 import {redirect, useLoaderData} from 'react-router';
-import {getPaginationVariables, Analytics} from '@shopify/hydrogen';
+import {getPaginationVariables, getSeoMeta, Analytics} from '@shopify/hydrogen';
 import {PaginatedResourceSection} from '~/components/PaginatedResourceSection';
 import {redirectIfHandleIsLocalized} from '~/lib/.server/redirect.server';
 import {ProductItem} from '~/components/ProductItem';
-import {canonicalUrl, pageTitle} from '~/lib/meta';
+import {detectLocaleFromRequest, getDictionary} from '~/lib/i18n';
+import {absoluteUrl, collectionSeo} from '~/lib/.server/seo.server';
 import type {Route} from './+types/($locale).collections.$handle';
 
-export const meta: Route.MetaFunction = ({data, matches, params}) => {
-  const collection = data?.collection;
-  const collectionTitle = collection?.title;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ~/lib/meta accepts a narrower MetaMatch type than Route.MetaArgs["matches"]
-  const m = matches as any;
-  const tags: Route.MetaDescriptors = [
-    {
-      title: pageTitle(
-        m,
-        collectionTitle ? `${collectionTitle} Collection` : null,
-      ),
-    },
-    {
-      tagName: 'link',
-      rel: 'canonical',
-      href: canonicalUrl(m, `/collections/${params.handle ?? ''}`),
-    },
-  ];
-  if (collection?.description) {
-    tags.push({name: 'description', content: collection.description});
-  }
-  return tags;
-};
+export const meta: Route.MetaFunction = ({data, matches}) =>
+  getSeoMeta(matches[0]?.data?.seo as Parameters<typeof getSeoMeta>[0], data?.seo as Parameters<typeof getSeoMeta>[0]) ?? [];
 
 export async function loader(args: Route.LoaderArgs) {
   // Start fetching non-critical data without blocking time to first byte
@@ -72,8 +52,18 @@ async function loadCriticalData({context, params, request}: Route.LoaderArgs) {
   // The API handle might be localized, so redirect to the localized handle
   redirectIfHandleIsLocalized(request, {handle, data: collection});
 
+  const locale = detectLocaleFromRequest(request);
+  const dict = getDictionary(locale);
+  const suffix = dict.collections.collectionMetaSuffix;
+  const seo = collectionSeo({
+    title: suffix ? `${collection.title} ${suffix}` : collection.title,
+    description: collection.description || '',
+    url: absoluteUrl(`/collections/${collection.handle}`, locale),
+  });
+
   return {
     collection,
+    seo,
   };
 }
 

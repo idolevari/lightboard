@@ -1,7 +1,9 @@
 import {Link, useLoaderData} from 'react-router';
+import {getSeoMeta} from '@shopify/hydrogen';
 import {useI18n} from '~/lib/useI18n';
 import {sanitizeShopifyHtml} from '~/lib/sanitize';
-import {canonicalUrl, pageTitle} from '~/lib/meta';
+import {detectLocaleFromRequest} from '~/lib/i18n';
+import {absoluteUrl, simpleSeo} from '~/lib/.server/seo.server';
 import type {Shop} from '@shopify/hydrogen/storefront-api-types';
 import type {Route} from './+types/($locale).policies.$handle';
 
@@ -10,20 +12,10 @@ type SelectedPolicies = keyof Pick<
   'privacyPolicy' | 'shippingPolicy' | 'termsOfService' | 'refundPolicy'
 >;
 
-export const meta: Route.MetaFunction = ({data, matches, params}) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- matches helpers in ~/lib/meta accept a narrower MetaMatch type than Route.MetaArgs surfaces
-  const m = matches as any;
-  return [
-    {title: pageTitle(m, data?.policy.title)},
-    {
-      tagName: 'link',
-      rel: 'canonical',
-      href: canonicalUrl(m, `/policies/${params.handle ?? ''}`),
-    },
-  ];
-};
+export const meta: Route.MetaFunction = ({data, matches}) =>
+  getSeoMeta(matches[0]?.data?.seo as Parameters<typeof getSeoMeta>[0], data?.seo as Parameters<typeof getSeoMeta>[0]) ?? [];
 
-export async function loader({params, context}: Route.LoaderArgs) {
+export async function loader({params, context, request}: Route.LoaderArgs) {
   if (!params.handle) {
     throw new Response('No handle was passed in', {status: 404});
   }
@@ -51,7 +43,13 @@ export async function loader({params, context}: Route.LoaderArgs) {
     throw new Response('Could not find the policy', {status: 404});
   }
 
-  return {policy};
+  const locale = detectLocaleFromRequest(request);
+  const seo = simpleSeo({
+    title: policy.title,
+    url: absoluteUrl(`/policies/${params.handle}`, locale),
+  });
+
+  return {policy, seo};
 }
 
 export default function Policy() {

@@ -1,15 +1,16 @@
 import {redirect, useLoaderData} from 'react-router';
-import {Money, Image} from '@shopify/hydrogen';
+import {Money, Image, getSeoMeta} from '@shopify/hydrogen';
 import {CUSTOMER_ORDER_QUERY} from '~/graphql/customer-account/CustomerOrderQuery';
 import {useI18n} from '~/lib/useI18n';
+import {detectLocaleFromRequest} from '~/lib/i18n';
+import {absoluteUrl, simpleSeo} from '~/lib/.server/seo.server';
 import type {OrderLineItemFullFragment} from 'customer-accountapi.generated';
 import type {Route} from './+types/($locale).account.orders.$id';
 
-export const meta: Route.MetaFunction = ({data}) => {
-  return [{title: `Order ${data?.order?.name}`}];
-};
+export const meta: Route.MetaFunction = ({data, matches}) =>
+  getSeoMeta(matches[0]?.data?.seo as Parameters<typeof getSeoMeta>[0], data?.seo as Parameters<typeof getSeoMeta>[0]) ?? [];
 
-export async function loader({params, context}: Route.LoaderArgs) {
+export async function loader({params, context, request}: Route.LoaderArgs) {
   const {customerAccount} = context;
   if (!params.id) {
     return redirect('/account/orders');
@@ -51,12 +52,19 @@ export async function loader({params, context}: Route.LoaderArgs) {
       ? firstDiscount.percentage
       : null;
 
+  const locale = detectLocaleFromRequest(request);
+  const seo = simpleSeo({
+    title: `Order ${order.name}`,
+    url: absoluteUrl(`/account/orders/${params.id}`, locale),
+  });
+
   return {
     order,
     lineItems,
     discountValue,
     discountPercentage,
     fulfillmentStatus,
+    seo,
   };
 }
 

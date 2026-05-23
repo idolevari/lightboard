@@ -1,5 +1,5 @@
 import {useLoaderData} from 'react-router';
-import {getPaginationVariables, Analytics} from '@shopify/hydrogen';
+import {getPaginationVariables, getSeoMeta, Analytics} from '@shopify/hydrogen';
 import {SearchForm} from '~/components/SearchForm';
 import {SearchResults} from '~/components/SearchResults';
 import {
@@ -8,17 +8,14 @@ import {
   type RegularSearchReturn,
 } from '~/lib/search';
 import {useI18n} from '~/lib/useI18n';
-import {getDictionary} from '~/lib/i18n';
+import {detectLocaleFromRequest, getDictionary} from '~/lib/i18n';
+import {absoluteUrl, simpleSeo} from '~/lib/.server/seo.server';
 import type {Route} from './+types/($locale).search';
 
 type SearchLoaderArgs = Pick<Route.LoaderArgs, 'request' | 'context'>;
 
-export const meta: Route.MetaFunction = ({matches}) => {
-  const root = matches?.find?.((m) => m?.id === 'root');
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- root match data shape is not exposed via generated types
-  const dict = (root?.data as any)?.dict ?? getDictionary('he');
-  return [{title: dict.search.metaTitle}];
-};
+export const meta: Route.MetaFunction = ({data, matches}) =>
+  getSeoMeta(matches[0]?.data?.seo as Parameters<typeof getSeoMeta>[0], data?.seo as Parameters<typeof getSeoMeta>[0]) ?? [];
 
 export async function loader({request, context}: Route.LoaderArgs) {
   const url = new URL(request.url);
@@ -34,7 +31,16 @@ export async function loader({request, context}: Route.LoaderArgs) {
     return {term: '', result: null, error: message};
   });
 
-  return await searchPromise;
+  const result = await searchPromise;
+  const locale = detectLocaleFromRequest(request);
+  const dict = getDictionary(locale);
+  return {
+    ...result,
+    seo: simpleSeo({
+      title: dict.search.metaTitle,
+      url: absoluteUrl('/search', locale),
+    }),
+  };
 }
 
 /**

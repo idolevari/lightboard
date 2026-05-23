@@ -1,15 +1,14 @@
 import {useLoaderData} from 'react-router';
-import {getPaginationVariables} from '@shopify/hydrogen';
+import {getPaginationVariables, getSeoMeta} from '@shopify/hydrogen';
 import {PaginatedResourceSection} from '~/components/PaginatedResourceSection';
 import {ProductItem} from '~/components/ProductItem';
 import {useI18n} from '~/lib/useI18n';
-import {pageTitle} from '~/lib/meta';
+import {detectLocaleFromRequest, getDictionary} from '~/lib/i18n';
+import {absoluteUrl, collectionSeo} from '~/lib/.server/seo.server';
 import type {Route} from './+types/($locale).collections.all';
 
-export const meta: Route.MetaFunction = ({matches}) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ~/lib/meta accepts a narrower MetaMatch type than Route.MetaArgs["matches"]
-  return [{title: pageTitle(matches as any, 'All products')}];
-};
+export const meta: Route.MetaFunction = ({data, matches}) =>
+  getSeoMeta(matches[0]?.data?.seo as Parameters<typeof getSeoMeta>[0], data?.seo as Parameters<typeof getSeoMeta>[0]) ?? [];
 
 export async function loader(args: Route.LoaderArgs) {
   // Start fetching non-critical data without blocking time to first byte
@@ -38,7 +37,14 @@ async function loadCriticalData({context, request}: Route.LoaderArgs) {
     }),
     // Add other queries here, so that they are loaded in parallel
   ]);
-  return {products};
+  const locale = detectLocaleFromRequest(request);
+  const dict = getDictionary(locale);
+  const seo = collectionSeo({
+    title: dict.collections.allTitle,
+    description: dict.collections.allMeta,
+    url: absoluteUrl('/collections/all', locale),
+  });
+  return {products, seo};
 }
 
 /**

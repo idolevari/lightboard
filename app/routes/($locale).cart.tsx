@@ -4,19 +4,16 @@ import {
   isRouteErrorResponse,
   data,
 } from 'react-router';
-import {Analytics, CartForm} from '@shopify/hydrogen';
+import {Analytics, CartForm, getSeoMeta} from '@shopify/hydrogen';
 import {CartMain} from '~/components/CartMain';
 import {useI18n} from '~/lib/useI18n';
-import {getDictionary} from '~/lib/i18n';
+import {detectLocaleFromRequest, getDictionary} from '~/lib/i18n';
 import {isSameOriginPath} from '~/lib/.server/redirect.server';
+import {absoluteUrl, simpleSeo} from '~/lib/.server/seo.server';
 import type {Route} from './+types/($locale).cart';
 
-export const meta: Route.MetaFunction = ({matches}) => {
-  const root = matches?.find?.((m) => m?.id === 'root');
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- root match data shape is not exposed via generated types
-  const dict = (root?.data as any)?.dict ?? getDictionary('he');
-  return [{title: dict.cart.metaTitle}];
-};
+export const meta: Route.MetaFunction = ({data, matches}) =>
+  getSeoMeta(matches[0]?.data?.seo as Parameters<typeof getSeoMeta>[0], data?.seo as Parameters<typeof getSeoMeta>[0]) ?? [];
 
 export const headers: Route.HeadersFunction = ({actionHeaders}) => actionHeaders;
 
@@ -107,13 +104,22 @@ export async function action({request, context}: Route.ActionArgs) {
   );
 }
 
-export async function loader({context}: Route.LoaderArgs) {
+export async function loader({context, request}: Route.LoaderArgs) {
   const {cart} = context;
-  return await cart.get();
+  const locale = detectLocaleFromRequest(request);
+  const dict = getDictionary(locale);
+  const cartData = await cart.get();
+  return {
+    cart: cartData,
+    seo: simpleSeo({
+      title: dict.cart.metaTitle,
+      url: absoluteUrl('/cart', locale),
+    }),
+  };
 }
 
 export default function Cart() {
-  const cart = useLoaderData<typeof loader>();
+  const {cart} = useLoaderData<typeof loader>();
   const {dict} = useI18n();
 
   return (

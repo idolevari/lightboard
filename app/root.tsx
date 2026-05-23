@@ -1,5 +1,5 @@
 import type {ReactNode} from 'react';
-import {Analytics, getShopAnalytics, useNonce} from '@shopify/hydrogen';
+import {Analytics, getSeoMeta, getShopAnalytics, useNonce} from '@shopify/hydrogen';
 import {
   Outlet,
   useRouteError,
@@ -18,14 +18,14 @@ import {PageLayout} from './components/PageLayout';
 import {ComingSoon} from './components/ComingSoon';
 import {
   DEFAULT_LOCALE,
-  SUPPORTED_LOCALES,
   detectLocaleFromRequest,
   getDictionary,
   getLocaleConfig,
-  localizedPath,
   parseLocaleFromPath,
 } from '~/lib/i18n';
 import {isLaunchGateActive} from '~/lib/.server/coming-soon.server';
+import {rootSeo} from '~/lib/.server/seo.server';
+import {buildAlternates} from '~/lib/seo-urls';
 import {MetaPixel, MetaPixelScript} from '~/lib/meta-pixel';
 import type {Route} from './+types/root';
 
@@ -103,6 +103,13 @@ export async function loader(args: Route.LoaderArgs) {
   const url = new URL(args.request.url);
   const {rest: pathnameNoLocale} = parseLocaleFromPath(url.pathname);
 
+  const seo = rootSeo({
+    locale,
+    pathnameNoLocale,
+    title: dict.meta.title,
+    description: dict.meta.description,
+  });
+
   // When the launch gate is active we render <ComingSoon /> only — no
   // header/footer/cart/shop/consent data leaves the server. Child route
   // loaders are also blocked by the locale layout gate.
@@ -113,6 +120,7 @@ export async function loader(args: Route.LoaderArgs) {
       localeConfig,
       dict,
       pathnameNoLocale,
+      seo,
     };
   }
 
@@ -130,6 +138,7 @@ export async function loader(args: Route.LoaderArgs) {
     localeConfig,
     dict,
     pathnameNoLocale,
+    seo,
     publicStoreDomain: env.PUBLIC_STORE_DOMAIN,
     metaPixelId: env.META_PIXEL_ID || null,
     shop: getShopAnalytics({
@@ -146,6 +155,22 @@ export async function loader(args: Route.LoaderArgs) {
     },
   };
 }
+
+export const meta: Route.MetaFunction = ({data}) => {
+  const baseMeta =
+    (data?.seo
+      ? getSeoMeta(data.seo as Parameters<typeof getSeoMeta>[0])
+      : []) ?? [];
+  const alternates = data?.pathnameNoLocale
+    ? buildAlternates(data.pathnameNoLocale).map((a) => ({
+        tagName: 'link' as const,
+        rel: a.rel,
+        hrefLang: a.hrefLang,
+        href: a.href,
+      }))
+    : [];
+  return [...baseMeta, ...alternates];
+};
 
 /**
  * Load data necessary for rendering content above the fold. This is the critical data
@@ -204,7 +229,6 @@ export function Layout({children}: LayoutProps) {
   const data = useRouteLoaderData<RootLoader>('root');
   const locale = data?.locale ?? DEFAULT_LOCALE;
   const config = data?.localeConfig ?? getLocaleConfig(locale);
-  const pathnameNoLocale = data?.pathnameNoLocale ?? '/';
 
   return (
     <html lang={config.htmlLang} dir={config.dir}>
@@ -213,19 +237,6 @@ export function Layout({children}: LayoutProps) {
         <meta name="viewport" content="width=device-width,initial-scale=1" />
         <link rel="stylesheet" href={resetStyles}></link>
         <link rel="stylesheet" href={appStyles}></link>
-        {SUPPORTED_LOCALES.map((l) => (
-          <link
-            key={l}
-            rel="alternate"
-            hrefLang={getLocaleConfig(l).htmlLang}
-            href={localizedPath(pathnameNoLocale, l)}
-          />
-        ))}
-        <link
-          rel="alternate"
-          hrefLang="x-default"
-          href={localizedPath(pathnameNoLocale, DEFAULT_LOCALE)}
-        />
         <Meta />
         <Links />
         <MetaPixelScript

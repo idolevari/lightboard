@@ -8,6 +8,7 @@ import {useRef} from 'react';
 import {
   Money,
   getPaginationVariables,
+  getSeoMeta,
   flattenConnection,
 } from '@shopify/hydrogen';
 import {
@@ -19,19 +20,16 @@ import type {OrderFilterParams} from '~/lib/orderFilters';
 import {CUSTOMER_ORDERS_QUERY} from '~/graphql/customer-account/CustomerOrdersQuery';
 import {PaginatedResourceSection} from '~/components/PaginatedResourceSection';
 import {useI18n} from '~/lib/useI18n';
-import {getDictionary} from '~/lib/i18n';
+import {detectLocaleFromRequest, getDictionary} from '~/lib/i18n';
+import {absoluteUrl, simpleSeo} from '~/lib/.server/seo.server';
 import type {
   CustomerOrdersFragment,
   OrderItemFragment,
 } from 'customer-accountapi.generated';
 import type {Route} from './+types/($locale).account.orders._index';
 
-export const meta: Route.MetaFunction = ({matches}) => {
-  const root = matches?.find?.((m) => m?.id === 'root');
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- root match data shape is not exposed via generated types
-  const dict = (root?.data as any)?.dict ?? getDictionary('he');
-  return [{title: dict.account.orders}];
-};
+export const meta: Route.MetaFunction = ({data, matches}) =>
+  getSeoMeta(matches[0]?.data?.seo as Parameters<typeof getSeoMeta>[0], data?.seo as Parameters<typeof getSeoMeta>[0]) ?? [];
 
 export async function loader({request, context}: Route.LoaderArgs) {
   const {customerAccount} = context;
@@ -55,7 +53,14 @@ export async function loader({request, context}: Route.LoaderArgs) {
     throw Error('Customer orders not found');
   }
 
-  return {customer: data.customer, filters};
+  const locale = detectLocaleFromRequest(request);
+  const dict = getDictionary(locale);
+  const seo = simpleSeo({
+    title: dict.account.orders,
+    url: absoluteUrl('/account/orders', locale),
+  });
+
+  return {customer: data.customer, filters, seo};
 }
 
 export default function Orders() {

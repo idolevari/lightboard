@@ -1,21 +1,15 @@
 import {Link, useLoaderData} from 'react-router';
-import {Image, getPaginationVariables} from '@shopify/hydrogen';
+import {Image, getPaginationVariables, getSeoMeta} from '@shopify/hydrogen';
 import {PaginatedResourceSection} from '~/components/PaginatedResourceSection';
 import {redirectIfHandleIsLocalized} from '~/lib/.server/redirect.server';
 import {useI18n} from '~/lib/useI18n';
-import {pageTitle} from '~/lib/meta';
+import {detectLocaleFromRequest} from '~/lib/i18n';
+import {absoluteUrl, simpleSeo} from '~/lib/.server/seo.server';
 import type {ArticleItemFragment} from 'storefrontapi.generated';
 import type {Route} from './+types/($locale).blogs.$blogHandle._index';
 
-export const meta: Route.MetaFunction = ({data, matches}) => {
-  const blogTitle = data?.blog.title;
-  return [
-    {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- matches helpers in ~/lib/meta accept a narrower MetaMatch type than Route.MetaArgs surfaces
-      title: pageTitle(matches as any, blogTitle ? `${blogTitle} blog` : null),
-    },
-  ];
-};
+export const meta: Route.MetaFunction = ({data, matches}) =>
+  getSeoMeta(matches[0]?.data?.seo as Parameters<typeof getSeoMeta>[0], data?.seo as Parameters<typeof getSeoMeta>[0]) ?? [];
 
 export async function loader(args: Route.LoaderArgs) {
   // Start fetching non-critical data without blocking time to first byte
@@ -57,7 +51,14 @@ async function loadCriticalData({context, request, params}: Route.LoaderArgs) {
 
   redirectIfHandleIsLocalized(request, {handle: params.blogHandle, data: blog});
 
-  return {blog};
+  const locale = detectLocaleFromRequest(request);
+  const seo = simpleSeo({
+    title: blog.seo?.title || `${blog.title} blog`,
+    description: blog.seo?.description || undefined,
+    url: absoluteUrl(`/blogs/${blog.handle}`, locale),
+  });
+
+  return {blog, seo};
 }
 
 /**

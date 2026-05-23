@@ -1,28 +1,13 @@
 import {useLoaderData} from 'react-router';
+import {getSeoMeta} from '@shopify/hydrogen';
 import {redirectIfHandleIsLocalized} from '~/lib/.server/redirect.server';
 import {sanitizeShopifyHtml} from '~/lib/sanitize';
-import {canonicalUrl, pageTitle} from '~/lib/meta';
+import {detectLocaleFromRequest} from '~/lib/i18n';
+import {absoluteUrl, simpleSeo} from '~/lib/.server/seo.server';
 import type {Route} from './+types/($locale).pages.$handle';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- matches helpers in ~/lib/meta accept a narrower MetaMatch type than Route.MetaArgs surfaces
-type RouteMatches = any;
-
-export const meta: Route.MetaFunction = ({data, matches}) => {
-  const page = data?.page;
-  if (!page) return [];
-  const title = pageTitle(matches as RouteMatches, page.seo?.title || page.title);
-  const description = page.seo?.description || '';
-  const tags: Route.MetaDescriptors = [
-    {title},
-    {tagName: 'link', rel: 'canonical', href: canonicalUrl(matches as RouteMatches, `/pages/${page.handle}`)},
-    {property: 'og:title', content: title},
-  ];
-  if (description) {
-    tags.push({name: 'description', content: description});
-    tags.push({property: 'og:description', content: description});
-  }
-  return tags;
-};
+export const meta: Route.MetaFunction = ({data, matches}) =>
+  getSeoMeta(matches[0]?.data?.seo as Parameters<typeof getSeoMeta>[0], data?.seo as Parameters<typeof getSeoMeta>[0]) ?? [];
 
 export async function loader(args: Route.LoaderArgs) {
   // Start fetching non-critical data without blocking time to first byte
@@ -59,8 +44,16 @@ async function loadCriticalData({context, request, params}: Route.LoaderArgs) {
 
   redirectIfHandleIsLocalized(request, {handle: params.handle, data: page});
 
+  const locale = detectLocaleFromRequest(request);
+  const seo = simpleSeo({
+    title: page.seo?.title || page.title,
+    description: page.seo?.description || undefined,
+    url: absoluteUrl(`/pages/${page.handle}`, locale),
+  });
+
   return {
     page,
+    seo,
   };
 }
 

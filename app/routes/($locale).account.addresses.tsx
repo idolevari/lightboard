@@ -6,12 +6,15 @@ import {
   useOutletContext,
 } from 'react-router';
 import type {Fetcher} from 'react-router';
+import {getSeoMeta} from '@shopify/hydrogen';
 import {
   UPDATE_ADDRESS_MUTATION,
   DELETE_ADDRESS_MUTATION,
   CREATE_ADDRESS_MUTATION,
 } from '~/graphql/customer-account/CustomerAddressMutations';
 import {useI18n} from '~/lib/useI18n';
+import {detectLocaleFromRequest, getDictionary} from '~/lib/i18n';
+import {absoluteUrl, simpleSeo} from '~/lib/.server/seo.server';
 import type {
   AddressFragment,
   CustomerFragment,
@@ -28,14 +31,20 @@ type ActionResponse = {
   updatedAddress?: CustomerAddressInput;
 };
 
-export const meta: Route.MetaFunction = () => {
-  return [{title: 'Addresses'}];
-};
+export const meta: Route.MetaFunction = ({data, matches}) =>
+  getSeoMeta(matches[0]?.data?.seo as Parameters<typeof getSeoMeta>[0], data?.seo as Parameters<typeof getSeoMeta>[0]) ?? [];
 
-export async function loader({context}: Route.LoaderArgs) {
+export async function loader({context, request}: Route.LoaderArgs) {
   await context.customerAccount.handleAuthStatus();
 
-  return {};
+  const locale = detectLocaleFromRequest(request);
+  const dict = getDictionary(locale);
+  return {
+    seo: simpleSeo({
+      title: dict.account.addresses,
+      url: absoluteUrl('/account/addresses', locale),
+    }),
+  };
 }
 
 export async function action({request, context}: Route.ActionArgs) {

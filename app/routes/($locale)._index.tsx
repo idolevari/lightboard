@@ -1,6 +1,6 @@
 import {Await, Link, useLoaderData} from 'react-router';
 import {Suspense, useEffect, useState} from 'react';
-import {Image} from '@shopify/hydrogen';
+import {Image, getSeoMeta} from '@shopify/hydrogen';
 import {useI18n} from '~/lib/useI18n';
 import {useInView} from '~/lib/useInView';
 import {getDictionary, detectLocaleFromRequest} from '~/lib/i18n';
@@ -9,7 +9,7 @@ import {
   translateOptionValue,
 } from '~/lib/productOptionLabels';
 import {isLaunchGateActive} from '~/lib/.server/coming-soon.server';
-import {canonicalUrl} from '~/lib/meta';
+import {absoluteUrl, simpleSeo} from '~/lib/.server/seo.server';
 import {sanitizeShopifyHtml} from '~/lib/sanitize';
 import type {Route} from './+types/($locale)._index';
 
@@ -128,27 +128,8 @@ type MetaobjectFieldRecord = {
   [key: string]: string | number;
 };
 
-export const meta: Route.MetaFunction = ({data, matches}) => {
-  const dict = data?.dict ?? getDictionary('he');
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ~/lib/meta accepts a narrower MetaMatch type than Route.MetaArgs["matches"]
-  const href = canonicalUrl(matches as any, '/');
-  const image = data?.featuredProduct?.featuredImage?.url;
-  const tags: Route.MetaDescriptors = [
-    {title: dict.meta.title},
-    {name: 'description', content: dict.meta.description},
-    {tagName: 'link', rel: 'canonical', href},
-    {property: 'og:type', content: 'website'},
-    {property: 'og:title', content: dict.meta.title},
-    {property: 'og:description', content: dict.meta.description},
-    {property: 'og:url', content: href},
-    {name: 'twitter:card', content: 'summary_large_image'},
-  ];
-  if (image) {
-    tags.push({property: 'og:image', content: image});
-    tags.push({name: 'twitter:image', content: image});
-  }
-  return tags;
-};
+export const meta: Route.MetaFunction = ({data, matches}) =>
+  getSeoMeta(matches[0]?.data?.seo as Parameters<typeof getSeoMeta>[0], data?.seo as Parameters<typeof getSeoMeta>[0]) ?? [];
 
 type SimpleMetaobjectQueryResponse = {
   metaobjects?: {nodes?: Array<SimpleMetaobjectNode>} | null;
@@ -159,6 +140,7 @@ export async function loader(args: Route.LoaderArgs) {
   // closed; the root layout renders <ComingSoon /> instead.
   if (isLaunchGateActive(args.request, args.context.env)) {
     const locale = detectLocaleFromRequest(args.request);
+    const dict = getDictionary(locale);
     return {
       isShopLinked: false,
       featuredCollection: null,
@@ -172,8 +154,13 @@ export async function loader(args: Route.LoaderArgs) {
       heroSlides: [] as Array<HeroSlide>,
       hero: null as HeroSection | null,
       story: null as StorySection | null,
-      dict: getDictionary(locale),
+      dict,
       locale,
+      seo: simpleSeo({
+        title: dict.meta.title,
+        description: dict.meta.description,
+        url: absoluteUrl('/', locale),
+      }),
     };
   }
   const deferredData = loadDeferredData(args);
@@ -208,15 +195,32 @@ async function loadCriticalData({context, request}: Route.LoaderArgs) {
         return null;
       }),
   ]);
+  const featuredProduct = productData?.shop?.featured?.reference ?? null;
   return {
     isShopLinked: Boolean(context.env.PUBLIC_STORE_DOMAIN),
     featuredCollection: collections?.nodes?.[0] ?? null,
-    featuredProduct: productData?.shop?.featured?.reference ?? null,
+    featuredProduct,
     heroSlides: extractHeroSlides(heroData?.metaobjects?.nodes),
     hero: extractHeroSection(homepageData?.shop?.hero?.reference, locale),
     story: extractStorySection(homepageData?.shop?.story?.reference, locale),
     dict,
     locale,
+    seo: {
+      ...simpleSeo({
+        title: dict.meta.title,
+        description: dict.meta.description,
+        url: absoluteUrl('/', locale),
+      }),
+      media: featuredProduct?.featuredImage?.url
+        ? {
+            type: 'image' as const,
+            url: featuredProduct.featuredImage.url,
+            height: featuredProduct.featuredImage.height ?? 1200,
+            width: featuredProduct.featuredImage.width ?? 1200,
+            altText: featuredProduct.featuredImage.altText ?? null,
+          }
+        : undefined,
+    },
   };
 }
 

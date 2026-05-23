@@ -2,6 +2,7 @@ import {useState} from 'react';
 import {useLoaderData, useRouteError, isRouteErrorResponse, Link} from 'react-router';
 import {
   getSelectedProductOptions,
+  getSeoMeta,
   Analytics,
   useOptimisticVariant,
   getProductOptions,
@@ -13,69 +14,23 @@ import {ProductOptions, ProductCartAction} from '~/components/ProductForm';
 import {PhotoCustomizer} from '~/components/PhotoCustomizer/PhotoCustomizer';
 import type {PhotoCustomizerInitialState} from '~/components/PhotoCustomizer/PhotoCustomizer';
 import {redirectIfHandleIsLocalized} from '~/lib/.server/redirect.server';
+import {detectLocaleFromRequest} from '~/lib/i18n';
 import {useI18n} from '~/lib/useI18n';
 import {sanitizeShopifyHtml} from '~/lib/sanitize';
-import {canonicalUrl, pageTitle, siteOrigin} from '~/lib/meta';
+import {
+  absoluteUrl,
+  breadcrumbs,
+  productSeo,
+  withJsonLd,
+} from '~/lib/.server/seo.server';
 import type {Route} from './+types/($locale).products.$handle';
 
 const REQUIRES_PHOTOS_TAG = 'requires-photos';
 
 type CartLineAttribute = {key: string; value?: string | null};
 
-export const meta: Route.MetaFunction = ({data, matches}) => {
-  const product = data?.product;
-  if (!product) return [];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ~/lib/meta accepts a narrower MetaMatch type than Route.MetaArgs["matches"]
-  const m = matches as any;
-  const title = pageTitle(m, product.seo?.title || product.title);
-  const description =
-    product.seo?.description || product.description || '';
-  const path = `/products/${product.handle}`;
-  const href = canonicalUrl(m, path);
-  const image = product.featuredImage?.url;
-  const origin = siteOrigin(m);
-  const tags: Route.MetaDescriptors = [
-    {title},
-    {name: 'description', content: description},
-    {tagName: 'link', rel: 'canonical', href},
-    {property: 'og:type', content: 'product'},
-    {property: 'og:title', content: title},
-    {property: 'og:description', content: description},
-    {property: 'og:url', content: href},
-    {name: 'twitter:card', content: 'summary_large_image'},
-  ];
-  if (image) {
-    tags.push({property: 'og:image', content: image});
-    tags.push({name: 'twitter:image', content: image});
-  }
-  // Product JSON-LD for rich-result eligibility (price + availability).
-  const variant = product.selectedOrFirstAvailableVariant;
-  if (variant) {
-    const ld = {
-      '@context': 'https://schema.org/',
-      '@type': 'Product',
-      name: product.title,
-      description,
-      image: image ? [image] : undefined,
-      url: origin ? href : undefined,
-      sku: variant.sku || undefined,
-      brand: product.vendor ? {'@type': 'Brand', name: product.vendor} : undefined,
-      offers: {
-        '@type': 'Offer',
-        priceCurrency: variant.price?.currencyCode,
-        price: variant.price?.amount,
-        availability: variant.availableForSale
-          ? 'https://schema.org/InStock'
-          : 'https://schema.org/OutOfStock',
-        url: origin ? href : undefined,
-      },
-    };
-    tags.push({
-      'script:ld+json': ld,
-    });
-  }
-  return tags;
-};
+export const meta: Route.MetaFunction = ({data, matches}) =>
+  getSeoMeta(matches[0]?.data?.seo as Parameters<typeof getSeoMeta>[0], data?.seo as Parameters<typeof getSeoMeta>[0]) ?? [];
 
 export async function loader(args: Route.LoaderArgs) {
   // Start fetching non-critical data without blocking time to first byte
@@ -132,12 +87,39 @@ async function loadCriticalData({context, params, request}: Route.LoaderArgs) {
     }
   }
 
+  const locale = detectLocaleFromRequest(request);
+  const productUrl = absoluteUrl(`/products/${product.handle}`, locale);
+  const variant = product.selectedOrFirstAvailableVariant;
+  const productSeoConfig = productSeo({
+    title: product.seo?.title || product.title,
+    description: product.seo?.description || product.description || '',
+    imageUrl: product.featuredImage?.url,
+    url: productUrl,
+    sku: variant?.sku ?? null,
+    vendor: product.vendor ?? null,
+    price: variant?.price
+      ? {
+          amount: variant.price.amount,
+          currencyCode: variant.price.currencyCode,
+        }
+      : null,
+    availability: variant?.availableForSale ? 'InStock' : 'OutOfStock',
+  });
+  const seo = withJsonLd(
+    productSeoConfig,
+    breadcrumbs([
+      {name: 'Lightboard', url: absoluteUrl('/', locale)},
+      {name: product.title, url: productUrl},
+    ]),
+  );
+
   return {
     product,
     requiresPhotos,
     editLineId: resolvedEditLineId,
     initialPhotoState,
     cartId: cartData?.id ?? null,
+    seo,
   };
 }
 
