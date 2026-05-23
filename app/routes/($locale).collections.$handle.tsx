@@ -2,6 +2,7 @@ import {redirect, useLoaderData} from 'react-router';
 import {getPaginationVariables, getSeoMeta, Analytics} from '@shopify/hydrogen';
 import {PaginatedResourceSection} from '~/components/PaginatedResourceSection';
 import {redirectIfHandleIsLocalized} from '~/lib/.server/redirect.server';
+import {checkForTrailingEncodedSpaces} from '~/lib/.server/url.server';
 import {ProductItem} from '~/components/ProductItem';
 import {detectLocaleFromRequest, getDictionary} from '~/lib/i18n';
 import {absoluteUrl, collectionSeo} from '~/lib/.server/seo.server';
@@ -12,6 +13,9 @@ export const meta: Route.MetaFunction = ({data, matches}) =>
   getSeoMeta(matches[0]?.data?.seo as Parameters<typeof getSeoMeta>[0], data?.seo as Parameters<typeof getSeoMeta>[0]) ?? [];
 
 export async function loader(args: Route.LoaderArgs) {
+  const redirectResponse = checkForTrailingEncodedSpaces(args.request);
+  if (redirectResponse) throw redirectResponse;
+
   // Start fetching non-critical data without blocking time to first byte
   const deferredData = loadDeferredData();
 

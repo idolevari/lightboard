@@ -14,6 +14,7 @@ import {ProductOptions, ProductCartAction} from '~/components/ProductForm';
 import {PhotoCustomizer} from '~/components/PhotoCustomizer/PhotoCustomizer';
 import type {PhotoCustomizerInitialState} from '~/components/PhotoCustomizer/PhotoCustomizer';
 import {redirectIfHandleIsLocalized} from '~/lib/.server/redirect.server';
+import {checkForTrailingEncodedSpaces} from '~/lib/.server/url.server';
 import {detectLocaleFromRequest} from '~/lib/i18n';
 import {sanitizeShopifyHtml} from '~/lib/sanitize';
 import {RouteError} from '~/components/RouteError';
@@ -33,6 +34,9 @@ export const meta: Route.MetaFunction = ({data, matches}) =>
   getSeoMeta(matches[0]?.data?.seo as Parameters<typeof getSeoMeta>[0], data?.seo as Parameters<typeof getSeoMeta>[0]) ?? [];
 
 export async function loader(args: Route.LoaderArgs) {
+  const redirectResponse = checkForTrailingEncodedSpaces(args.request);
+  if (redirectResponse) throw redirectResponse;
+
   // Start fetching non-critical data without blocking time to first byte
   const deferredData = loadDeferredData();
 

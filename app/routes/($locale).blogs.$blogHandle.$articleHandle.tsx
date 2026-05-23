@@ -1,6 +1,7 @@
 import {useLoaderData} from 'react-router';
 import {Image, getSeoMeta} from '@shopify/hydrogen';
 import {redirectIfHandleIsLocalized} from '~/lib/.server/redirect.server';
+import {checkForTrailingEncodedSpaces} from '~/lib/.server/url.server';
 import {useI18n} from '~/lib/useI18n';
 import {sanitizeShopifyHtml} from '~/lib/sanitize';
 import {detectLocaleFromRequest} from '~/lib/i18n';
@@ -12,6 +13,9 @@ export const meta: Route.MetaFunction = ({data, matches}) =>
   getSeoMeta(matches[0]?.data?.seo as Parameters<typeof getSeoMeta>[0], data?.seo as Parameters<typeof getSeoMeta>[0]) ?? [];
 
 export async function loader(args: Route.LoaderArgs) {
+  const redirectResponse = checkForTrailingEncodedSpaces(args.request);
+  if (redirectResponse) throw redirectResponse;
+
   // Start fetching non-critical data without blocking time to first byte
   const deferredData = loadDeferredData();
 
