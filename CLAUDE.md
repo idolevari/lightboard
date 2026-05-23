@@ -192,7 +192,7 @@ Migration CSV generator is kept locally at `scripts/woo-to-shopify.py` (gitignor
 
 ## Project Conventions
 
-- **JavaScript, not TypeScript** — scaffold uses `.jsx`
+- **TypeScript, strict** — see `tsconfig.json`. All sources are `.ts`/`.tsx`. JSDoc `@type`/`@typedef` is no longer used.
 - **RTL + Hebrew** — `<html lang="he" dir="rtl">` set in `app/root.jsx`
 - **Flat repo structure** — app is at the root, not in a subdirectory (keeps CI and Shopify CLI assumptions aligned)
 - **Gitignored:** `.env`, `.shopify/`, `.claude/`, `.idea/`, `.cursor/`, `scripts/`, `node_modules/`, build artifacts
