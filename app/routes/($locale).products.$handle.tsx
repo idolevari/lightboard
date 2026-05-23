@@ -12,7 +12,7 @@ import {ProductPrice} from '~/components/ProductPrice';
 import {ProductOptions, ProductCartAction} from '~/components/ProductForm';
 import {PhotoCustomizer} from '~/components/PhotoCustomizer/PhotoCustomizer';
 import type {PhotoCustomizerInitialState} from '~/components/PhotoCustomizer/PhotoCustomizer';
-import {redirectIfHandleIsLocalized} from '~/lib/redirect';
+import {redirectIfHandleIsLocalized} from '~/lib/.server/redirect.server';
 import {useI18n} from '~/lib/useI18n';
 import {sanitizeShopifyHtml} from '~/lib/sanitize';
 import {canonicalUrl, pageTitle, siteOrigin} from '~/lib/meta';

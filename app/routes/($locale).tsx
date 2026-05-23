@@ -1,6 +1,6 @@
 import {Outlet, redirect} from 'react-router';
 import {DEFAULT_LOCALE, SUPPORTED_LOCALES} from '~/lib/i18n';
-import {enforceLaunchGate} from '~/lib/coming-soon';
+import {enforceLaunchGate} from '~/lib/.server/coming-soon.server';
 import type {Route} from './+types/($locale)';
 
 /**

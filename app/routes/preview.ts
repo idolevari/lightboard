@@ -1,5 +1,5 @@
 import {data} from 'react-router';
-import {buildPreviewCookie, tokensMatch} from '~/lib/coming-soon';
+import {buildPreviewCookie, tokensMatch} from '~/lib/.server/coming-soon.server';
 import type {Route} from './+types/preview';
 
 /**

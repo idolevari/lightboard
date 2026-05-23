@@ -1,7 +1,7 @@
 import {redirect, useLoaderData} from 'react-router';
 import {getPaginationVariables, Analytics} from '@shopify/hydrogen';
 import {PaginatedResourceSection} from '~/components/PaginatedResourceSection';
-import {redirectIfHandleIsLocalized} from '~/lib/redirect';
+import {redirectIfHandleIsLocalized} from '~/lib/.server/redirect.server';
 import {ProductItem} from '~/components/ProductItem';
 import {canonicalUrl, pageTitle} from '~/lib/meta';
 import type {Route} from './+types/($locale).collections.$handle';

@@ -1,5 +1,5 @@
 import {createHydrogenContext} from '@shopify/hydrogen';
-import {AppSession} from '~/lib/session';
+import {AppSession} from '~/lib/.server/session.server';
 import {CART_QUERY_FRAGMENT} from '~/lib/fragments';
 import {detectLocaleFromRequest, getLocaleConfig} from '~/lib/i18n';
 

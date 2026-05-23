@@ -1,6 +1,6 @@
 import {redirect} from 'react-router';
 import {detectLocaleFromRequest, localizedPath} from '~/lib/i18n';
-import {isSameOriginPath} from '~/lib/redirect';
+import {isSameOriginPath} from '~/lib/.server/redirect.server';
 import type {Route} from './+types/($locale).discount.$code';
 
 /**

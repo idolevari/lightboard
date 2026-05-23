@@ -8,7 +8,7 @@ import {Analytics, CartForm} from '@shopify/hydrogen';
 import {CartMain} from '~/components/CartMain';
 import {useI18n} from '~/lib/useI18n';
 import {getDictionary} from '~/lib/i18n';
-import {isSameOriginPath} from '~/lib/redirect';
+import {isSameOriginPath} from '~/lib/.server/redirect.server';
 import type {Route} from './+types/($locale).cart';
 
 export const meta: Route.MetaFunction = ({matches}) => {

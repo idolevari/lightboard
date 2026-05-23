@@ -25,7 +25,7 @@ import {
   localizedPath,
   parseLocaleFromPath,
 } from '~/lib/i18n';
-import {isLaunchGateActive} from '~/lib/coming-soon';
+import {isLaunchGateActive} from '~/lib/.server/coming-soon.server';
 import {MetaPixel, MetaPixelScript} from '~/lib/meta-pixel';
 import type {Route} from './+types/root';
 

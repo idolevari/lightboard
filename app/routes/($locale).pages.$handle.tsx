@@ -1,5 +1,5 @@
 import {useLoaderData} from 'react-router';
-import {redirectIfHandleIsLocalized} from '~/lib/redirect';
+import {redirectIfHandleIsLocalized} from '~/lib/.server/redirect.server';
 import {sanitizeShopifyHtml} from '~/lib/sanitize';
 import {canonicalUrl, pageTitle} from '~/lib/meta';
 import type {Route} from './+types/($locale).pages.$handle';

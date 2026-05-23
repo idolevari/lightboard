@@ -1,7 +1,7 @@
 import {data} from 'react-router';
-import {uploadImageToShopifyFiles} from '~/lib/shopify-admin';
+import {uploadImageToShopifyFiles} from '~/lib/.server/shopify-admin.server';
 import {ALLOWED_PHOTO_TYPES, MAX_PHOTO_BYTES} from '~/lib/photo-canvas';
-import {isLaunchGateActive} from '~/lib/coming-soon';
+import {isLaunchGateActive} from '~/lib/.server/coming-soon.server';
 import type {Route} from './+types/api.photos.upload';
 
 /**

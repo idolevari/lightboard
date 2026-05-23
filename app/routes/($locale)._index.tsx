@@ -8,7 +8,7 @@ import {
   getOptionValueHex,
   translateOptionValue,
 } from '~/lib/productOptionLabels';
-import {isLaunchGateActive} from '~/lib/coming-soon';
+import {isLaunchGateActive} from '~/lib/.server/coming-soon.server';
 import {canonicalUrl} from '~/lib/meta';
 import {sanitizeShopifyHtml} from '~/lib/sanitize';
 import type {Route} from './+types/($locale)._index';
