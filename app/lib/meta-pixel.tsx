@@ -1,5 +1,5 @@
 import {useAnalytics} from '@shopify/hydrogen';
-import {useEffect} from 'react';
+import {useEffect, useRef, useState} from 'react';
 
 const DEFAULT_CURRENCY = 'ILS';
 
@@ -19,13 +19,17 @@ type MetaPixelScriptProps = {
 };
 
 /**
- * Inline base pixel snippet. Renders once in <head>. Fires the initial
- * PageView; SPA navigations are tracked by <MetaPixel /> via Hydrogen's
- * page_viewed event.
+ * Loads the fbq SDK shim. Does NOT call fbq('init') or fbq('track') —
+ * those are gated on visitor marketing consent and fired from <MetaPixel />
+ * after Shopify's Customer Privacy API confirms consent.
+ *
+ * Loading the shim itself before consent is safe: it only sets up
+ * window.fbq with a no-op queue. Network calls to facebook.com/tr only
+ * happen when fbq('init'|'track', ...) is called.
  */
 export function MetaPixelScript({pixelId, nonce}: MetaPixelScriptProps) {
   if (!pixelId) return null;
-  const snippet = `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${pixelId}');fbq('track','PageView');`;
+  const snippet = `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');`;
   return (
     <script
       nonce={nonce}
@@ -104,25 +108,139 @@ function cartPayload(
   };
 }
 
+type MetaPixelProps = {pixelId: string | null | undefined};
+
 /**
  * Subscribes to Hydrogen's analytics events and forwards them to Meta.
  * Must be rendered inside <Analytics.Provider>.
+ *
+ * fbq('init', pixelId) and the initial PageView fire ONCE, only after
+ * Shopify's Customer Privacy API confirms marketing consent. Subsequent
+ * analytics events are also gated on the same consent state via a ref
+ * read inside each callback — no events leak before consent.
+ *
+ * Implementation note: Hydrogen's `subscribe` returns void (no
+ * unsubscribe), so we subscribe once and gate inside each callback.
+ * Consent state is tracked with a ref so subscription callbacks see
+ * the latest value without re-subscribing.
  */
-export function MetaPixel() {
-  const {subscribe} = useAnalytics();
+export function MetaPixel({pixelId}: MetaPixelProps) {
+  const {subscribe, customerPrivacy} = useAnalytics();
+  const [consented, setConsented] = useState(false);
+  const consentRef = useRef(false);
+  const initRef = useRef(false);
+  const subscribedRef = useRef(false);
+  // Timestamp of last PageView we sent — used to dedupe Hydrogen's queued
+  // page_viewed flush that lands right after init fires PageView.
+  const lastPageViewAtRef = useRef<number>(0);
 
+  // Keep the ref in sync so subscribe callbacks always read latest.
   useEffect(() => {
+    consentRef.current = consented;
+  }, [consented]);
+
+  // Detect when marketing consent is granted. Hydrogen's customerPrivacy
+  // API is loaded asynchronously and exposed via the analytics context
+  // once ready. Poll briefly until it appears and reports marketing
+  // tracking is allowed. The polling stops as soon as consent is granted
+  // (safe default: stays off forever otherwise).
+  useEffect(() => {
+    if (!pixelId) return;
+    if (typeof window === 'undefined') return;
+
+    const check = () => {
+      const cp = customerPrivacy ?? (
+        (window as unknown as {
+          Shopify?: {
+            customerPrivacy?: {
+              marketingAllowed?: () => boolean;
+            };
+          };
+        }).Shopify?.customerPrivacy ?? null
+      );
+      const allowed = cp?.marketingAllowed?.() ?? false;
+      if (allowed) {
+        setConsented(true);
+        return true;
+      }
+      return false;
+    };
+
+    if (check()) return;
+
+    // Re-check whenever the visitor records a consent decision.
+    const onConsentCollected = () => {
+      check();
+    };
+    document.addEventListener('visitorConsentCollected', onConsentCollected);
+
+    // Fallback poll in case the event fires before our listener is
+    // attached, or the API only becomes ready after Provider mounts.
+    const interval = window.setInterval(() => {
+      if (check()) {
+        window.clearInterval(interval);
+      }
+    }, 500);
+    const timeout = window.setTimeout(() => {
+      window.clearInterval(interval);
+    }, 10_000);
+
+    return () => {
+      document.removeEventListener(
+        'visitorConsentCollected',
+        onConsentCollected,
+      );
+      window.clearInterval(interval);
+      window.clearTimeout(timeout);
+    };
+  }, [pixelId, customerPrivacy]);
+
+  // Fire fbq('init', ...) + initial PageView once, after consent. This
+  // guarantees a landing PageView even if Hydrogen flushes its queued
+  // page_viewed before our subscription callback can read consent. The
+  // page_viewed subscription below dedupes by checking how long ago init
+  // fired and skipping the duplicate flush.
+  useEffect(() => {
+    if (!consented || !pixelId || initRef.current) return;
+    if (typeof window === 'undefined') return;
+    if (typeof window.fbq !== 'function') return;
+    window.fbq('init', pixelId);
+    window.fbq('track', 'PageView');
+    initRef.current = true;
+    lastPageViewAtRef.current = Date.now();
+  }, [consented, pixelId]);
+
+  // Subscribe to Hydrogen analytics events once. Each callback consults
+  // consentRef before forwarding so events stay gated even if consent is
+  // granted later.
+  useEffect(() => {
+    if (subscribedRef.current) return;
+    if (!pixelId) return;
+    subscribedRef.current = true;
+
+    // The initial page_viewed is handled inline by the consent effect
+    // above (which fires fbq('track', 'PageView') on the first consent
+    // grant). Subsequent SPA navigations come through here.
     subscribe('page_viewed', () => {
+      if (!consentRef.current) return;
+      // The init effect fires PageView the moment consent flips; if
+      // Hydrogen's queued page_viewed for the same landing page lands
+      // within a short window after that, skip it. Subsequent SPA
+      // navigations land far outside this window and forward normally.
+      if (Date.now() - lastPageViewAtRef.current < 1000) return;
       track('PageView');
+      lastPageViewAtRef.current = Date.now();
     });
 
     subscribe('product_viewed', ({products}) => {
+      if (!consentRef.current) return;
       const product = products?.[0];
       if (!product) return;
       track('ViewContent', productPayload(product));
     });
 
     subscribe('collection_viewed', ({collection}) => {
+      if (!consentRef.current) return;
       if (!collection) return;
       // CollectionPayloadDetails exposes {id, handle} from Hydrogen, but some
       // call sites attach a title — read it through a loose cast since we
@@ -135,11 +253,13 @@ export function MetaPixel() {
     });
 
     subscribe('search_viewed', ({searchTerm}) => {
+      if (!consentRef.current) return;
       if (!searchTerm) return;
       track('Search', {search_string: searchTerm});
     });
 
     subscribe('product_added_to_cart', ({currentLine}) => {
+      if (!consentRef.current) return;
       const product: AnalyticsProduct | null | undefined = currentLine?.merchandise
         ? {
             productGid: currentLine.merchandise.product?.id,
@@ -154,6 +274,7 @@ export function MetaPixel() {
     });
 
     subscribe('cart_viewed', ({cart}) => {
+      if (!consentRef.current) return;
       // cart.lines is BaseCartLineConnection | CartLine[] in Hydrogen's type —
       // normalize both shapes into a flat array of cart line nodes.
       const linesRaw = cart?.lines as
@@ -186,7 +307,7 @@ export function MetaPixel() {
       const payload = cartPayload(products);
       if (payload) track('InitiateCheckout', payload);
     });
-  }, [subscribe]);
+  }, [subscribe, pixelId]);
 
   return null;
 }

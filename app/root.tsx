@@ -1,5 +1,11 @@
 import type {ReactNode} from 'react';
-import {Analytics, getSeoMeta, getShopAnalytics, useNonce} from '@shopify/hydrogen';
+import {
+  Analytics,
+  getSeoMeta,
+  getShopAnalytics,
+  useCustomerPrivacy,
+  useNonce,
+} from '@shopify/hydrogen';
 import {
   Outlet,
   useRouteError,
@@ -253,6 +259,38 @@ export function Layout({children}: LayoutProps) {
   );
 }
 
+type PrivacyGateProps = {
+  checkoutDomain: string;
+  storefrontAccessToken: string;
+};
+
+/**
+ * Mounts Shopify's Customer Privacy API and registers a dev-only callback
+ * for visitor consent collection. Returns null — its only job is to fire
+ * the side effect of loading the consent-tracking script and wiring the
+ * `visitorConsentCollected` event listener so other components (e.g.
+ * <MetaPixel />) can read consent state.
+ *
+ * Note: <Analytics.Provider> internally also calls useCustomerPrivacy,
+ * but the script loader dedupes by element id ("customer-privacy-api"),
+ * so the script only loads once. Calling the hook again here gives us a
+ * place to add custom consent-related side effects without forking the
+ * Provider.
+ */
+function PrivacyGate({checkoutDomain, storefrontAccessToken}: PrivacyGateProps) {
+  useCustomerPrivacy({
+    checkoutDomain,
+    storefrontAccessToken,
+    onVisitorConsentCollected: (consent) => {
+      if (process.env.NODE_ENV !== 'production') {
+        // eslint-disable-next-line no-console
+        console.warn('[customer-privacy] consent collected', consent);
+      }
+    },
+  });
+  return null;
+}
+
 export default function App() {
   const data = useRouteLoaderData<RootLoader>('root');
 
@@ -270,7 +308,11 @@ export default function App() {
       shop={data.shop}
       consent={data.consent}
     >
-      <MetaPixel />
+      <PrivacyGate
+        checkoutDomain={data.consent.checkoutDomain}
+        storefrontAccessToken={data.consent.storefrontAccessToken}
+      />
+      <MetaPixel pixelId={data.metaPixelId ?? null} />
       <PageLayout {...data}>
         <Outlet />
       </PageLayout>
