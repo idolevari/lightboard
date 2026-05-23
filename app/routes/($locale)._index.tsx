@@ -1,5 +1,5 @@
-import {Link, useLoaderData} from 'react-router';
-import {useEffect, useState} from 'react';
+import {Await, Link, useLoaderData} from 'react-router';
+import {Suspense, useEffect, useState} from 'react';
 import {Image} from '@shopify/hydrogen';
 import {useI18n} from '~/lib/useI18n';
 import {useInView} from '~/lib/useInView';
@@ -15,7 +15,7 @@ import type {Route} from './+types/($locale)._index';
 
 // ---- Local shape types for the GraphQL responses on this route ----
 
-type AliasedField = {value: string | null} | null | undefined;
+type AliasedField = {value?: string | null} | null | undefined;
 
 type HeroAliasedNode = {
   eyebrow_he?: AliasedField;
@@ -52,7 +52,9 @@ type StoryAliasedNode = {
   p1_en?: AliasedField;
   p2_he?: AliasedField;
   p2_en?: AliasedField;
-  stats?: {references?: {nodes?: Array<StoryStatNode>}} | null;
+  stats?:
+    | {references?: {nodes?: Array<StoryStatNode>} | null}
+    | null;
 };
 
 type ProductSpecNode = {
@@ -66,7 +68,7 @@ type ProductSpecNode = {
 
 type HeroSlideField = {
   key: string;
-  value: string | null;
+  value?: string | null;
   reference?: {image?: {url: string} | null} | null;
 };
 
@@ -76,7 +78,7 @@ type HeroSlideNode = {
   fields?: Array<HeroSlideField>;
 };
 
-type SimpleMetaobjectField = {key: string; value: string | null};
+type SimpleMetaobjectField = {key: string; value?: string | null};
 
 type SimpleMetaobjectNode = {
   id: string;
@@ -148,6 +150,10 @@ export const meta: Route.MetaFunction = ({data, matches}) => {
   return tags;
 };
 
+type SimpleMetaobjectQueryResponse = {
+  metaobjects?: {nodes?: Array<SimpleMetaobjectNode>} | null;
+} | null;
+
 export async function loader(args: Route.LoaderArgs) {
   // Launch-gate: do not fetch products/collections when the public site is
   // closed; the root layout renders <ComingSoon /> instead.
@@ -157,8 +163,12 @@ export async function loader(args: Route.LoaderArgs) {
       isShopLinked: false,
       featuredCollection: null,
       featuredProduct: null,
-      faqs: [] as Array<MetaobjectFieldRecord>,
-      testimonials: [] as Array<MetaobjectFieldRecord>,
+      faqs: Promise.resolve(
+        null,
+      ) as Promise<SimpleMetaobjectQueryResponse | null>,
+      testimonials: Promise.resolve(
+        null,
+      ) as Promise<SimpleMetaobjectQueryResponse | null>,
       heroSlides: [] as Array<HeroSlide>,
       hero: null as HeroSection | null,
       story: null as StorySection | null,
@@ -166,38 +176,21 @@ export async function loader(args: Route.LoaderArgs) {
       locale,
     };
   }
-  return await loadCriticalData(args);
+  const deferredData = loadDeferredData(args);
+  const criticalData = await loadCriticalData(args);
+  return {...deferredData, ...criticalData};
 }
 
 async function loadCriticalData({context, request}: Route.LoaderArgs) {
   const locale = detectLocaleFromRequest(request);
   const dict = getDictionary(locale);
   const {storefront} = context;
-  const [
-    {collections},
-    productData,
-    faqData,
-    testimonialData,
-    heroData,
-    homepageData,
-  ] = await Promise.all([
+  const [{collections}, productData, heroData, homepageData] = await Promise.all([
     storefront.query(FEATURED_COLLECTION_QUERY, {
       cache: storefront.CacheLong(),
     }),
     storefront
       .query(FEATURED_PRODUCT_QUERY, {cache: storefront.CacheShort()})
-      .catch((error) => {
-        console.error(error);
-        return null;
-      }),
-    storefront
-      .query(FAQS_QUERY, {cache: storefront.CacheLong()})
-      .catch((error) => {
-        console.error(error);
-        return null;
-      }),
-    storefront
-      .query(TESTIMONIALS_QUERY, {cache: storefront.CacheLong()})
       .catch((error) => {
         console.error(error);
         return null;
@@ -219,24 +212,35 @@ async function loadCriticalData({context, request}: Route.LoaderArgs) {
     isShopLinked: Boolean(context.env.PUBLIC_STORE_DOMAIN),
     featuredCollection: collections?.nodes?.[0] ?? null,
     featuredProduct: productData?.shop?.featured?.reference ?? null,
-    faqs: extractMetaobjectFields(faqData?.metaobjects?.nodes, locale, [
-      {target: 'question', heKey: 'question_he', enKey: 'question_en'},
-      {target: 'answer', heKey: 'answer_he', enKey: 'answer_en'},
-    ]),
-    testimonials: extractMetaobjectFields(
-      testimonialData?.metaobjects?.nodes,
-      locale,
-      [
-        {target: 'body', heKey: 'body_he', enKey: 'body_en'},
-        {target: 'attribution', heKey: 'attribution_he', enKey: 'attribution_en'},
-      ],
-    ),
     heroSlides: extractHeroSlides(heroData?.metaobjects?.nodes),
     hero: extractHeroSection(homepageData?.shop?.hero?.reference, locale),
     story: extractStorySection(homepageData?.shop?.story?.reference, locale),
     dict,
     locale,
   };
+}
+
+/**
+ * Non-blocking queries returned as unresolved promises so the FAQ and
+ * testimonial sections can stream in below the fold instead of holding up
+ * first paint. Each query catches its own error and resolves to `null` so a
+ * downstream failure renders nothing rather than 500-ing the homepage.
+ */
+function loadDeferredData({context}: Route.LoaderArgs) {
+  const {storefront} = context;
+  const faqs = storefront
+    .query(FAQS_QUERY, {cache: storefront.CacheLong()})
+    .catch((error: Error) => {
+      console.error(error);
+      return null;
+    });
+  const testimonials = storefront
+    .query(TESTIMONIALS_QUERY, {cache: storefront.CacheLong()})
+    .catch((error: Error) => {
+      console.error(error);
+      return null;
+    });
+  return {faqs, testimonials};
 }
 
 /**
@@ -349,7 +353,7 @@ function extractMetaobjectFields(
 ): Array<MetaobjectFieldRecord> {
   if (!Array.isArray(nodes)) return [];
   const items: Array<MetaobjectFieldRecord> = nodes.map((node) => {
-    const byKey: Record<string, string | null> = Object.fromEntries(
+    const byKey: Record<string, string | null | undefined> = Object.fromEntries(
       (node.fields ?? []).map((f) => [f.key, f.value]),
     );
     const result: MetaobjectFieldRecord = {
@@ -369,15 +373,56 @@ function extractMetaobjectFields(
 
 export default function Homepage() {
   const data = useLoaderData<typeof loader>();
+  const locale = data.locale;
   return (
     <>
       <Hero slides={data.heroSlides} content={data.hero} />
       <FeaturedLightboard featuredProduct={data.featuredProduct} />
       <Story content={data.story} />
-      <Faq items={data.faqs} />
-      <Testimonials items={data.testimonials} />
+      <Suspense fallback={<DeferredSectionFallback />}>
+        <Await resolve={data.faqs}>
+          {(faqsResponse) => {
+            if (!faqsResponse) return null;
+            const items = extractMetaobjectFields(
+              faqsResponse?.metaobjects?.nodes,
+              locale,
+              [
+                {target: 'question', heKey: 'question_he', enKey: 'question_en'},
+                {target: 'answer', heKey: 'answer_he', enKey: 'answer_en'},
+              ],
+            );
+            return <Faq items={items} />;
+          }}
+        </Await>
+      </Suspense>
+      <Suspense fallback={<DeferredSectionFallback />}>
+        <Await resolve={data.testimonials}>
+          {(testimonialsResponse) => {
+            if (!testimonialsResponse) return null;
+            const items = extractMetaobjectFields(
+              testimonialsResponse?.metaobjects?.nodes,
+              locale,
+              [
+                {target: 'body', heKey: 'body_he', enKey: 'body_en'},
+                {
+                  target: 'attribution',
+                  heKey: 'attribution_he',
+                  enKey: 'attribution_en',
+                },
+              ],
+            );
+            return <Testimonials items={items} />;
+          }}
+        </Await>
+      </Suspense>
     </>
   );
+}
+
+// Empty placeholder while deferred sections stream in. Reserves vertical space
+// to avoid CLS but is intentionally minimal — refine visually later if needed.
+function DeferredSectionFallback() {
+  return <div aria-hidden="true" style={{minHeight: '320px'}} />;
 }
 
 /* ---------------- MOTION HELPERS ---------------- */
