@@ -6,13 +6,11 @@ import {createHydrogenRouterContext} from '~/lib/context';
  * Export a fetch handler in module format.
  */
 export default {
-  /**
-   * @param {Request} request
-   * @param {Env} env
-   * @param {ExecutionContext} executionContext
-   * @return {Promise<Response>}
-   */
-  async fetch(request, env, executionContext) {
+  async fetch(
+    request: Request,
+    env: Env,
+    executionContext: ExecutionContext,
+  ): Promise<Response> {
     try {
       const hydrogenContext = await createHydrogenRouterContext(
         request,
