@@ -6,29 +6,28 @@ import {
   useNavigation,
   useOutletContext,
 } from 'react-router';
-import {getSeoMeta} from '@shopify/hydrogen';
 import {useI18n} from '~/lib/useI18n';
 import {detectLocaleFromRequest, getDictionary} from '~/lib/i18n';
 import {absoluteUrl, simpleSeo} from '~/lib/.server/seo.server';
+import {routeMeta} from '~/lib/seo-urls';
 import {RouteError} from '~/components/RouteError';
 import type {CustomerFragment} from 'customer-accountapi.generated';
 import type {CustomerUpdateInput} from '@shopify/hydrogen/customer-account-api-types';
 import type {Route} from './+types/($locale).account.profile';
 
 export const meta: Route.MetaFunction = ({data, matches}) =>
-  getSeoMeta(matches[0]?.data?.seo as Parameters<typeof getSeoMeta>[0], data?.seo as Parameters<typeof getSeoMeta>[0]) ?? [];
+  routeMeta({matches, data});
 
 export async function loader({context, request}: Route.LoaderArgs) {
   await context.customerAccount.handleAuthStatus();
 
   const locale = detectLocaleFromRequest(request);
   const dict = getDictionary(locale);
-  return {
-    seo: simpleSeo({
-      title: dict.account.profile,
-      url: absoluteUrl('/account/profile', locale),
-    }),
-  };
+  const {seo} = simpleSeo({
+    title: dict.account.profile,
+    url: absoluteUrl('/account/profile', locale),
+  });
+  return {seo};
 }
 
 export async function action({request, context}: Route.ActionArgs) {

@@ -1,16 +1,18 @@
 import {redirect, useLoaderData} from 'react-router';
-import {getPaginationVariables, getSeoMeta, Analytics} from '@shopify/hydrogen';
+import {getPaginationVariables, Analytics} from '@shopify/hydrogen';
 import {PaginatedResourceSection} from '~/components/PaginatedResourceSection';
 import {redirectIfHandleIsLocalized} from '~/lib/.server/redirect.server';
 import {checkForTrailingEncodedSpaces} from '~/lib/.server/url.server';
 import {ProductItem} from '~/components/ProductItem';
 import {detectLocaleFromRequest, getDictionary} from '~/lib/i18n';
 import {absoluteUrl, collectionSeo} from '~/lib/.server/seo.server';
+import {routeMeta} from '~/lib/seo-urls';
+import {JsonLd} from '~/components/JsonLd';
 import {RouteError} from '~/components/RouteError';
 import type {Route} from './+types/($locale).collections.$handle';
 
 export const meta: Route.MetaFunction = ({data, matches}) =>
-  getSeoMeta(matches[0]?.data?.seo as Parameters<typeof getSeoMeta>[0], data?.seo as Parameters<typeof getSeoMeta>[0]) ?? [];
+  routeMeta({matches, data});
 
 export async function loader(args: Route.LoaderArgs) {
   const redirectResponse = checkForTrailingEncodedSpaces(args.request);
@@ -60,7 +62,7 @@ async function loadCriticalData({context, params, request}: Route.LoaderArgs) {
   const locale = detectLocaleFromRequest(request);
   const dict = getDictionary(locale);
   const suffix = dict.collections.collectionMetaSuffix;
-  const seo = collectionSeo({
+  const {seo, jsonLd} = collectionSeo({
     title: suffix ? `${collection.title} ${suffix}` : collection.title,
     description: collection.description || '',
     url: absoluteUrl(`/collections/${collection.handle}`, locale),
@@ -69,6 +71,7 @@ async function loadCriticalData({context, params, request}: Route.LoaderArgs) {
   return {
     collection,
     seo,
+    jsonLd,
   };
 }
 
@@ -82,10 +85,11 @@ function loadDeferredData() {
 }
 
 export default function Collection() {
-  const {collection} = useLoaderData<typeof loader>();
+  const {collection, jsonLd} = useLoaderData<typeof loader>();
 
   return (
     <div className="collection">
+      <JsonLd data={jsonLd} />
       <h1>{collection.title}</h1>
       <p className="collection-description">{collection.description}</p>
       <PaginatedResourceSection

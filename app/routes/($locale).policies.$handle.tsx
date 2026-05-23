@@ -1,9 +1,9 @@
 import {Link, useLoaderData} from 'react-router';
-import {getSeoMeta} from '@shopify/hydrogen';
 import {useI18n} from '~/lib/useI18n';
 import {sanitizeShopifyHtml} from '~/lib/sanitize';
 import {detectLocaleFromRequest} from '~/lib/i18n';
 import {absoluteUrl, simpleSeo} from '~/lib/.server/seo.server';
+import {routeMeta} from '~/lib/seo-urls';
 import {RouteError} from '~/components/RouteError';
 import type {Shop} from '@shopify/hydrogen/storefront-api-types';
 import type {Route} from './+types/($locale).policies.$handle';
@@ -14,7 +14,7 @@ type SelectedPolicies = keyof Pick<
 >;
 
 export const meta: Route.MetaFunction = ({data, matches}) =>
-  getSeoMeta(matches[0]?.data?.seo as Parameters<typeof getSeoMeta>[0], data?.seo as Parameters<typeof getSeoMeta>[0]) ?? [];
+  routeMeta({matches, data});
 
 export async function loader({params, context, request}: Route.LoaderArgs) {
   if (!params.handle) {
@@ -45,7 +45,7 @@ export async function loader({params, context, request}: Route.LoaderArgs) {
   }
 
   const locale = detectLocaleFromRequest(request);
-  const seo = simpleSeo({
+  const {seo} = simpleSeo({
     title: policy.title,
     url: absoluteUrl(`/policies/${params.handle}`, locale),
   });

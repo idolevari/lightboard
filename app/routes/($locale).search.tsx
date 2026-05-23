@@ -1,5 +1,5 @@
 import {useLoaderData} from 'react-router';
-import {getPaginationVariables, getSeoMeta, Analytics} from '@shopify/hydrogen';
+import {getPaginationVariables, Analytics} from '@shopify/hydrogen';
 import {SearchForm} from '~/components/SearchForm';
 import {SearchResults} from '~/components/SearchResults';
 import {
@@ -10,13 +10,14 @@ import {
 import {useI18n} from '~/lib/useI18n';
 import {detectLocaleFromRequest, getDictionary} from '~/lib/i18n';
 import {absoluteUrl, simpleSeo} from '~/lib/.server/seo.server';
+import {routeMeta} from '~/lib/seo-urls';
 import {RouteError} from '~/components/RouteError';
 import type {Route} from './+types/($locale).search';
 
 type SearchLoaderArgs = Pick<Route.LoaderArgs, 'request' | 'context'>;
 
 export const meta: Route.MetaFunction = ({data, matches}) =>
-  getSeoMeta(matches[0]?.data?.seo as Parameters<typeof getSeoMeta>[0], data?.seo as Parameters<typeof getSeoMeta>[0]) ?? [];
+  routeMeta({matches, data});
 
 export async function loader({request, context}: Route.LoaderArgs) {
   const url = new URL(request.url);
@@ -35,12 +36,13 @@ export async function loader({request, context}: Route.LoaderArgs) {
   const result = await searchPromise;
   const locale = detectLocaleFromRequest(request);
   const dict = getDictionary(locale);
+  const {seo} = simpleSeo({
+    title: dict.search.metaTitle,
+    url: absoluteUrl('/search', locale),
+  });
   return {
     ...result,
-    seo: simpleSeo({
-      title: dict.search.metaTitle,
-      url: absoluteUrl('/search', locale),
-    }),
+    seo,
   };
 }
 

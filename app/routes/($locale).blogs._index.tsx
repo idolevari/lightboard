@@ -1,14 +1,15 @@
 import {Link, useLoaderData} from 'react-router';
-import {getPaginationVariables, getSeoMeta} from '@shopify/hydrogen';
+import {getPaginationVariables} from '@shopify/hydrogen';
 import {PaginatedResourceSection} from '~/components/PaginatedResourceSection';
 import {useI18n} from '~/lib/useI18n';
 import {detectLocaleFromRequest, getDictionary} from '~/lib/i18n';
 import {absoluteUrl, simpleSeo} from '~/lib/.server/seo.server';
+import {routeMeta} from '~/lib/seo-urls';
 import {RouteError} from '~/components/RouteError';
 import type {Route} from './+types/($locale).blogs._index';
 
 export const meta: Route.MetaFunction = ({data, matches}) =>
-  getSeoMeta(matches[0]?.data?.seo as Parameters<typeof getSeoMeta>[0], data?.seo as Parameters<typeof getSeoMeta>[0]) ?? [];
+  routeMeta({matches, data});
 
 export async function loader(args: Route.LoaderArgs) {
   // Start fetching non-critical data without blocking time to first byte
@@ -41,7 +42,7 @@ async function loadCriticalData({context, request}: Route.LoaderArgs) {
 
   const locale = detectLocaleFromRequest(request);
   const dict = getDictionary(locale);
-  const seo = simpleSeo({
+  const {seo} = simpleSeo({
     title: dict.blogs.indexMeta,
     url: absoluteUrl('/blogs', locale),
   });

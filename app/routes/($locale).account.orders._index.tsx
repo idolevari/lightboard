@@ -8,7 +8,6 @@ import {useRef} from 'react';
 import {
   Money,
   getPaginationVariables,
-  getSeoMeta,
   flattenConnection,
 } from '@shopify/hydrogen';
 import {RouteError} from '~/components/RouteError';
@@ -23,6 +22,7 @@ import {PaginatedResourceSection} from '~/components/PaginatedResourceSection';
 import {useI18n} from '~/lib/useI18n';
 import {detectLocaleFromRequest, getDictionary} from '~/lib/i18n';
 import {absoluteUrl, simpleSeo} from '~/lib/.server/seo.server';
+import {routeMeta} from '~/lib/seo-urls';
 import type {
   CustomerOrdersFragment,
   OrderItemFragment,
@@ -30,7 +30,7 @@ import type {
 import type {Route} from './+types/($locale).account.orders._index';
 
 export const meta: Route.MetaFunction = ({data, matches}) =>
-  getSeoMeta(matches[0]?.data?.seo as Parameters<typeof getSeoMeta>[0], data?.seo as Parameters<typeof getSeoMeta>[0]) ?? [];
+  routeMeta({matches, data});
 
 export async function loader({request, context}: Route.LoaderArgs) {
   const {customerAccount} = context;
@@ -56,7 +56,7 @@ export async function loader({request, context}: Route.LoaderArgs) {
 
   const locale = detectLocaleFromRequest(request);
   const dict = getDictionary(locale);
-  const seo = simpleSeo({
+  const {seo} = simpleSeo({
     title: dict.account.orders,
     url: absoluteUrl('/account/orders', locale),
   });

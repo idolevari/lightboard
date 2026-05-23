@@ -2,7 +2,6 @@ import {useState} from 'react';
 import {useLoaderData} from 'react-router';
 import {
   getSelectedProductOptions,
-  getSeoMeta,
   Analytics,
   useOptimisticVariant,
   getProductOptions,
@@ -17,13 +16,10 @@ import {redirectIfHandleIsLocalized} from '~/lib/.server/redirect.server';
 import {checkForTrailingEncodedSpaces} from '~/lib/.server/url.server';
 import {detectLocaleFromRequest} from '~/lib/i18n';
 import {sanitizeShopifyHtml} from '~/lib/sanitize';
+import {JsonLd} from '~/components/JsonLd';
 import {RouteError} from '~/components/RouteError';
-import {
-  absoluteUrl,
-  breadcrumbs,
-  productSeo,
-  withJsonLd,
-} from '~/lib/.server/seo.server';
+import {absoluteUrl, productSeo} from '~/lib/.server/seo.server';
+import {routeMeta} from '~/lib/seo-urls';
 import type {Route} from './+types/($locale).products.$handle';
 
 const REQUIRES_PHOTOS_TAG = 'requires-photos';
@@ -31,7 +27,7 @@ const REQUIRES_PHOTOS_TAG = 'requires-photos';
 type CartLineAttribute = {key: string; value?: string | null};
 
 export const meta: Route.MetaFunction = ({data, matches}) =>
-  getSeoMeta(matches[0]?.data?.seo as Parameters<typeof getSeoMeta>[0], data?.seo as Parameters<typeof getSeoMeta>[0]) ?? [];
+  routeMeta({matches, data});
 
 export async function loader(args: Route.LoaderArgs) {
   const redirectResponse = checkForTrailingEncodedSpaces(args.request);
@@ -94,7 +90,7 @@ async function loadCriticalData({context, params, request}: Route.LoaderArgs) {
   const locale = detectLocaleFromRequest(request);
   const productUrl = absoluteUrl(`/products/${product.handle}`, locale);
   const variant = product.selectedOrFirstAvailableVariant;
-  const productSeoConfig = productSeo({
+  const {seo, jsonLd} = productSeo({
     title: product.seo?.title || product.title,
     description: product.seo?.description || product.description || '',
     imageUrl: product.featuredImage?.url,
@@ -108,14 +104,11 @@ async function loadCriticalData({context, params, request}: Route.LoaderArgs) {
         }
       : null,
     availability: variant?.availableForSale ? 'InStock' : 'OutOfStock',
-  });
-  const seo = withJsonLd(
-    productSeoConfig,
-    breadcrumbs([
+    breadcrumb: [
       {name: 'Lightboard', url: absoluteUrl('/', locale)},
       {name: product.title, url: productUrl},
-    ]),
-  );
+    ],
+  });
 
   return {
     product,
@@ -124,6 +117,7 @@ async function loadCriticalData({context, params, request}: Route.LoaderArgs) {
     initialPhotoState,
     cartId: cartData?.id ?? null,
     seo,
+    jsonLd,
   };
 }
 
@@ -175,6 +169,7 @@ export default function Product() {
     editLineId,
     initialPhotoState,
     cartId,
+    jsonLd,
   } = useLoaderData<typeof loader>();
 
   // Optimistically selects a variant with given available variant information
@@ -203,6 +198,7 @@ export default function Product() {
 
   return (
     <div className="product">
+      <JsonLd data={jsonLd} />
       {requiresPhotos ? (
         <PhotoCustomizer
           cartId={cartId}

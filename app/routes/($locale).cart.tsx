@@ -1,15 +1,16 @@
 import {useLoaderData, data} from 'react-router';
-import {Analytics, CartForm, getSeoMeta} from '@shopify/hydrogen';
+import {Analytics, CartForm} from '@shopify/hydrogen';
 import {CartMain} from '~/components/CartMain';
 import {RouteError} from '~/components/RouteError';
 import {useI18n} from '~/lib/useI18n';
 import {detectLocaleFromRequest, getDictionary} from '~/lib/i18n';
 import {isSameOriginPath} from '~/lib/.server/redirect.server';
 import {absoluteUrl, simpleSeo} from '~/lib/.server/seo.server';
+import {routeMeta} from '~/lib/seo-urls';
 import type {Route} from './+types/($locale).cart';
 
 export const meta: Route.MetaFunction = ({data, matches}) =>
-  getSeoMeta(matches[0]?.data?.seo as Parameters<typeof getSeoMeta>[0], data?.seo as Parameters<typeof getSeoMeta>[0]) ?? [];
+  routeMeta({matches, data});
 
 export const headers: Route.HeadersFunction = ({actionHeaders}) => actionHeaders;
 
@@ -105,12 +106,13 @@ export async function loader({context, request}: Route.LoaderArgs) {
   const locale = detectLocaleFromRequest(request);
   const dict = getDictionary(locale);
   const cartData = await cart.get();
+  const {seo} = simpleSeo({
+    title: dict.cart.metaTitle,
+    url: absoluteUrl('/cart', locale),
+  });
   return {
     cart: cartData,
-    seo: simpleSeo({
-      title: dict.cart.metaTitle,
-      url: absoluteUrl('/cart', locale),
-    }),
+    seo,
   };
 }
 

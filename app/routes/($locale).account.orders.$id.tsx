@@ -1,15 +1,16 @@
 import {redirect, useLoaderData} from 'react-router';
-import {Money, Image, getSeoMeta} from '@shopify/hydrogen';
+import {Money, Image} from '@shopify/hydrogen';
 import {CUSTOMER_ORDER_QUERY} from '~/graphql/customer-account/CustomerOrderQuery';
 import {useI18n} from '~/lib/useI18n';
 import {detectLocaleFromRequest} from '~/lib/i18n';
 import {absoluteUrl, simpleSeo} from '~/lib/.server/seo.server';
+import {routeMeta} from '~/lib/seo-urls';
 import {RouteError} from '~/components/RouteError';
 import type {OrderLineItemFullFragment} from 'customer-accountapi.generated';
 import type {Route} from './+types/($locale).account.orders.$id';
 
 export const meta: Route.MetaFunction = ({data, matches}) =>
-  getSeoMeta(matches[0]?.data?.seo as Parameters<typeof getSeoMeta>[0], data?.seo as Parameters<typeof getSeoMeta>[0]) ?? [];
+  routeMeta({matches, data});
 
 export async function loader({params, context, request}: Route.LoaderArgs) {
   const {customerAccount} = context;
@@ -54,7 +55,7 @@ export async function loader({params, context, request}: Route.LoaderArgs) {
       : null;
 
   const locale = detectLocaleFromRequest(request);
-  const seo = simpleSeo({
+  const {seo} = simpleSeo({
     title: `Order ${order.name}`,
     url: absoluteUrl(`/account/orders/${params.id}`, locale),
   });

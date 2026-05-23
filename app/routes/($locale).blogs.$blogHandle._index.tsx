@@ -1,16 +1,17 @@
 import {Link, useLoaderData} from 'react-router';
-import {Image, getPaginationVariables, getSeoMeta} from '@shopify/hydrogen';
+import {Image, getPaginationVariables} from '@shopify/hydrogen';
 import {PaginatedResourceSection} from '~/components/PaginatedResourceSection';
 import {redirectIfHandleIsLocalized} from '~/lib/.server/redirect.server';
 import {useI18n} from '~/lib/useI18n';
 import {detectLocaleFromRequest} from '~/lib/i18n';
 import {absoluteUrl, simpleSeo} from '~/lib/.server/seo.server';
+import {routeMeta} from '~/lib/seo-urls';
 import {RouteError} from '~/components/RouteError';
 import type {ArticleItemFragment} from 'storefrontapi.generated';
 import type {Route} from './+types/($locale).blogs.$blogHandle._index';
 
 export const meta: Route.MetaFunction = ({data, matches}) =>
-  getSeoMeta(matches[0]?.data?.seo as Parameters<typeof getSeoMeta>[0], data?.seo as Parameters<typeof getSeoMeta>[0]) ?? [];
+  routeMeta({matches, data});
 
 export async function loader(args: Route.LoaderArgs) {
   // Start fetching non-critical data without blocking time to first byte
@@ -53,7 +54,7 @@ async function loadCriticalData({context, request, params}: Route.LoaderArgs) {
   redirectIfHandleIsLocalized(request, {handle: params.blogHandle, data: blog});
 
   const locale = detectLocaleFromRequest(request);
-  const seo = simpleSeo({
+  const {seo} = simpleSeo({
     title: blog.seo?.title || `${blog.title} blog`,
     description: blog.seo?.description || undefined,
     url: absoluteUrl(`/blogs/${blog.handle}`, locale),

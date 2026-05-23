@@ -1,15 +1,15 @@
 import {useLoaderData} from 'react-router';
-import {getSeoMeta} from '@shopify/hydrogen';
 import {redirectIfHandleIsLocalized} from '~/lib/.server/redirect.server';
 import {checkForTrailingEncodedSpaces} from '~/lib/.server/url.server';
 import {sanitizeShopifyHtml} from '~/lib/sanitize';
 import {detectLocaleFromRequest} from '~/lib/i18n';
 import {absoluteUrl, simpleSeo} from '~/lib/.server/seo.server';
+import {routeMeta} from '~/lib/seo-urls';
 import {RouteError} from '~/components/RouteError';
 import type {Route} from './+types/($locale).pages.$handle';
 
 export const meta: Route.MetaFunction = ({data, matches}) =>
-  getSeoMeta(matches[0]?.data?.seo as Parameters<typeof getSeoMeta>[0], data?.seo as Parameters<typeof getSeoMeta>[0]) ?? [];
+  routeMeta({matches, data});
 
 export async function loader(args: Route.LoaderArgs) {
   const redirectResponse = checkForTrailingEncodedSpaces(args.request);
@@ -50,7 +50,7 @@ async function loadCriticalData({context, request, params}: Route.LoaderArgs) {
   redirectIfHandleIsLocalized(request, {handle: params.handle, data: page});
 
   const locale = detectLocaleFromRequest(request);
-  const seo = simpleSeo({
+  const {seo} = simpleSeo({
     title: page.seo?.title || page.title,
     description: page.seo?.description || undefined,
     url: absoluteUrl(`/pages/${page.handle}`, locale),

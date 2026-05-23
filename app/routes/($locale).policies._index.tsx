@@ -1,14 +1,14 @@
 import {useLoaderData, Link} from 'react-router';
-import {getSeoMeta} from '@shopify/hydrogen';
 import {useI18n} from '~/lib/useI18n';
 import {detectLocaleFromRequest, getDictionary} from '~/lib/i18n';
 import {absoluteUrl, simpleSeo} from '~/lib/.server/seo.server';
+import {routeMeta} from '~/lib/seo-urls';
 import {RouteError} from '~/components/RouteError';
 import type {PolicyItemFragment} from 'storefrontapi.generated';
 import type {Route} from './+types/($locale).policies._index';
 
 export const meta: Route.MetaFunction = ({data, matches}) =>
-  getSeoMeta(matches[0]?.data?.seo as Parameters<typeof getSeoMeta>[0], data?.seo as Parameters<typeof getSeoMeta>[0]) ?? [];
+  routeMeta({matches, data});
 
 export async function loader({context, request}: Route.LoaderArgs) {
   const data = await context.storefront.query(POLICIES_QUERY, {
@@ -30,7 +30,7 @@ export async function loader({context, request}: Route.LoaderArgs) {
 
   const locale = detectLocaleFromRequest(request);
   const dict = getDictionary(locale);
-  const seo = simpleSeo({
+  const {seo} = simpleSeo({
     title: dict.policies.indexMeta,
     url: absoluteUrl('/policies', locale),
   });

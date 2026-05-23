@@ -1,6 +1,6 @@
 import {Await, Link, useLoaderData} from 'react-router';
 import {Suspense, useEffect, useState} from 'react';
-import {Image, getSeoMeta} from '@shopify/hydrogen';
+import {Image} from '@shopify/hydrogen';
 import {useI18n} from '~/lib/useI18n';
 import {useInView} from '~/lib/useInView';
 import {getDictionary, detectLocaleFromRequest} from '~/lib/i18n';
@@ -10,6 +10,7 @@ import {
 } from '~/lib/productOptionLabels';
 import {isLaunchGateActive} from '~/lib/.server/coming-soon.server';
 import {absoluteUrl, simpleSeo} from '~/lib/.server/seo.server';
+import {routeMeta} from '~/lib/seo-urls';
 import {sanitizeShopifyHtml} from '~/lib/sanitize';
 import {RouteError} from '~/components/RouteError';
 import type {Route} from './+types/($locale)._index';
@@ -130,7 +131,7 @@ type MetaobjectFieldRecord = {
 };
 
 export const meta: Route.MetaFunction = ({data, matches}) =>
-  getSeoMeta(matches[0]?.data?.seo as Parameters<typeof getSeoMeta>[0], data?.seo as Parameters<typeof getSeoMeta>[0]) ?? [];
+  routeMeta({matches, data});
 
 type SimpleMetaobjectQueryResponse = {
   metaobjects?: {nodes?: Array<SimpleMetaobjectNode>} | null;
@@ -142,6 +143,11 @@ export async function loader(args: Route.LoaderArgs) {
   if (isLaunchGateActive(args.request, args.context.env)) {
     const locale = detectLocaleFromRequest(args.request);
     const dict = getDictionary(locale);
+    const {seo, jsonLd} = simpleSeo({
+      title: dict.meta.title,
+      description: dict.meta.description,
+      url: absoluteUrl('/', locale),
+    });
     return {
       isShopLinked: false,
       featuredCollection: null,
@@ -157,11 +163,8 @@ export async function loader(args: Route.LoaderArgs) {
       story: null as StorySection | null,
       dict,
       locale,
-      seo: simpleSeo({
-        title: dict.meta.title,
-        description: dict.meta.description,
-        url: absoluteUrl('/', locale),
-      }),
+      seo,
+      jsonLd,
     };
   }
   const deferredData = loadDeferredData(args);
@@ -197,6 +200,11 @@ async function loadCriticalData({context, request}: Route.LoaderArgs) {
       }),
   ]);
   const featuredProduct = productData?.shop?.featured?.reference ?? null;
+  const {seo: baseSeo, jsonLd} = simpleSeo({
+    title: dict.meta.title,
+    description: dict.meta.description,
+    url: absoluteUrl('/', locale),
+  });
   return {
     isShopLinked: Boolean(context.env.PUBLIC_STORE_DOMAIN),
     featuredCollection: collections?.nodes?.[0] ?? null,
@@ -207,11 +215,7 @@ async function loadCriticalData({context, request}: Route.LoaderArgs) {
     dict,
     locale,
     seo: {
-      ...simpleSeo({
-        title: dict.meta.title,
-        description: dict.meta.description,
-        url: absoluteUrl('/', locale),
-      }),
+      ...baseSeo,
       media: featuredProduct?.featuredImage?.url
         ? {
             type: 'image' as const,
@@ -222,6 +226,7 @@ async function loadCriticalData({context, request}: Route.LoaderArgs) {
           }
         : undefined,
     },
+    jsonLd,
   };
 }
 

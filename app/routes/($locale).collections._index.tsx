@@ -1,15 +1,17 @@
 import {useLoaderData, Link} from 'react-router';
-import {getPaginationVariables, getSeoMeta, Image} from '@shopify/hydrogen';
+import {getPaginationVariables, Image} from '@shopify/hydrogen';
 import {PaginatedResourceSection} from '~/components/PaginatedResourceSection';
 import {useI18n} from '~/lib/useI18n';
 import {detectLocaleFromRequest, getDictionary} from '~/lib/i18n';
 import {absoluteUrl, collectionSeo} from '~/lib/.server/seo.server';
+import {routeMeta} from '~/lib/seo-urls';
+import {JsonLd} from '~/components/JsonLd';
 import {RouteError} from '~/components/RouteError';
 import type {CollectionFragment} from 'storefrontapi.generated';
 import type {Route} from './+types/($locale).collections._index';
 
 export const meta: Route.MetaFunction = ({data, matches}) =>
-  getSeoMeta(matches[0]?.data?.seo as Parameters<typeof getSeoMeta>[0], data?.seo as Parameters<typeof getSeoMeta>[0]) ?? [];
+  routeMeta({matches, data});
 
 export async function loader(args: Route.LoaderArgs) {
   // Start fetching non-critical data without blocking time to first byte
@@ -40,13 +42,13 @@ async function loadCriticalData({context, request}: Route.LoaderArgs) {
 
   const locale = detectLocaleFromRequest(request);
   const dict = getDictionary(locale);
-  const seo = collectionSeo({
+  const {seo, jsonLd} = collectionSeo({
     title: dict.collections.indexTitle,
     description: dict.collections.indexMeta,
     url: absoluteUrl('/collections', locale),
   });
 
-  return {collections, seo};
+  return {collections, seo, jsonLd};
 }
 
 /**
@@ -59,11 +61,12 @@ function loadDeferredData() {
 }
 
 export default function Collections() {
-  const {collections} = useLoaderData<typeof loader>();
+  const {collections, jsonLd} = useLoaderData<typeof loader>();
   const {dict} = useI18n();
 
   return (
     <div className="collections">
+      <JsonLd data={jsonLd} />
       <h1>{dict.collections.indexTitle}</h1>
       <PaginatedResourceSection
         connection={collections}

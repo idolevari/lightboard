@@ -1,7 +1,6 @@
 import type {ReactNode} from 'react';
 import {
   Analytics,
-  getSeoMeta,
   getShopAnalytics,
   useCustomerPrivacy,
   useNonce,
@@ -20,6 +19,7 @@ import resetStyles from '~/styles/reset.css?url';
 import appStyles from '~/styles/app.css?url';
 import {PageLayout} from './components/PageLayout';
 import {ComingSoon} from './components/ComingSoon';
+import {JsonLd} from './components/JsonLd';
 import {RouteError} from './components/RouteError';
 import {
   DEFAULT_LOCALE,
@@ -30,7 +30,7 @@ import {
 } from '~/lib/i18n';
 import {isLaunchGateActive} from '~/lib/.server/coming-soon.server';
 import {rootSeo} from '~/lib/.server/seo.server';
-import {buildAlternates} from '~/lib/seo-urls';
+import {routeMeta} from '~/lib/seo-urls';
 import {MetaPixel, MetaPixelScript} from '~/lib/meta-pixel';
 import type {Route} from './+types/root';
 
@@ -108,7 +108,7 @@ export async function loader(args: Route.LoaderArgs) {
   const url = new URL(args.request.url);
   const {rest: pathnameNoLocale} = parseLocaleFromPath(url.pathname);
 
-  const seo = rootSeo({
+  const {seo, jsonLd} = rootSeo({
     locale,
     pathnameNoLocale,
     title: dict.meta.title,
@@ -126,6 +126,7 @@ export async function loader(args: Route.LoaderArgs) {
       dict,
       pathnameNoLocale,
       seo,
+      jsonLd,
     };
   }
 
@@ -144,6 +145,7 @@ export async function loader(args: Route.LoaderArgs) {
     dict,
     pathnameNoLocale,
     seo,
+    jsonLd,
     publicStoreDomain: env.PUBLIC_STORE_DOMAIN,
     metaPixelId: env.META_PIXEL_ID || null,
     shop: getShopAnalytics({
@@ -161,21 +163,8 @@ export async function loader(args: Route.LoaderArgs) {
   };
 }
 
-export const meta: Route.MetaFunction = ({data}) => {
-  const baseMeta =
-    (data?.seo
-      ? getSeoMeta(data.seo as Parameters<typeof getSeoMeta>[0])
-      : []) ?? [];
-  const alternates = data?.pathnameNoLocale
-    ? buildAlternates(data.pathnameNoLocale).map((a) => ({
-        tagName: 'link' as const,
-        rel: a.rel,
-        hrefLang: a.hrefLang,
-        href: a.href,
-      }))
-    : [];
-  return [...baseMeta, ...alternates];
-};
+export const meta: Route.MetaFunction = ({data, matches}) =>
+  routeMeta({matches, data});
 
 /**
  * Load data necessary for rendering content above the fold. This is the critical data
@@ -298,7 +287,12 @@ export default function App() {
   }
 
   if (data.showComingSoon) {
-    return <ComingSoon />;
+    return (
+      <>
+        <JsonLd data={data.jsonLd} />
+        <ComingSoon />
+      </>
+    );
   }
 
   return (
@@ -312,6 +306,7 @@ export default function App() {
         storefrontAccessToken={data.consent.storefrontAccessToken}
       />
       <MetaPixel pixelId={data.metaPixelId ?? null} />
+      <JsonLd data={data.jsonLd} />
       <PageLayout {...data}>
         <Outlet />
       </PageLayout>

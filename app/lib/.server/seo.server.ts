@@ -1,9 +1,22 @@
 /**
- * Centralized SEO builders. Each helper returns a Hydrogen `SeoConfig` that
- * can be passed to `getSeoMeta(...)` in a route's `meta` export.
+ * Centralized SEO builders. Each helper returns `{seo, jsonLd}`:
  *
- * The hreflang `<link rel="alternate">` set is emitted via `buildAlternates`
- * from the root meta export so React Router controls the head, not us.
+ *  - `seo` is a Hydrogen `SeoConfig` (no `jsonLd` field — see below) consumed
+ *    by `getSeoMeta(...)` in a route's `meta` export, which produces the
+ *    standard `<title>` / `<meta>` / `<link rel="canonical">` descriptors.
+ *  - `jsonLd` is a flat array of schema.org payloads (`WithContext<Thing>`)
+ *    rendered as `<script type="application/ld+json">` tags by the
+ *    `<JsonLd>` component in each route's JSX.
+ *
+ * JSON-LD is **deliberately not** routed through `getSeoMeta` / React
+ * Router's `<Meta />` because RR's `script:ld+json` meta descriptor
+ * disagrees with itself across SSR vs CSR on the `type` attribute,
+ * triggering a hydration mismatch. See `app/components/JsonLd.tsx` for the
+ * fix.
+ *
+ * The hreflang `<link rel="alternate">` set is emitted via `alternateLinks`
+ * from `~/lib/seo-urls` and is added by `routeMeta` in every route's `meta`
+ * export.
  *
  * JSON-LD payloads are typed with `schema-dts`'s `WithContext<Thing>` so the
  * `@context` literal is preserved end to end.
@@ -17,7 +30,6 @@ import type {
   Offer,
   Organization,
   Product as ProductLd,
-  Thing,
   WebSite,
   WithContext,
 } from 'schema-dts';
@@ -26,13 +38,12 @@ import {SITE_NAME, SITE_URL} from '~/lib/seo-urls';
 
 const SCHEMA_CONTEXT = 'https://schema.org' as const;
 
-// Hydrogen's SeoConfig['jsonLd'] is `WithContext<Thing> | WithContext<Thing>[]`.
-// schema-dts unions like `Organization = OrganizationLeaf | Airline | ... |
-// string` are too wide for TS to distribute back into `WithContext<Thing>`
-// once the structural type is materialized through a loader round-trip — the
-// deeply-nested recursive fields blow up. We accept the type-checked
-// per-helper shape but widen it via this alias on the way into `SeoConfig`.
-type JsonLd = SeoConfig['jsonLd'];
+// schema-dts unions (e.g. `Organization = OrganizationLeaf | Airline | ...`)
+// are too wide for TS to distribute through a loader round-trip without
+// blowing the recursive-types budget. We type each payload narrowly at the
+// builder site and widen via this alias for the `Array<object>` returned to
+// the route. Consumers (`<JsonLd>`) only need the structural shape.
+type JsonLdPayload = ReadonlyArray<object>;
 
 export type RootSeoInput = {
   locale: Locale;
@@ -41,12 +52,15 @@ export type RootSeoInput = {
   description?: string;
 };
 
+export type SeoResult = {seo: SeoConfig; jsonLd: JsonLdPayload};
+
 /**
  * Root-level SEO defaults. Applied via `getSeoMeta(rootSeo, routeSeo)` so
- * routes inherit the title template + Organization/WebSite JSON-LD and only
- * supply page-specific overrides.
+ * routes inherit the title template and only supply page-specific overrides.
+ * Returns the Organization + WebSite JSON-LD that should appear on every
+ * page; child routes add product/collection-specific schemas on top.
  */
-export function rootSeo(input: RootSeoInput): SeoConfig {
+export function rootSeo(input: RootSeoInput): SeoResult {
   const {locale, pathnameNoLocale, title, description} = input;
   const orgLd: WithContext<Organization> = {
     '@context': SCHEMA_CONTEXT,
@@ -64,11 +78,13 @@ export function rootSeo(input: RootSeoInput): SeoConfig {
     inLanguage: getLocaleConfig(locale).htmlLang,
   };
   return {
-    title: title ?? SITE_NAME,
-    titleTemplate: `%s | ${SITE_NAME}`,
-    description: description ?? 'Lightboard — living · design · surfing',
-    url: `${SITE_URL}${localizedPath(pathnameNoLocale, locale)}`,
-    jsonLd: [orgLd, siteLd] as unknown as JsonLd,
+    seo: {
+      title: title ?? SITE_NAME,
+      titleTemplate: `%s | ${SITE_NAME}`,
+      description: description ?? 'Lightboard — living · design · surfing',
+      url: `${SITE_URL}${localizedPath(pathnameNoLocale, locale)}`,
+    },
+    jsonLd: [orgLd, siteLd],
   };
 }
 
@@ -81,9 +97,11 @@ export type ProductSeoInput = {
   vendor?: string | null;
   price?: {amount: string; currencyCode: string} | null;
   availability?: 'InStock' | 'OutOfStock' | 'PreOrder';
+  /** Optional breadcrumb trail; emitted as a separate BreadcrumbList payload. */
+  breadcrumb?: ReadonlyArray<{name: string; url: string}>;
 };
 
-export function productSeo(input: ProductSeoInput): SeoConfig {
+export function productSeo(input: ProductSeoInput): SeoResult {
   const offer: Offer | undefined = input.price
     ? {
         '@type': 'Offer',
@@ -106,14 +124,20 @@ export function productSeo(input: ProductSeoInput): SeoConfig {
       : undefined,
     offers: offer,
   };
+  const payload: Array<object> = [productLd];
+  if (input.breadcrumb && input.breadcrumb.length > 0) {
+    payload.push(breadcrumbs(input.breadcrumb));
+  }
   return {
-    title: input.title,
-    description: input.description,
-    url: input.url,
-    media: input.imageUrl
-      ? {type: 'image', url: input.imageUrl, height: 1200, width: 1200}
-      : undefined,
-    jsonLd: productLd as unknown as JsonLd,
+    seo: {
+      title: input.title,
+      description: input.description,
+      url: input.url,
+      media: input.imageUrl
+        ? {type: 'image', url: input.imageUrl, height: 1200, width: 1200}
+        : undefined,
+    },
+    jsonLd: payload,
   };
 }
 
@@ -124,7 +148,7 @@ export type CollectionSeoInput = {
   imageUrl?: string | null;
 };
 
-export function collectionSeo(input: CollectionSeoInput): SeoConfig {
+export function collectionSeo(input: CollectionSeoInput): SeoResult {
   const pageLd: WithContext<CollectionPage> = {
     '@context': SCHEMA_CONTEXT,
     '@type': 'CollectionPage',
@@ -133,18 +157,20 @@ export function collectionSeo(input: CollectionSeoInput): SeoConfig {
     url: input.url,
   };
   return {
-    title: input.title,
-    description: input.description,
-    url: input.url,
-    media: input.imageUrl
-      ? {type: 'image', url: input.imageUrl, height: 1200, width: 1200}
-      : undefined,
-    jsonLd: pageLd as unknown as JsonLd,
+    seo: {
+      title: input.title,
+      description: input.description,
+      url: input.url,
+      media: input.imageUrl
+        ? {type: 'image', url: input.imageUrl, height: 1200, width: 1200}
+        : undefined,
+    },
+    jsonLd: [pageLd],
   };
 }
 
 export function breadcrumbs(
-  items: Array<{name: string; url: string}>,
+  items: ReadonlyArray<{name: string; url: string}>,
 ): WithContext<BreadcrumbList> {
   return {
     '@context': SCHEMA_CONTEXT,
@@ -167,7 +193,7 @@ export type ArticleSeoInput = {
   authorName?: string | null;
 };
 
-export function articleSeo(input: ArticleSeoInput): SeoConfig {
+export function articleSeo(input: ArticleSeoInput): SeoResult {
   const articleLd: WithContext<Article> = {
     '@context': SCHEMA_CONTEXT,
     '@type': 'Article',
@@ -181,13 +207,15 @@ export function articleSeo(input: ArticleSeoInput): SeoConfig {
       : undefined,
   };
   return {
-    title: input.title,
-    description: input.description,
-    url: input.url,
-    media: input.imageUrl
-      ? {type: 'image', url: input.imageUrl, height: 1200, width: 1200}
-      : undefined,
-    jsonLd: articleLd as unknown as JsonLd,
+    seo: {
+      title: input.title,
+      description: input.description,
+      url: input.url,
+      media: input.imageUrl
+        ? {type: 'image', url: input.imageUrl, height: 1200, width: 1200}
+        : undefined,
+    },
+    jsonLd: [articleLd],
   };
 }
 
@@ -201,34 +229,15 @@ export type SimpleSeoInput = {
  * For simple pages (cart, search, account, pages, policies) — just a
  * title + canonical URL with no additional JSON-LD beyond root's defaults.
  */
-export function simpleSeo(input: SimpleSeoInput): SeoConfig {
+export function simpleSeo(input: SimpleSeoInput): SeoResult {
   return {
-    title: input.title,
-    description: input.description,
-    url: input.url,
+    seo: {
+      title: input.title,
+      description: input.description,
+      url: input.url,
+    },
+    jsonLd: [],
   };
-}
-
-/**
- * Merge an additional JSON-LD payload into an existing SeoConfig. Hydrogen's
- * `getSeoMeta` preserves `jsonLd` across configs but each route's own config
- * holds a single `jsonLd` slot, so concat at the call site when a route emits
- * multiple structured-data blocks (e.g. Product + BreadcrumbList).
- */
-export function withJsonLd(
-  config: SeoConfig,
-  extra: WithContext<Thing>,
-): SeoConfig {
-  const current = config.jsonLd;
-  let next: WithContext<Thing>[];
-  if (!current) {
-    next = [extra];
-  } else if (Array.isArray(current)) {
-    next = [...current, extra];
-  } else {
-    next = [current, extra];
-  }
-  return {...config, jsonLd: next as unknown as JsonLd};
 }
 
 export {absoluteUrl, buildAlternates, SITE_NAME, SITE_URL} from '~/lib/seo-urls';

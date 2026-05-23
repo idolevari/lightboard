@@ -1,16 +1,18 @@
 import {useLoaderData} from 'react-router';
-import {Image, getSeoMeta} from '@shopify/hydrogen';
+import {Image} from '@shopify/hydrogen';
 import {redirectIfHandleIsLocalized} from '~/lib/.server/redirect.server';
 import {checkForTrailingEncodedSpaces} from '~/lib/.server/url.server';
 import {useI18n} from '~/lib/useI18n';
 import {sanitizeShopifyHtml} from '~/lib/sanitize';
 import {detectLocaleFromRequest} from '~/lib/i18n';
 import {absoluteUrl, articleSeo} from '~/lib/.server/seo.server';
+import {routeMeta} from '~/lib/seo-urls';
+import {JsonLd} from '~/components/JsonLd';
 import {RouteError} from '~/components/RouteError';
 import type {Route} from './+types/($locale).blogs.$blogHandle.$articleHandle';
 
 export const meta: Route.MetaFunction = ({data, matches}) =>
-  getSeoMeta(matches[0]?.data?.seo as Parameters<typeof getSeoMeta>[0], data?.seo as Parameters<typeof getSeoMeta>[0]) ?? [];
+  routeMeta({matches, data});
 
 export async function loader(args: Route.LoaderArgs) {
   const redirectResponse = checkForTrailingEncodedSpaces(args.request);
@@ -63,7 +65,7 @@ async function loadCriticalData({context, request, params}: Route.LoaderArgs) {
   const article = blog.articleByHandle;
 
   const locale = detectLocaleFromRequest(request);
-  const seo = articleSeo({
+  const {seo, jsonLd} = articleSeo({
     title: article.seo?.title || article.title,
     description: article.seo?.description || '',
     url: absoluteUrl(`/blogs/${blogHandle}/${article.handle}`, locale),
@@ -72,7 +74,7 @@ async function loadCriticalData({context, request, params}: Route.LoaderArgs) {
     authorName: article.author?.name ?? null,
   });
 
-  return {article, seo};
+  return {article, seo, jsonLd};
 }
 
 /**
@@ -85,7 +87,7 @@ function loadDeferredData() {
 }
 
 export default function Article() {
-  const {article} = useLoaderData<typeof loader>();
+  const {article, jsonLd} = useLoaderData<typeof loader>();
   const {title, image, contentHtml, author} = article;
   const {locale} = useI18n();
 
@@ -96,6 +98,7 @@ export default function Article() {
 
   return (
     <div className="article">
+      <JsonLd data={jsonLd} />
       <h1>
         {title}
         <div>
