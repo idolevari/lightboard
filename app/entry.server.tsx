@@ -55,6 +55,10 @@ export default async function handleRequest(
       'https://www.facebook.com',
       ...(isDev ? ['http://localhost:*', 'ws://localhost:*'] : []),
     ],
+    frameSrc: [
+      "'self'",
+      'https://www.facebook.com',
+    ],
   });
 
   const body = await renderToReadableStream(

@@ -641,7 +641,10 @@ function Hero({
             sizes="100vw"
             alt=""
             loading={j === 0 ? 'eager' : 'lazy'}
-            fetchPriority={j === 0 ? 'high' : 'low'}
+            // React 18 doesn't recognize the camelCase `fetchPriority` prop and
+            // warns at runtime. Pass the DOM-native lowercase attribute via
+            // spread so the browser honours it without React's warning.
+            {...({fetchpriority: j === 0 ? 'high' : 'low'} as Record<string, string>)}
             draggable={false}
           />
         </div>

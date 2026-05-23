@@ -33,6 +33,11 @@ export function MetaPixelScript({pixelId, nonce}: MetaPixelScriptProps) {
   return (
     <script
       nonce={nonce}
+      // React 18 strips the `nonce` attribute from SSR HTML for security, then
+      // re-applies it on the client. The hydration reconciler flags the diff
+      // ("Server: null Client: <nonce>") even though the nonce is correctly
+      // attached at runtime. Silencing the benign mismatch.
+      suppressHydrationWarning
       // eslint-disable-next-line react/no-danger
       dangerouslySetInnerHTML={{__html: snippet}}
     />
