@@ -7,7 +7,7 @@ type ProductOptionDict = {
 
 /**
  * Translate a Shopify product option name (e.g. "Color") or value
- * (e.g. "Turquoise") using the active locale's product dictionary.
+ * (e.g. "Light Blue") using the active locale's product dictionary.
  * Falls back to the original Shopify string when no translation exists.
  */
 export function translateOptionName(
@@ -29,7 +29,7 @@ export function translateOptionValue(
 // pipeline (shopify--color-pattern metaobjects) requires per-color taxonomy
 // references — overkill for our 3 finishes.
 export const OPTION_VALUE_HEX: Record<string, string> = {
-  Turquoise: '#3bb7c4',
+  'Light Blue': '#A5C8D8',
   Cream: '#f5ebd8',
   Pink: '#e8a097',
 };

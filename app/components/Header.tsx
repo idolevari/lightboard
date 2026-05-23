@@ -96,7 +96,6 @@ export function Header({isLoggedIn, cart}: HeaderProps) {
           <AccountLink isLoggedIn={isLoggedIn} label={dict.nav.account} />
           <CartToggle cart={cart} label={dict.nav.cart} />
         </div>
-        <LangToggle />
       </div>
     </header>
   );
@@ -271,8 +270,9 @@ function CartBadge({count, label}: {count: number; label: string}) {
       type="button"
     >
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M6 7h12l-1 14H7L6 7Z" />
-        <path d="M9 7a3 3 0 0 1 6 0" />
+        <path d="M5 8h14v10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z" />
+        <path d="M8 8V6a1.5 1.5 0 0 1 3 0v2" />
+        <path d="M13 8V6a1.5 1.5 0 0 1 3 0v2" />
       </svg>
       <span>{label}</span>
       <span className="lb-cart-count">{count}</span>

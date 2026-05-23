@@ -204,6 +204,11 @@ export default function Product() {
           cartId={cartId}
           initialState={initialPhotoState}
           isEditing={isEditing}
+          imageUrl={selectedVariant?.image?.url ?? null}
+          color={
+            selectedVariant?.selectedOptions.find((o) => o.name === 'Color')
+              ?.value ?? null
+          }
           onApprove={setPhotoAttributes}
           onUnapprove={() => setPhotoAttributes(null)}
         />

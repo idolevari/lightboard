@@ -1,9 +1,6 @@
 import {useRef} from 'react';
 import type {ChangeEvent, DragEvent} from 'react';
 
-const BOARD_IMAGE_URL =
-  'https://cdn.shopify.com/s/files/1/0982/9325/2392/files/lightboard-canvas-empty-v2.png?v=1779485082';
-
 type SlotRect = {
   left: number;
   top: number;
@@ -11,14 +8,34 @@ type SlotRect = {
   height: number;
 };
 
-// Percentages of the board image at which the three white photo slots sit.
-// Measured against the 1024x1024 source on Shopify Files; positions scale with
-// the rendered image, so the overlays stay aligned at any size.
-const SLOT_RECTS: SlotRect[] = [
-  {left: 24.609, top: 42.676, width: 16.016, height: 15.039},
-  {left: 44.141, top: 42.969, width: 15.723, height: 14.648},
-  {left: 63.086, top: 43.066, width: 15.918, height: 14.355},
-];
+// The three white photo-slot positions per Color variant, as percentages of
+// the variant's board image. Measured against the 920×920 sources uploaded to
+// Shopify Files and bound to each variant's `image` field in Admin. Slots stay
+// aligned at any rendered size because they're stored as percentages.
+//
+// IMPORTANT: these rects are coupled to the specific image composition for
+// each variant. If a merchant swaps a variant's image in Shopify Admin to a
+// different scene, the slots will misalign — re-run scripts/lightboard-board-prep.py
+// against the new images and update the rects below.
+const SLOT_RECTS_BY_COLOR: Record<string, SlotRect[]> = {
+  Cream: [
+    {left: 29.348, top: 45.326, width: 15.652, height: 14.457},
+    {left: 47.391, top: 45.435, width: 15.543, height: 14.13},
+    {left: 66.522, top: 44.457, width: 15.109, height: 14.239},
+  ],
+  'Light Blue': [
+    {left: 34.565, top: 38.696, width: 13.37, height: 12.5},
+    {left: 50.652, top: 38.696, width: 13.152, height: 12.283},
+    {left: 66.413, top: 38.696, width: 13.043, height: 12.174},
+  ],
+  Pink: [
+    {left: 39.783, top: 39.783, width: 10.0, height: 9.457},
+    {left: 51.957, top: 39.783, width: 9.891, height: 9.239},
+    {left: 64.022, top: 39.674, width: 9.891, height: 9.348},
+  ],
+};
+
+const DEFAULT_COLOR = 'Cream';
 
 const ACCEPTED_TYPES = 'image/jpeg,image/png,image/webp';
 
@@ -34,6 +51,17 @@ type BoardCanvasProps = {
   editLabel: string;
   removeLabel: string;
   disabled?: boolean;
+  /** Board image URL from the selected variant. Falls back to nothing rendered. */
+  imageUrl?: string | null;
+  /** Lightboard "Color" option value (e.g. "Cream" / "Light Blue" / "Pink") — selects the slot-rect set. */
+  color?: string | null;
+  /** Surprise-me overlay: omit to hide the pill entirely. */
+  surprise?: {
+    label: string;
+    swapLabel: string;
+    onPick: () => void;
+    disabled?: boolean;
+  };
   onFilePicked: (index: number, file: File) => void;
   onEditCrop: (index: number) => void;
   onRemove: (index: number) => void;
@@ -54,23 +82,51 @@ export function BoardCanvas({
   editLabel,
   removeLabel,
   disabled = false,
+  imageUrl,
+  color,
+  surprise,
   onFilePicked,
   onEditCrop,
   onRemove,
 }: BoardCanvasProps) {
+  const rects =
+    SLOT_RECTS_BY_COLOR[color ?? ''] ?? SLOT_RECTS_BY_COLOR[DEFAULT_COLOR];
+  // Shopify CDN URLs include a `?v=...` cache-buster, so append width via `&`.
+  const srcSep = imageUrl?.includes('?') ? '&' : '?';
+  const filledCount = slots.filter((s) => !!s?.thumbnailUrl).length;
+  const surpriseState =
+    filledCount === 0 ? 'empty' : filledCount === slots.length ? 'filled' : 'partial';
+  const surpriseLabel =
+    surprise && surpriseState === 'filled' ? surprise.swapLabel : surprise?.label ?? '';
   return (
     <div className="board-canvas" role="group" aria-label={slotLabel(0)}>
-      <img
-        src={`${BOARD_IMAGE_URL}&width=1200`}
-        srcSet={[600, 900, 1200, 1600]
-          .map((w) => `${BOARD_IMAGE_URL}&width=${w} ${w}w`)
-          .join(', ')}
-        sizes="(min-width: 45em) 50vw, 100vw"
-        alt=""
-        className="board-canvas__bg"
-        draggable={false}
-      />
-      {SLOT_RECTS.map((rect, i) => (
+      {imageUrl ? (
+        <img
+          src={`${imageUrl}${srcSep}width=1200`}
+          srcSet={[600, 900, 1200, 1600]
+            .map((w) => `${imageUrl}${srcSep}width=${w} ${w}w`)
+            .join(', ')}
+          sizes="(min-width: 45em) 50vw, 100vw"
+          alt=""
+          className="board-canvas__bg"
+          draggable={false}
+        />
+      ) : null}
+      {surprise ? (
+        <button
+          type="button"
+          className="board-canvas__surprise"
+          data-state={surpriseState}
+          onClick={surprise.onPick}
+          disabled={surprise.disabled}
+          aria-label={surpriseLabel}
+          title={surpriseLabel}
+        >
+          <span className="board-canvas__surprise-icon" aria-hidden="true">✨</span>
+          <span className="board-canvas__surprise-label">{surpriseLabel}</span>
+        </button>
+      ) : null}
+      {rects.map((rect, i) => (
         <BoardSlot
           key={i}
           index={i}

@@ -2115,47 +2115,74 @@ main:not(.coming-soon-content) > :not(.hero):first-child {
   color: var(--brand-teal-2);
 }
 
-/* "Surprise me" — populate the three slots with curated brand-aligned
-   photos so customers without photos handy can still buy a Lightboard. */
-.photo-customizer__surprise {
-  margin-top: 18px;
-  padding: 16px;
-  border: 1px dashed var(--rule-strong);
-  border-radius: 12px;
-  background: var(--cream-2);
-  display: flex;
-  flex-direction: column;
+/* "Surprise me" — frosted-glass pill overlaid on the board image at the
+   top-start corner. Populates the three slots with curated brand photos so
+   customers without photos handy can still buy a Lightboard.
+   Pulses gently when slots are empty; dims to ~50% once all are filled. */
+.board-canvas__surprise {
+  position: absolute;
+  top: 12px;
+  inset-inline-start: 12px;
+  z-index: 3;
+  display: inline-flex;
   align-items: center;
-  gap: 10px;
-  text-align: center;
-}
-.photo-customizer__surprise-helper {
-  margin: 0;
-  font-size: 13px;
-  color: var(--ink-soft);
-}
-.photo-customizer__surprise-btn {
-  appearance: none;
-  border: 1px solid var(--ink);
-  background: transparent;
-  color: var(--ink);
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  padding: 10px 18px;
+  gap: 8px;
+  padding: 9px 16px;
   border-radius: 999px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px) saturate(140%);
+  -webkit-backdrop-filter: blur(10px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
   cursor: pointer;
-  transition: background 0.18s ease, color 0.18s ease;
+  box-shadow: 0 2px 14px rgba(11, 58, 74, 0.18);
+  transition: opacity 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
-.photo-customizer__surprise-btn:hover:not(:disabled) {
-  background: var(--ink);
-  color: var(--white);
+.board-canvas__surprise:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(11, 58, 74, 0.18);
 }
-.photo-customizer__surprise-btn:disabled {
-  opacity: 0.5;
+.board-canvas__surprise:disabled {
+  opacity: 0.4;
   cursor: not-allowed;
 }
+.board-canvas__surprise[data-state='filled'] {
+  opacity: 0.55;
+}
+.board-canvas__surprise[data-state='filled']:hover:not(:disabled) {
+  opacity: 1;
+}
+.board-canvas__surprise[data-state='empty'] {
+  animation: surprise-nudge 2.8s ease-in-out infinite;
+}
+@keyframes surprise-nudge {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+.board-canvas__surprise-icon {
+  font-size: 18px;
+  line-height: 1;
+  /* Color hint for environments that render ✨ as a text glyph (some
+     monochrome font fallbacks). When the emoji renders in color, the OS
+     ignores this value. */
+  color: var(--brand-teal-2);
+}
+@media (prefers-reduced-motion: reduce) {
+  .board-canvas__surprise[data-state='empty'] { animation: none; }
+}
+@media (max-width: 480px) {
+  .board-canvas__surprise {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+}
+
+
 
 /* ============================================
    CROP DIALOG

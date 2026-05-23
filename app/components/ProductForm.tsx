@@ -58,19 +58,16 @@ export function ProductOptions({
                 const hasDot = Boolean(hex || swatch?.image?.previewImage?.url);
                 const swatchImage = swatch?.image?.previewImage?.url;
 
-                const inner = (
-                  <>
-                    {hasDot && (
-                      <span
-                        className="dot"
-                        aria-hidden="true"
-                        style={{background: hex ?? 'transparent'}}
-                      >
-                        {swatchImage && <img src={swatchImage} alt="" />}
-                      </span>
-                    )}
-                    <span>{displayName}</span>
-                  </>
+                const inner = hasDot ? (
+                  <span
+                    className="dot"
+                    aria-hidden="true"
+                    style={{background: hex ?? 'transparent'}}
+                  >
+                    {swatchImage && <img src={swatchImage} alt="" />}
+                  </span>
+                ) : (
+                  <span aria-hidden="true">{displayName}</span>
                 );
 
                 if (isDifferentProduct) {
@@ -83,6 +80,8 @@ export function ProductOptions({
                       replace
                       to={`${to(`/products/${handle}`)}?${variantUriQuery}`}
                       aria-pressed={selected}
+                      aria-label={displayName}
+                      title={displayName}
                     >
                       {inner}
                     </Link>
@@ -96,6 +95,8 @@ export function ProductOptions({
                     key={option.name + name}
                     disabled={!exists}
                     aria-pressed={selected}
+                    aria-label={displayName}
+                    title={displayName}
                     onClick={() => {
                       if (!selected) {
                         void navigate(`?${variantUriQuery}`, {

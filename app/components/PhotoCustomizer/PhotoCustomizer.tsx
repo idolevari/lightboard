@@ -48,6 +48,10 @@ export type PhotoCustomizerProps = {
   cartId?: string | null;
   initialState?: PhotoCustomizerInitialState | null;
   isEditing?: boolean;
+  /** Board image URL from the selected variant. */
+  imageUrl?: string | null;
+  /** Lightboard "Color" option value (selects the slot-rect set). */
+  color?: string | null;
   onApprove: (attrs: PhotoAttribute[]) => void;
   onUnapprove?: () => void;
 };
@@ -138,6 +142,8 @@ export function PhotoCustomizer({
   cartId,
   initialState,
   isEditing = false,
+  imageUrl,
+  color,
   onApprove,
   onUnapprove,
 }: PhotoCustomizerProps) {
@@ -539,32 +545,18 @@ export function PhotoCustomizer({
         editLabel={t.editCrop}
         removeLabel={t.remove}
         disabled={uploading}
+        imageUrl={imageUrl}
+        color={color}
+        surprise={{
+          label: t.surprise?.button ?? 'Surprise me from the gallery',
+          swapLabel: t.surprise?.swap ?? 'Surprise me again',
+          onPick: handleSurprise,
+          disabled: uploading,
+        }}
         onFilePicked={handleFilePicked}
         onEditCrop={handleEditCrop}
         onRemove={handleRemove}
       />
-
-      <div
-        className="photo-customizer__surprise"
-        role="group"
-        aria-label={
-          t.surprise?.button ?? 'Pick photos from our gallery'
-        }
-      >
-        <p className="photo-customizer__surprise-helper">
-          {t.surprise?.helper ?? "Don't have photos handy?"}
-        </p>
-        <button
-          type="button"
-          className="photo-customizer__surprise-btn"
-          onClick={handleSurprise}
-          disabled={uploading}
-        >
-          {allFilled && !anyDirty
-            ? (t.surprise?.swap ?? 'Surprise me again')
-            : (t.surprise?.button ?? 'Surprise me from the gallery')}
-        </button>
-      </div>
 
       {uploadError ? (
         <p className="photo-customizer__upload-error" role="alert">
