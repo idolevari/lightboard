@@ -4,6 +4,7 @@ import {useI18n} from '~/lib/useI18n';
 import {sanitizeShopifyHtml} from '~/lib/sanitize';
 import {detectLocaleFromRequest} from '~/lib/i18n';
 import {absoluteUrl, simpleSeo} from '~/lib/.server/seo.server';
+import {RouteError} from '~/components/RouteError';
 import type {Shop} from '@shopify/hydrogen/storefront-api-types';
 import type {Route} from './+types/($locale).policies.$handle';
 
@@ -102,3 +103,7 @@ const POLICY_CONTENT_QUERY = `#graphql
     }
   }
 `;
+
+export function ErrorBoundary() {
+  return <RouteError />;
+}

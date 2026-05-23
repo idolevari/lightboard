@@ -10,6 +10,7 @@ import {getSeoMeta} from '@shopify/hydrogen';
 import {useI18n} from '~/lib/useI18n';
 import {detectLocaleFromRequest, getDictionary} from '~/lib/i18n';
 import {absoluteUrl, simpleSeo} from '~/lib/.server/seo.server';
+import {RouteError} from '~/components/RouteError';
 import type {CustomerFragment} from 'customer-accountapi.generated';
 import type {CustomerUpdateInput} from '@shopify/hydrogen/customer-account-api-types';
 import type {Route} from './+types/($locale).account.profile';
@@ -140,4 +141,8 @@ export default function AccountProfile() {
       </Form>
     </div>
   );
+}
+
+export function ErrorBoundary() {
+  return <RouteError />;
 }

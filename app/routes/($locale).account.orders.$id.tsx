@@ -4,6 +4,7 @@ import {CUSTOMER_ORDER_QUERY} from '~/graphql/customer-account/CustomerOrderQuer
 import {useI18n} from '~/lib/useI18n';
 import {detectLocaleFromRequest} from '~/lib/i18n';
 import {absoluteUrl, simpleSeo} from '~/lib/.server/seo.server';
+import {RouteError} from '~/components/RouteError';
 import type {OrderLineItemFullFragment} from 'customer-accountapi.generated';
 import type {Route} from './+types/($locale).account.orders.$id';
 
@@ -222,4 +223,8 @@ function OrderLineRow({lineItem}: {lineItem: OrderLineItemFullFragment}) {
       </td>
     </tr>
   );
+}
+
+export function ErrorBoundary() {
+  return <RouteError />;
 }

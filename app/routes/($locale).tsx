@@ -1,6 +1,7 @@
 import {Outlet, redirect} from 'react-router';
 import {DEFAULT_LOCALE, SUPPORTED_LOCALES} from '~/lib/i18n';
 import {enforceLaunchGate} from '~/lib/.server/coming-soon.server';
+import {RouteError} from '~/components/RouteError';
 import type {Route} from './+types/($locale)';
 
 /**
@@ -38,4 +39,8 @@ export async function loader({params, request, context}: Route.LoaderArgs) {
 
 export default function LocaleLayout() {
   return <Outlet />;
+}
+
+export function ErrorBoundary() {
+  return <RouteError />;
 }

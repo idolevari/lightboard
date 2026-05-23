@@ -5,6 +5,7 @@ import {ProductItem} from '~/components/ProductItem';
 import {useI18n} from '~/lib/useI18n';
 import {detectLocaleFromRequest, getDictionary} from '~/lib/i18n';
 import {absoluteUrl, collectionSeo} from '~/lib/.server/seo.server';
+import {RouteError} from '~/components/RouteError';
 import type {Route} from './+types/($locale).collections.all';
 
 export const meta: Route.MetaFunction = ({data, matches}) =>
@@ -130,3 +131,7 @@ const CATALOG_QUERY = `#graphql
   }
   ${COLLECTION_ITEM_FRAGMENT}
 `;
+
+export function ErrorBoundary() {
+  return <RouteError />;
+}

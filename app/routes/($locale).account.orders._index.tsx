@@ -11,6 +11,7 @@ import {
   getSeoMeta,
   flattenConnection,
 } from '@shopify/hydrogen';
+import {RouteError} from '~/components/RouteError';
 import {
   buildOrderSearchQuery,
   parseOrderFilters,
@@ -232,4 +233,8 @@ function OrderItem({order}: {order: OrderItemFragment}) {
       <br />
     </>
   );
+}
+
+export function ErrorBoundary() {
+  return <RouteError />;
 }

@@ -4,6 +4,7 @@ import {PaginatedResourceSection} from '~/components/PaginatedResourceSection';
 import {useI18n} from '~/lib/useI18n';
 import {detectLocaleFromRequest, getDictionary} from '~/lib/i18n';
 import {absoluteUrl, collectionSeo} from '~/lib/.server/seo.server';
+import {RouteError} from '~/components/RouteError';
 import type {CollectionFragment} from 'storefrontapi.generated';
 import type {Route} from './+types/($locale).collections._index';
 
@@ -148,3 +149,7 @@ const COLLECTIONS_QUERY = `#graphql
     }
   }
 `;
+
+export function ErrorBoundary() {
+  return <RouteError />;
+}

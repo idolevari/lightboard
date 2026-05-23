@@ -1,6 +1,7 @@
 import {redirect} from 'react-router';
 import {detectLocaleFromRequest, localizedPath} from '~/lib/i18n';
 import {isSameOriginPath} from '~/lib/.server/redirect.server';
+import {RouteError} from '~/components/RouteError';
 import type {Route} from './+types/($locale).discount.$code';
 
 /**
@@ -45,4 +46,8 @@ export async function loader({request, context, params}: Route.LoaderArgs) {
     status: 303,
     headers,
   });
+}
+
+export function ErrorBoundary() {
+  return <RouteError />;
 }

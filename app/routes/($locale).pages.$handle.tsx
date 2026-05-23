@@ -4,6 +4,7 @@ import {redirectIfHandleIsLocalized} from '~/lib/.server/redirect.server';
 import {sanitizeShopifyHtml} from '~/lib/sanitize';
 import {detectLocaleFromRequest} from '~/lib/i18n';
 import {absoluteUrl, simpleSeo} from '~/lib/.server/seo.server';
+import {RouteError} from '~/components/RouteError';
 import type {Route} from './+types/($locale).pages.$handle';
 
 export const meta: Route.MetaFunction = ({data, matches}) =>
@@ -98,3 +99,7 @@ const PAGE_QUERY = `#graphql
     }
   }
 `;
+
+export function ErrorBoundary() {
+  return <RouteError />;
+}

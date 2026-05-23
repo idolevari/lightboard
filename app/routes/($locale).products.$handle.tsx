@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {useLoaderData, useRouteError, isRouteErrorResponse, Link} from 'react-router';
+import {useLoaderData} from 'react-router';
 import {
   getSelectedProductOptions,
   getSeoMeta,
@@ -15,8 +15,8 @@ import {PhotoCustomizer} from '~/components/PhotoCustomizer/PhotoCustomizer';
 import type {PhotoCustomizerInitialState} from '~/components/PhotoCustomizer/PhotoCustomizer';
 import {redirectIfHandleIsLocalized} from '~/lib/.server/redirect.server';
 import {detectLocaleFromRequest} from '~/lib/i18n';
-import {useI18n} from '~/lib/useI18n';
 import {sanitizeShopifyHtml} from '~/lib/sanitize';
+import {RouteError} from '~/components/RouteError';
 import {
   absoluteUrl,
   breadcrumbs,
@@ -348,17 +348,5 @@ const PRODUCT_QUERY = `#graphql
 `;
 
 export function ErrorBoundary() {
-  const error = useRouteError();
-  const {dict, to} = useI18n();
-  const isNotFound = isRouteErrorResponse(error) && error.status === 404;
-  return (
-    <div className="product-error" style={{padding: '80px 24px', textAlign: 'center'}}>
-      <h1>{isNotFound ? dict.notFound.title : 'Oops'}</h1>
-      {isNotFound && <p>{dict.notFound.kicker}</p>}
-      <Link to={to('/collections')} className="hero-cta">
-        <span>{dict.notFound.cta}</span>
-        <span className="arrow" aria-hidden="true">→</span>
-      </Link>
-    </div>
-  );
+  return <RouteError />;
 }

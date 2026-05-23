@@ -5,6 +5,7 @@ import {useI18n} from '~/lib/useI18n';
 import {sanitizeShopifyHtml} from '~/lib/sanitize';
 import {detectLocaleFromRequest} from '~/lib/i18n';
 import {absoluteUrl, articleSeo} from '~/lib/.server/seo.server';
+import {RouteError} from '~/components/RouteError';
 import type {Route} from './+types/($locale).blogs.$blogHandle.$articleHandle';
 
 export const meta: Route.MetaFunction = ({data, matches}) =>
@@ -141,3 +142,7 @@ const ARTICLE_QUERY = `#graphql
     }
   }
 `;
+
+export function ErrorBoundary() {
+  return <RouteError />;
+}

@@ -1,3 +1,4 @@
+import {RouteError} from '~/components/RouteError';
 import type {Route} from './+types/($locale).account_.login';
 
 export async function loader({request, context}: Route.LoaderArgs) {
@@ -14,4 +15,8 @@ export async function loader({request, context}: Route.LoaderArgs) {
     loginHintMode,
     locale,
   });
+}
+
+export function ErrorBoundary() {
+  return <RouteError />;
 }

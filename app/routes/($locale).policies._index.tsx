@@ -3,6 +3,7 @@ import {getSeoMeta} from '@shopify/hydrogen';
 import {useI18n} from '~/lib/useI18n';
 import {detectLocaleFromRequest, getDictionary} from '~/lib/i18n';
 import {absoluteUrl, simpleSeo} from '~/lib/.server/seo.server';
+import {RouteError} from '~/components/RouteError';
 import type {PolicyItemFragment} from 'storefrontapi.generated';
 import type {Route} from './+types/($locale).policies._index';
 
@@ -87,3 +88,7 @@ const POLICIES_QUERY = `#graphql
     }
   }
 `;
+
+export function ErrorBoundary() {
+  return <RouteError />;
+}

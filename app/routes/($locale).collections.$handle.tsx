@@ -5,6 +5,7 @@ import {redirectIfHandleIsLocalized} from '~/lib/.server/redirect.server';
 import {ProductItem} from '~/components/ProductItem';
 import {detectLocaleFromRequest, getDictionary} from '~/lib/i18n';
 import {absoluteUrl, collectionSeo} from '~/lib/.server/seo.server';
+import {RouteError} from '~/components/RouteError';
 import type {Route} from './+types/($locale).collections.$handle';
 
 export const meta: Route.MetaFunction = ({data, matches}) =>
@@ -170,3 +171,7 @@ const COLLECTION_QUERY = `#graphql
     }
   }
 `;
+
+export function ErrorBoundary() {
+  return <RouteError />;
+}

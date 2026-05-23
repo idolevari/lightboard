@@ -8,6 +8,7 @@ import {
 import type {ShouldRevalidateFunction} from 'react-router';
 import {CUSTOMER_DETAILS_QUERY} from '~/graphql/customer-account/CustomerDetailsQuery';
 import {useI18n} from '~/lib/useI18n';
+import {RouteError} from '~/components/RouteError';
 import type {Route} from './+types/($locale).account';
 
 export const shouldRevalidate: ShouldRevalidateFunction = () => {
@@ -99,4 +100,8 @@ function Logout() {
       &nbsp;<button type="submit">{dict.account.signOut}</button>
     </Form>
   );
+}
+
+export function ErrorBoundary() {
+  return <RouteError />;
 }

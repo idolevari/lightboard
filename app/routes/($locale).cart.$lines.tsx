@@ -1,4 +1,5 @@
 import {redirect} from 'react-router';
+import {RouteError} from '~/components/RouteError';
 import type {Route} from './+types/($locale).cart.$lines';
 
 /**
@@ -67,4 +68,8 @@ export async function loader({request, context, params}: Route.LoaderArgs) {
 
 export default function Component() {
   return null;
+}
+
+export function ErrorBoundary() {
+  return <RouteError />;
 }

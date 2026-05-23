@@ -4,6 +4,7 @@ import {PaginatedResourceSection} from '~/components/PaginatedResourceSection';
 import {useI18n} from '~/lib/useI18n';
 import {detectLocaleFromRequest, getDictionary} from '~/lib/i18n';
 import {absoluteUrl, simpleSeo} from '~/lib/.server/seo.server';
+import {RouteError} from '~/components/RouteError';
 import type {Route} from './+types/($locale).blogs._index';
 
 export const meta: Route.MetaFunction = ({data, matches}) =>
@@ -115,3 +116,7 @@ const BLOGS_QUERY = `#graphql
     }
   }
 `;
+
+export function ErrorBoundary() {
+  return <RouteError />;
+}

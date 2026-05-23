@@ -15,6 +15,7 @@ import {
 import {useI18n} from '~/lib/useI18n';
 import {detectLocaleFromRequest, getDictionary} from '~/lib/i18n';
 import {absoluteUrl, simpleSeo} from '~/lib/.server/seo.server';
+import {RouteError} from '~/components/RouteError';
 import type {
   AddressFragment,
   CustomerFragment,
@@ -538,4 +539,8 @@ export function AddressForm({
       </fieldset>
     </Form>
   );
+}
+
+export function ErrorBoundary() {
+  return <RouteError />;
 }

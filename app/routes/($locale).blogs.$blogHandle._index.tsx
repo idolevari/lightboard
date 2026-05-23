@@ -5,6 +5,7 @@ import {redirectIfHandleIsLocalized} from '~/lib/.server/redirect.server';
 import {useI18n} from '~/lib/useI18n';
 import {detectLocaleFromRequest} from '~/lib/i18n';
 import {absoluteUrl, simpleSeo} from '~/lib/.server/seo.server';
+import {RouteError} from '~/components/RouteError';
 import type {ArticleItemFragment} from 'storefrontapi.generated';
 import type {Route} from './+types/($locale).blogs.$blogHandle._index';
 
@@ -183,3 +184,7 @@ const BLOGS_QUERY = `#graphql
     }
   }
 `;
+
+export function ErrorBoundary() {
+  return <RouteError />;
+}

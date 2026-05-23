@@ -11,6 +11,7 @@ import {
 import {isLaunchGateActive} from '~/lib/.server/coming-soon.server';
 import {absoluteUrl, simpleSeo} from '~/lib/.server/seo.server';
 import {sanitizeShopifyHtml} from '~/lib/sanitize';
+import {RouteError} from '~/components/RouteError';
 import type {Route} from './+types/($locale)._index';
 
 // ---- Local shape types for the GraphQL responses on this route ----
@@ -1318,3 +1319,8 @@ const HOMEPAGE_SECTIONS_QUERY = `#graphql
     }
   }
 `;
+
+
+export function ErrorBoundary() {
+  return <RouteError />;
+}

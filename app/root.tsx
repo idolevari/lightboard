@@ -8,8 +8,6 @@ import {
 } from '@shopify/hydrogen';
 import {
   Outlet,
-  useRouteError,
-  isRouteErrorResponse,
   Links,
   Meta,
   Scripts,
@@ -22,6 +20,7 @@ import resetStyles from '~/styles/reset.css?url';
 import appStyles from '~/styles/app.css?url';
 import {PageLayout} from './components/PageLayout';
 import {ComingSoon} from './components/ComingSoon';
+import {RouteError} from './components/RouteError';
 import {
   DEFAULT_LOCALE,
   detectLocaleFromRequest,
@@ -321,63 +320,5 @@ export default function App() {
 }
 
 export function ErrorBoundary() {
-  const error = useRouteError();
-  const data = useRouteLoaderData<RootLoader>('root');
-  const dict = data?.dict ?? getDictionary(DEFAULT_LOCALE);
-  const locale = data?.locale ?? DEFAULT_LOCALE;
-  let errorMessage = 'Unknown error';
-  let errorStatus = 500;
-
-  if (isRouteErrorResponse(error)) {
-    errorMessage = error?.data?.message ?? error.data;
-    errorStatus = error.status;
-  } else if (error instanceof Error) {
-    errorMessage = error.message;
-  }
-
-  const homeHref = locale === DEFAULT_LOCALE ? '/' : `/${locale}`;
-  const isNotFound = errorStatus === 404;
-
-  return (
-    <div className="route-error" style={{padding: '160px 24px 80px', maxWidth: 720, margin: '0 auto', textAlign: 'center'}}>
-      <p
-        style={{
-          fontFamily: 'var(--mono)',
-          fontSize: 11,
-          letterSpacing: '0.18em',
-          textTransform: 'uppercase',
-          color: 'var(--ink-soft)',
-          marginBottom: 24,
-        }}
-      >
-        {errorStatus}
-      </p>
-      <h1
-        style={{
-          fontFamily: 'var(--serif)',
-          fontWeight: 300,
-          fontSize: 'clamp(40px, 6vw, 80px)',
-          lineHeight: 1,
-          letterSpacing: '-0.03em',
-          margin: '0 0 16px',
-        }}
-      >
-        {isNotFound ? dict.notFound.title : 'Oops'}
-      </h1>
-      {isNotFound && <p style={{color: 'var(--ink-soft)', marginBottom: 32}}>{dict.notFound.kicker}</p>}
-      <a
-        href={homeHref}
-        className="hero-cta"
-        style={{display: 'inline-flex', background: 'var(--ink)', color: 'var(--white)'}}
-      >
-        <span>{dict.notFound.cta}</span>
-        <span className="arrow" aria-hidden="true">→</span>
-      </a>
-      {!isNotFound && errorMessage && (
-        <fieldset style={{marginTop: 40, textAlign: 'start'}}>
-          <pre>{errorMessage}</pre>
-        </fieldset>
-      )}
-    </div>
-  );
+  return <RouteError />;
 }
