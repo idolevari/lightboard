@@ -153,7 +153,11 @@ export async function loader(args: Route.LoaderArgs) {
       publicStorefrontId: env.PUBLIC_STOREFRONT_ID,
     }),
     consent: {
-      checkoutDomain: env.PUBLIC_CHECKOUT_DOMAIN,
+      // PUBLIC_CHECKOUT_DOMAIN is configured in Oxygen but isn't always
+      // injected into the worker runtime; fall back to PUBLIC_STORE_DOMAIN
+      // (typically the same value for stores without a custom checkout
+      // subdomain) so the Customer Privacy API can initialise.
+      checkoutDomain: env.PUBLIC_CHECKOUT_DOMAIN || env.PUBLIC_STORE_DOMAIN,
       storefrontAccessToken: env.PUBLIC_STOREFRONT_API_TOKEN,
       withPrivacyBanner: false,
       // localize the privacy banner
