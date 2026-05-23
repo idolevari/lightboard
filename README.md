@@ -10,7 +10,7 @@ Live: <https://lightboard.co.il> · Oxygen preview: <https://lightboard-87fade0f
 - [Oxygen](https://shopify.dev/docs/custom-storefronts/oxygen) — Shopify's edge hosting
 - [React Router v7](https://reactrouter.com) — routing
 - [Vite](https://vitejs.dev) — build tool
-- JavaScript (not TypeScript); `.jsx` everywhere
+- TypeScript (strict); `.tsx`/`.ts` everywhere
 
 ## Development
 
