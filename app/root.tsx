@@ -301,10 +301,12 @@ export default function App() {
       shop={data.shop}
       consent={data.consent}
     >
-      <PrivacyGate
-        checkoutDomain={data.consent.checkoutDomain}
-        storefrontAccessToken={data.consent.storefrontAccessToken}
-      />
+      {data.consent.checkoutDomain && data.consent.storefrontAccessToken ? (
+        <PrivacyGate
+          checkoutDomain={data.consent.checkoutDomain}
+          storefrontAccessToken={data.consent.storefrontAccessToken}
+        />
+      ) : null}
       <MetaPixel pixelId={data.metaPixelId ?? null} />
       <JsonLd data={data.jsonLd} />
       <PageLayout {...data}>
