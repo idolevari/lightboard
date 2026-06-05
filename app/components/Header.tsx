@@ -43,9 +43,13 @@ export function Header({isLoggedIn, cart}: HeaderProps) {
   }, [isHome]);
 
   const menu = [
-    {to: to('/'), label: dict.nav.home, end: true},
-    {to: to('/#story'), label: dict.nav.about},
+    {to: to('/'), label: dict.nav.home, hash: ''},
+    {to: to('/#story'), label: dict.nav.about, hash: '#story'},
   ];
+  // NavLink's isActive compares pathname only and ignores the hash, so on the
+  // homepage both '/' and '/#story' would match. Drive the underline from the
+  // current hash instead so exactly one nav link is active.
+  const activeHash = isHome ? location.hash : null;
   const rightMenu = [{to: to('/pages/contact'), label: dict.nav.contact}];
 
   return (
@@ -53,19 +57,22 @@ export function Header({isLoggedIn, cart}: HeaderProps) {
       <div className="container lb-nav-inner">
         <nav className="lb-nav-left" role="navigation">
           <MenuToggle label={dict.nav.menu} />
-          {menu.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              prefetch="intent"
-              className={({isActive}) =>
-                `lb-nav-link lb-nav-link--desktop${isActive ? ' active' : ''}`
-              }
-            >
-              {item.label}
-            </NavLink>
-          ))}
+          {menu.map((item) => {
+            const isActive = item.hash === activeHash;
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                prefetch="intent"
+                aria-current={isActive ? 'page' : undefined}
+                className={() =>
+                  `lb-nav-link lb-nav-link--desktop${isActive ? ' active' : ''}`
+                }
+              >
+                {item.label}
+              </NavLink>
+            );
+          })}
         </nav>
 
         <NavLink to={to('/')} prefetch="intent" end aria-label="Lightboard" className="lb-logo-link">
