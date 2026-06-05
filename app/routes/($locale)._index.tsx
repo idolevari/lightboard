@@ -1040,7 +1040,7 @@ function Story({content}: {content: StorySection | null}) {
 function Faq({items}: {items: Array<MetaobjectFieldRecord>}) {
   const {dict} = useI18n();
   const f = dict.faq;
-  const [open, setOpen] = useState(0);
+  const [open, setOpen] = useState(-1);
   if (!Array.isArray(items) || items.length === 0) return null;
   return (
     <section className="faq" id="faq">
