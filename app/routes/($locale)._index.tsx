@@ -1,5 +1,6 @@
 import {Await, Link, useLoaderData} from 'react-router';
-import {Suspense, useEffect, useState} from 'react';
+import {Suspense, useCallback, useEffect, useState} from 'react';
+import type {FocusEvent} from 'react';
 import {Image} from '@shopify/hydrogen';
 import {useI18n} from '~/lib/useI18n';
 import {useInView} from '~/lib/useInView';
@@ -13,6 +14,7 @@ import {absoluteUrl, simpleSeo} from '~/lib/.server/seo.server';
 import {routeMeta} from '~/lib/seo-urls';
 import {sanitizeShopifyHtml} from '~/lib/sanitize';
 import {RouteError} from '~/components/RouteError';
+import {AutoLang} from '~/components/AutoLang';
 import type {Route} from './+types/($locale)._index';
 
 // ---- Local shape types for the GraphQL responses on this route ----
@@ -467,13 +469,22 @@ function CountUp({value, active, duration = 1400}: CountUpProps) {
   const match = /^(\D*)([\d,]+)(.*)$/.exec(String(value));
   const target = match ? parseInt(match[2].replace(/,/g, ''), 10) : 0;
   const hasMatch = Boolean(match);
-  const [n, setN] = useState(0);
+  // Server HTML (and no-JS / crawlers / reduced motion) gets the real final
+  // number. Only on the client, before the stat scrolls into view, do we
+  // reset to 0 so the count-up can play.
+  const [n, setN] = useState(target);
+  const [armed, setArmed] = useState(false);
+  useEffect(() => {
+    if (!hasMatch || active) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    setN(0);
+    setArmed(true);
+    // Mount-only: arm once, before the first intersection.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   useEffect(() => {
     if (!hasMatch || !active) return undefined;
-    if (
-      typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    ) {
+    if (!armed) {
       setN(target);
       return undefined;
     }
@@ -525,6 +536,104 @@ function StoryStat({n, k, delay}: {n: string; k: string; delay: number}) {
   );
 }
 
+/* ---------------- AUTO-ROTATE ---------------- */
+
+/**
+ * Shared carousel timing for the hero and testimonials (WCAG 2.2.2):
+ * - never auto-advances under prefers-reduced-motion;
+ * - a visible pause/play button (`userPaused`) wins over everything;
+ * - pauses while hovered, while keyboard focus is inside, and while the
+ *   tab is hidden.
+ */
+function useAutoRotate(count: number, intervalMs: number) {
+  const [index, setIndex] = useState(0);
+  const [userPaused, setUserPaused] = useState(false);
+  const [hoverPaused, setHoverPaused] = useState(false);
+  const [focusPaused, setFocusPaused] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const [hidden, setHidden] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const sync = () => setReducedMotion(mq.matches);
+    sync();
+    mq.addEventListener('change', sync);
+    const onVis = () => setHidden(document.visibilityState === 'hidden');
+    document.addEventListener('visibilitychange', onVis);
+    return () => {
+      mq.removeEventListener('change', sync);
+      document.removeEventListener('visibilitychange', onVis);
+    };
+  }, []);
+
+  const paused =
+    userPaused || hoverPaused || focusPaused || reducedMotion || hidden;
+
+  useEffect(() => {
+    if (paused || count <= 1) return undefined;
+    const id = setInterval(() => setIndex((x) => (x + 1) % count), intervalMs);
+    return () => clearInterval(id);
+  }, [paused, count, intervalMs]);
+
+  const handlers = {
+    onMouseEnter: () => setHoverPaused(true),
+    onMouseLeave: () => setHoverPaused(false),
+    onFocus: () => setFocusPaused(true),
+    onBlur: (e: FocusEvent<HTMLElement>) => {
+      if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+        setFocusPaused(false);
+      }
+    },
+    // Touch: no auto-pause on pointerdown — every scroll gesture over the
+    // hero starts with one. Touch users get the explicit pause button.
+  };
+
+  return {
+    index,
+    setIndex,
+    paused,
+    // The button reflects the visitor's own choice (or reduced motion).
+    stopped: userPaused || reducedMotion,
+    toggle: useCallback(() => {
+      setUserPaused((p) => !(p || reducedMotion));
+      if (reducedMotion) setReducedMotion(false);
+    }, [reducedMotion]),
+    handlers,
+  };
+}
+
+function MotionToggle({
+  stopped,
+  onToggle,
+  pauseLabel,
+  playLabel,
+}: {
+  stopped: boolean;
+  onToggle: () => void;
+  pauseLabel: string;
+  playLabel: string;
+}) {
+  return (
+    <button
+      type="button"
+      className="motion-toggle"
+      onClick={onToggle}
+      aria-label={stopped ? playLabel : pauseLabel}
+    >
+      {stopped ? (
+        <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+          <path d="M4 2.5v11l9-5.5z" fill="currentColor" />
+        </svg>
+      ) : (
+        <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+          <rect x="3.5" y="2.5" width="3" height="11" fill="currentColor" />
+          <rect x="9.5" y="2.5" width="3" height="11" fill="currentColor" />
+        </svg>
+      )}
+    </button>
+  );
+}
+
 /* ---------------- HERO ---------------- */
 
 type HeroSlideForRender = {
@@ -549,12 +658,6 @@ const HERO_SLIDES: Array<HeroSlideForRender> = [
   {
     img: 'https://cdn.shopify.com/s/files/1/0982/9325/2392/files/leo_visions-SzJo8G7BP8E-unsplash.jpg?v=1777136172',
     label: 'WAKE UP · OCEAN VIEW',
-  },
-  {
-    img: 'https://cdn.shopify.com/s/files/1/0982/9325/2392/files/mads-schmidt-rasmussen-tSp5_w9h5TQ-unsplash.jpg?v=1777136172',
-    label: 'SNOW · GOLDEN HOUR',
-    // Snowboarder is on the left third — keep them in the mobile crop.
-    mobilePos: '30%',
   },
   {
     img: 'https://cdn.shopify.com/s/files/1/0982/9325/2392/files/john-o-nelio-czM5xBzedXA-unsplash.jpg?v=1777136171',
@@ -601,24 +704,35 @@ function Hero({
           }))
       : HERO_SLIDES;
   const tape = content?.tape ?? [];
-  const [i, setI] = useState(0);
-  const [paused, setPaused] = useState(false);
+  const rotate = useAutoRotate(activeSlides.length, 5200);
+  const i = rotate.index;
+  const setI = rotate.setIndex;
+  // Only slide 0 is in the server HTML. The rest are absolutely stacked in
+  // the viewport, so loading="lazy" never deferred them (~250 KB on first
+  // load). Mount them once the page has loaded, or on first interaction.
+  const [mountAll, setMountAll] = useState(false);
   useEffect(() => {
-    if (paused) return undefined;
-    const id = setInterval(
-      () => setI((x) => (x + 1) % activeSlides.length),
-      5200,
-    );
-    return () => clearInterval(id);
-  }, [paused, activeSlides.length]);
+    if (mountAll) return undefined;
+    const mount = () => setMountAll(true);
+    if (document.readyState === 'complete') {
+      const id = window.setTimeout(mount, 1500);
+      return () => window.clearTimeout(id);
+    }
+    window.addEventListener('load', mount, {once: true});
+    return () => window.removeEventListener('load', mount);
+  }, [mountAll]);
+  useEffect(() => {
+    if (i !== 0) setMountAll(true);
+  }, [i]);
+  const hasVisibleTitle = Boolean(content?.titleLine1 || content?.titleLine2);
 
   return (
     <section
-      className="hero"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
+      className={`hero${rotate.paused ? ' is-paused' : ''}`}
+      aria-label={dict.hero.regionLabel}
+      {...rotate.handlers}
     >
-      {activeSlides.map((s, j) => (
+      {activeSlides.map((s, j) => (j === 0 || mountAll) && (
         <div
           key={s.id ?? s.img}
           className="hero-media"
@@ -639,7 +753,7 @@ function Hero({
             src={`${s.img}${s.img.includes('?') ? '&' : '?'}width=2000`}
             srcSet={heroSrcSet(s.img)}
             sizes="100vw"
-            alt=""
+            alt={s.label ?? ''}
             loading={j === 0 ? 'eager' : 'lazy'}
             // React 18 doesn't recognize the camelCase `fetchPriority` prop and
             // warns at runtime. Pass the DOM-native lowercase attribute via
@@ -659,12 +773,15 @@ function Hero({
             )}
             {activeSlides[i]?.label && (
               <span style={{fontFamily: 'var(--mono)', opacity: 0.85}}>
-                {activeSlides[i].label}
+                <AutoLang text={activeSlides[i].label} />
               </span>
             )}
           </div>
         )}
-        {(content?.titleLine1 || content?.titleLine2) && (
+        {/* Exactly one h1 on the homepage: when the merchant clears the
+            hero title, keep a visually-hidden one for structure and SEO. */}
+        {!hasVisibleTitle && <h1 className="sr-only">{dict.hero.srTitle}</h1>}
+        {hasVisibleTitle && (
           <h1 className="hero-title">
             {content?.titleLine1}
             {content?.titleLine1 && content?.titleLine2 && <br />}
@@ -680,22 +797,29 @@ function Hero({
             </a>
           )}
         </div>
-        <div className="hero-dots" role="tablist" aria-label={dict.hero.slideAria}>
+        <div className="hero-dots" role="group" aria-label={dict.hero.slideAria}>
           {activeSlides.map((s, j) => (
             <button
               key={s.id ?? s.img}
               onClick={() => setI(j)}
               aria-label={`${dict.hero.slideAria} ${j + 1}`}
-              aria-selected={j === i}
-              role="tab"
+              aria-current={j === i ? 'true' : undefined}
               className={j === i ? 'on' : ''}
               type="button"
             />
           ))}
-          <span className="count">
+          <span className="count" dir="ltr" aria-hidden="true">
             {String(i + 1).padStart(2, '0')} /{' '}
             {String(activeSlides.length).padStart(2, '0')}
           </span>
+          {activeSlides.length > 1 && (
+            <MotionToggle
+              stopped={rotate.stopped}
+              onToggle={rotate.toggle}
+              pauseLabel={dict.hero.pause}
+              playLabel={dict.hero.play}
+            />
+          )}
         </div>
       </div>
 
@@ -1096,16 +1220,18 @@ function Testimonials({items}: {items: Array<MetaobjectFieldRecord>}) {
   const {dict} = useI18n();
   const t = dict.testify;
   const quotes = Array.isArray(items) ? items : [];
-  const [i, setI] = useState(0);
-  useEffect(() => {
-    if (quotes.length <= 1) return undefined;
-    const id = setInterval(() => setI((x) => (x + 1) % quotes.length), 6200);
-    return () => clearInterval(id);
-  }, [quotes.length]);
+  const rotate = useAutoRotate(quotes.length, 6200);
+  const i = Math.min(rotate.index, Math.max(quotes.length - 1, 0));
+  const setI = rotate.setIndex;
   if (quotes.length === 0) return null;
   const q = quotes[i];
   return (
-    <section className="testify">
+    <section
+      className="testify"
+      aria-roledescription="carousel"
+      aria-label={t.regionLabel}
+      {...rotate.handlers}
+    >
       <div className="container">
         <Reveal>
           <div
@@ -1116,7 +1242,7 @@ function Testimonials({items}: {items: Array<MetaobjectFieldRecord>}) {
           </div>
         </Reveal>
         <Reveal delay={120}>
-          <div style={{position: 'relative', minHeight: 240}}>
+          <div className="testify-stage" aria-live={rotate.paused ? 'polite' : 'off'}>
             <blockquote key={i} style={{animation: 'fadeUp 0.5s ease both'}}>
               «{q.body}»
             </blockquote>
@@ -1126,7 +1252,7 @@ function Testimonials({items}: {items: Array<MetaobjectFieldRecord>}) {
         <div className="testify-nav">
           <button
             type="button"
-            onClick={() => setI((x) => (x - 1 + quotes.length) % quotes.length)}
+            onClick={() => setI((x: number) => (x - 1 + quotes.length) % quotes.length)}
             aria-label={t.prev}
             className="testify-nav-btn"
           >
@@ -1137,7 +1263,10 @@ function Testimonials({items}: {items: Array<MetaobjectFieldRecord>}) {
               <button
                 key={q.id}
                 onClick={() => setI(j)}
-                aria-label={`${t.eyebrow.trim()} ${j + 1}`}
+                aria-label={t.dotLabel
+                  .replace('{n}', String(j + 1))
+                  .replace('{total}', String(quotes.length))}
+                aria-current={j === i ? 'true' : undefined}
                 className={j === i ? 'on' : ''}
                 type="button"
               />
@@ -1145,12 +1274,20 @@ function Testimonials({items}: {items: Array<MetaobjectFieldRecord>}) {
           </div>
           <button
             type="button"
-            onClick={() => setI((x) => (x + 1) % quotes.length)}
+            onClick={() => setI((x: number) => (x + 1) % quotes.length)}
             aria-label={t.next}
             className="testify-nav-btn"
           >
             →
           </button>
+          {quotes.length > 1 && (
+            <MotionToggle
+              stopped={rotate.stopped}
+              onToggle={rotate.toggle}
+              pauseLabel={t.pause}
+              playLabel={t.play}
+            />
+          )}
         </div>
       </div>
     </section>
