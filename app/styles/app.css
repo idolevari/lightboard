@@ -1685,7 +1685,13 @@ main { min-height: 50vh; }
     padding-top: 120px;
     align-items: start;
   }
-  .product-media { position: sticky; top: 96px; }
+  /* Sticky on the inner customizer, not on the grid item: Chrome bounds a
+     sticky grid item by the whole grid, so the column used to slide down over
+     the full-width "In your home" row, which then covered the photo slots
+     and the Approve button (unclickable on a 1440×900 laptop). Bounded by
+     the stretched .product-media, the customizer stops at its own area. */
+  .product-media { align-self: stretch; }
+  .product-media > .photo-customizer { position: sticky; top: 96px; }
 }
 .product h1 { margin-top: 0; font-family: var(--serif); font-weight: 300; font-size: clamp(36px, 4vw, 56px); letter-spacing: -0.025em; }
 .product-price-on-sale { display: flex; grid-gap: 0.5rem; }
