@@ -1,7 +1,7 @@
 import {useLoaderData} from 'react-router';
 import {redirectIfHandleIsLocalized} from '~/lib/.server/redirect.server';
 import {checkForTrailingEncodedSpaces} from '~/lib/.server/url.server';
-import {sanitizeShopifyHtml} from '~/lib/sanitize';
+import {sanitizeShopifyHtml} from '~/lib/.server/sanitize.server';
 import {detectLocaleFromRequest} from '~/lib/i18n';
 import {absoluteUrl, simpleSeo} from '~/lib/.server/seo.server';
 import {routeMeta} from '~/lib/seo-urls';
@@ -57,7 +57,7 @@ async function loadCriticalData({context, request, params}: Route.LoaderArgs) {
   });
 
   return {
-    page,
+    page: {...page, body: sanitizeShopifyHtml(page.body)},
     seo,
   };
 }
@@ -78,7 +78,7 @@ export default function Page() {
     <article className="page">
       <div
         className="page-body"
-        dangerouslySetInnerHTML={{__html: sanitizeShopifyHtml(page.body)}}
+        dangerouslySetInnerHTML={{__html: page.body}}
       />
     </article>
   );

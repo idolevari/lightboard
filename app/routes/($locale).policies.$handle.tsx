@@ -1,6 +1,6 @@
 import {Link, useLoaderData} from 'react-router';
 import {useI18n} from '~/lib/useI18n';
-import {sanitizeShopifyHtml} from '~/lib/sanitize';
+import {sanitizeShopifyHtml} from '~/lib/.server/sanitize.server';
 import {detectLocaleFromRequest} from '~/lib/i18n';
 import {absoluteUrl, simpleSeo} from '~/lib/.server/seo.server';
 import {routeMeta} from '~/lib/seo-urls';
@@ -50,7 +50,7 @@ export async function loader({params, context, request}: Route.LoaderArgs) {
     url: absoluteUrl(`/policies/${params.handle}`, locale),
   });
 
-  return {policy, seo};
+  return {policy: {...policy, body: sanitizeShopifyHtml(policy.body)}, seo};
 }
 
 export default function Policy() {
@@ -64,7 +64,7 @@ export default function Policy() {
       </div>
       <div
         className="policy-body"
-        dangerouslySetInnerHTML={{__html: sanitizeShopifyHtml(policy.body)}}
+        dangerouslySetInnerHTML={{__html: policy.body}}
       />
     </article>
   );

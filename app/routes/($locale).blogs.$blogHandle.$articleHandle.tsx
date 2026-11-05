@@ -3,7 +3,7 @@ import {Image} from '@shopify/hydrogen';
 import {redirectIfHandleIsLocalized} from '~/lib/.server/redirect.server';
 import {checkForTrailingEncodedSpaces} from '~/lib/.server/url.server';
 import {useI18n} from '~/lib/useI18n';
-import {sanitizeShopifyHtml} from '~/lib/sanitize';
+import {sanitizeShopifyHtml} from '~/lib/.server/sanitize.server';
 import {detectLocaleFromRequest} from '~/lib/i18n';
 import {absoluteUrl, articleSeo} from '~/lib/.server/seo.server';
 import {routeMeta} from '~/lib/seo-urls';
@@ -74,7 +74,14 @@ async function loadCriticalData({context, request, params}: Route.LoaderArgs) {
     authorName: article.author?.name ?? null,
   });
 
-  return {article, seo, jsonLd};
+  return {
+    article: {
+      ...article,
+      contentHtml: sanitizeShopifyHtml(article.contentHtml),
+    },
+    seo,
+    jsonLd,
+  };
 }
 
 /**
@@ -109,7 +116,7 @@ export default function Article() {
 
       {image && <Image data={image} sizes="90vw" loading="eager" />}
       <div
-        dangerouslySetInnerHTML={{__html: sanitizeShopifyHtml(contentHtml)}}
+        dangerouslySetInnerHTML={{__html: contentHtml}}
         className="article"
       />
     </div>

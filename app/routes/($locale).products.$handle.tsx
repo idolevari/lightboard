@@ -15,7 +15,7 @@ import type {PhotoCustomizerInitialState} from '~/components/PhotoCustomizer/Pho
 import {redirectIfHandleIsLocalized} from '~/lib/.server/redirect.server';
 import {checkForTrailingEncodedSpaces} from '~/lib/.server/url.server';
 import {detectLocaleFromRequest} from '~/lib/i18n';
-import {sanitizeShopifyHtml} from '~/lib/sanitize';
+import {sanitizeShopifyHtml} from '~/lib/.server/sanitize.server';
 import {grantPhotoUploads} from '~/lib/.server/photo-upload.server';
 import {JsonLd} from '~/components/JsonLd';
 import {RouteError} from '~/components/RouteError';
@@ -115,7 +115,10 @@ async function loadCriticalData({context, params, request}: Route.LoaderArgs) {
   });
 
   return {
-    product,
+    product: {
+      ...product,
+      descriptionHtml: sanitizeShopifyHtml(product.descriptionHtml),
+    },
     requiresPhotos,
     editLineId: resolvedEditLineId,
     initialPhotoState,
@@ -226,7 +229,7 @@ export default function Product() {
         {descriptionHtml ? (
           <div
             className="product-description"
-            dangerouslySetInnerHTML={{__html: sanitizeShopifyHtml(descriptionHtml)}}
+            dangerouslySetInnerHTML={{__html: descriptionHtml}}
           />
         ) : null}
         <ProductOptions productOptions={productOptions} />
