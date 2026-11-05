@@ -83,7 +83,15 @@
       "Cream": "קרם",
       "Pink": "ורוד"
     },
-    "priceLabel": "מחיר"
+    "priceLabel": "מחיר",
+    "specsTitle": "מפרט",
+    "inYourHome": {
+      "eyebrow": "— בבית שלכם",
+      "title": "ככה זה נראה על הקיר",
+      "caption": "אור חם, עץ מלא ושלוש התמונות שבחרתם."
+    },
+    "stickyLabel": "קנייה מהירה",
+    "choosePhotos": "בחירת תמונות"
   },
   "photoCustomizer": {
     "heading": "התמונות שלכם",
@@ -166,7 +174,22 @@
       "requiredHint": "צריך לאשר את התקנון כדי להמשיך לתשלום"
     },
     "discountToggle": "יש לכם קופון או כרטיס מתנה?",
-    "checkoutSecure": "תשלום מאובטח"
+    "checkoutSecure": "תשלום מאובטח",
+    "emptyTitle": "הוואן עוד ריק",
+    "trust": [
+      {
+        "icon": "van",
+        "label": "משלוח חינם"
+      },
+      {
+        "icon": "hand",
+        "label": "עבודת יד"
+      },
+      {
+        "icon": "sun",
+        "label": "7–10 ימי עסקים"
+      }
+    ]
   },
   "search": {
     "metaTitle": "Lightboard | חיפוש",
@@ -296,7 +319,8 @@
     "reset": "איפוס",
     "statementLink": "הצהרת נגישות",
     "skipToContent": "דילוג לתוכן הראשי",
-    "quickActions": "עזרה ונגישות"
+    "quickActions": "עזרה ונגישות",
+    "stopAnimations": "עצירת אנימציות"
   },
   "whatsapp": {
     "label": "דברו איתנו בוואטסאפ",
@@ -331,7 +355,8 @@
       }
     ],
     "cookieSettings": "הגדרות עוגיות",
-    "legalNavLabel": "מידע משפטי"
+    "legalNavLabel": "מידע משפטי",
+    "photoCredit": "צילומים: Unsplash"
   },
   "contact": {
     "title": "דברו איתנו",
@@ -345,5 +370,36 @@
     "titleBefore": "משהו",
     "titleEm": "חדש",
     "titleAfter": "בדרך."
+  },
+  "usp": {
+    "label": "למה לייטבורד",
+    "items": [
+      {
+        "icon": "van",
+        "label": "משלוח חינם עד הבית"
+      },
+      {
+        "icon": "hand",
+        "label": "עבודת יד בתל אביב"
+      },
+      {
+        "icon": "sun",
+        "label": "7–10 ימי עסקים"
+      },
+      {
+        "icon": "photo",
+        "label": "עם התמונות שלכם"
+      }
+    ]
+  },
+  "finalCta": {
+    "title": "מוכנים להדליק את הקיר?",
+    "kicker": "שלוש תמונות שאתם אוהבים, עשרים נורות חמות, וגלשן עץ אחד שמחכה להן.",
+    "cta": "בחירת תמונות"
+  },
+  "hand": {
+    "stamp": "עבודת יד בתל אביב · מאז 2019",
+    "customizer": "התמונות שלכם כאן ↓",
+    "footer": "נעשה ביד בתל אביב"
   }
 }

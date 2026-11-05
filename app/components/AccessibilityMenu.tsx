@@ -1,5 +1,6 @@
 import {useEffect, useId, useRef, useState} from 'react';
 import {useI18n} from '~/lib/useI18n';
+import {MOTION_EVENT, NO_MOTION_CLASS} from '~/lib/motion';
 
 const STORAGE_KEY = 'lb-a11y';
 
@@ -10,6 +11,7 @@ type A11ySettings = {
   highContrast: boolean;
   highlightLinks: boolean;
   readableFont: boolean;
+  stopAnimations: boolean;
 };
 
 const DEFAULTS: A11ySettings = {
@@ -17,6 +19,7 @@ const DEFAULTS: A11ySettings = {
   highContrast: false,
   highlightLinks: false,
   readableFont: false,
+  stopAnimations: false,
 };
 
 function loadSettings(): A11ySettings {
@@ -39,6 +42,11 @@ function applyToBody(s: A11ySettings) {
   c.toggle('a11y-high-contrast', s.highContrast);
   c.toggle('a11y-highlight-links', s.highlightLinks);
   c.toggle('a11y-readable-font', s.readableFont);
+  const wasStopped = c.contains(NO_MOTION_CLASS);
+  c.toggle(NO_MOTION_CLASS, s.stopAnimations);
+  if (wasStopped !== s.stopAnimations) {
+    window.dispatchEvent(new Event(MOTION_EVENT));
+  }
 }
 
 export function AccessibilityMenu() {
@@ -216,6 +224,14 @@ export function AccessibilityMenu() {
                   onChange={(e) => update({readableFont: e.target.checked})}
                 />
                 <span>{a.readableFont}</span>
+              </label>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={settings.stopAnimations}
+                  onChange={(e) => update({stopAnimations: e.target.checked})}
+                />
+                <span>{a.stopAnimations}</span>
               </label>
             </div>
 

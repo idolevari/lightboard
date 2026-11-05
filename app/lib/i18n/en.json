@@ -77,7 +77,15 @@
     "soldOut": "Sold out for now",
     "optionLabels": {},
     "optionValues": {},
-    "priceLabel": "Price"
+    "priceLabel": "Price",
+    "specsTitle": "Specs",
+    "inYourHome": {
+      "eyebrow": "— In your home",
+      "title": "How it looks on the wall",
+      "caption": "Warm light, solid wood and the three photos you chose."
+    },
+    "stickyLabel": "Quick buy",
+    "choosePhotos": "Choose photos"
   },
   "photoCustomizer": {
     "heading": "Your photos",
@@ -160,7 +168,22 @@
       "requiredHint": "Please agree to the terms to continue to checkout"
     },
     "discountToggle": "Have a code or gift card?",
-    "checkoutSecure": "Secure checkout"
+    "checkoutSecure": "Secure checkout",
+    "emptyTitle": "The van is still empty",
+    "trust": [
+      {
+        "icon": "van",
+        "label": "Free shipping"
+      },
+      {
+        "icon": "hand",
+        "label": "Handmade"
+      },
+      {
+        "icon": "sun",
+        "label": "7–10 business days"
+      }
+    ]
   },
   "search": {
     "metaTitle": "Lightboard | Search",
@@ -290,7 +313,8 @@
     "reset": "Reset",
     "statementLink": "Accessibility statement",
     "skipToContent": "Skip to main content",
-    "quickActions": "Help and accessibility"
+    "quickActions": "Help and accessibility",
+    "stopAnimations": "Stop animations"
   },
   "whatsapp": {
     "label": "Talk to us on WhatsApp",
@@ -325,7 +349,8 @@
       }
     ],
     "cookieSettings": "Cookie settings",
-    "legalNavLabel": "Legal"
+    "legalNavLabel": "Legal",
+    "photoCredit": "Photos: Unsplash"
   },
   "contact": {
     "title": "Talk to us",
@@ -339,5 +364,36 @@
     "titleBefore": "Something",
     "titleEm": "new",
     "titleAfter": "is coming."
+  },
+  "usp": {
+    "label": "Why Lightboard",
+    "items": [
+      {
+        "icon": "van",
+        "label": "Free delivery to your door"
+      },
+      {
+        "icon": "hand",
+        "label": "Handmade in Tel Aviv"
+      },
+      {
+        "icon": "sun",
+        "label": "7–10 business days"
+      },
+      {
+        "icon": "photo",
+        "label": "With your own photos"
+      }
+    ]
+  },
+  "finalCta": {
+    "title": "Ready to light up your wall?",
+    "kicker": "Three photos you love, twenty warm bulbs and one wooden board waiting for them.",
+    "cta": "Choose photos"
+  },
+  "hand": {
+    "stamp": "Handmade in Tel Aviv · since 2019",
+    "customizer": "Your photos go here ↓",
+    "footer": "Handmade in Tel Aviv"
   }
 }

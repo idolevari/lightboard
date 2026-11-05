@@ -5,6 +5,7 @@ import type {CartReturn} from '@shopify/hydrogen';
 import {Aside} from '~/components/Aside';
 import {AccessibilityMenu} from '~/components/AccessibilityMenu';
 import {WhatsAppButton} from '~/components/WhatsAppButton';
+import {HandFont} from '~/components/HandFont';
 import {Footer} from '~/components/Footer';
 import {Header, MobileMenu} from '~/components/Header';
 import {CartMain} from '~/components/CartMain';
@@ -53,6 +54,7 @@ export function PageLayout({
       <main id="main" tabIndex={-1}>{children}</main>
       <Footer />
       <FloatingActions />
+      <HandFont />
     </Aside.Provider>
   );
 }
