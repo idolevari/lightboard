@@ -1,4 +1,9 @@
-import {useRouteError, isRouteErrorResponse, Link} from 'react-router';
+import {
+  useRouteError,
+  isRouteErrorResponse,
+  Link,
+  useRouteLoaderData,
+} from 'react-router';
 
 type RouteErrorProps = {context?: string};
 
@@ -24,6 +29,7 @@ const EN = {
  */
 export function RouteError({context: _context}: RouteErrorProps) {
   const error = useRouteError();
+  const isDev = process.env.NODE_ENV === 'development';
   let status: number | undefined;
   let message: string | undefined;
   if (isRouteErrorResponse(error)) {
@@ -32,14 +38,17 @@ export function RouteError({context: _context}: RouteErrorProps) {
       typeof error.data === 'string'
         ? error.data
         : (error.data?.message as string | undefined);
-  } else if (error instanceof Error) {
+  } else if (error instanceof Error && isDev) {
+    // Raw exception text is for developers only; shoppers get dict.generic.
     message = error.message;
   }
   const isNotFound = status === 404;
-  // Detect locale from <html lang>, default to HE.
-  const lang =
-    typeof document !== 'undefined' ? document.documentElement.lang : 'he';
-  const dict = lang.startsWith('en') ? EN : HE;
+  // Locale from the root loader (same value on server and client, so no
+  // hydration mismatch); default to HE when root data is unavailable.
+  const rootData = useRouteLoaderData('root') as
+    | {locale?: string}
+    | undefined;
+  const dict = rootData?.locale === 'en' ? EN : HE;
 
   return (
     <div
@@ -92,7 +101,7 @@ export function RouteError({context: _context}: RouteErrorProps) {
           →
         </span>
       </Link>
-      {!isNotFound && message && (
+      {isDev && !isNotFound && message && (
         <fieldset style={{marginTop: 40, textAlign: 'start'}}>
           <pre>{message}</pre>
         </fieldset>
