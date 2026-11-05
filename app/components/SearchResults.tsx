@@ -1,6 +1,7 @@
 import {Link} from 'react-router';
 import type {ReactNode} from 'react';
-import {Image, Money, Pagination} from '@shopify/hydrogen';
+import {Image, Pagination} from '@shopify/hydrogen';
+import {Price} from '~/components/ProductPrice';
 import {urlWithTrackingParams} from '~/lib/search';
 import type {RegularSearchReturn} from '~/lib/search';
 import {useI18n} from '~/lib/useI18n';
@@ -129,7 +130,7 @@ function SearchResultsProducts({
                   )}
                   <div>
                     <p>{product.title}</p>
-                    <small>{price && <Money data={price} />}</small>
+                    <small>{price && <Price data={price} />}</small>
                   </div>
                 </Link>
               </div>

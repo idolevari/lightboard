@@ -1,4 +1,6 @@
-import {CartForm, Money} from '@shopify/hydrogen';
+import {CartForm} from '@shopify/hydrogen';
+import {Price} from '~/components/ProductPrice';
+import type {MoneyLike} from '~/components/ProductPrice';
 import type {OptimisticCart} from '@shopify/hydrogen';
 import {useEffect, useId, useRef, useState} from 'react';
 import type {ReactNode, Ref} from 'react';
@@ -20,7 +22,7 @@ type DiscountCodeApplication = {
 type GiftCardCode = {
   id: string;
   lastCharacters: string;
-  amountUsed: React.ComponentProps<typeof Money>['data'];
+  amountUsed: MoneyLike;
 };
 
 export function CartSummary({cart, layout}: CartSummaryProps) {
@@ -32,43 +34,69 @@ export function CartSummary({cart, layout}: CartSummaryProps) {
   const giftCardHeadingId = useId();
   const giftCardInputId = useId();
   const termsCheckboxId = useId();
+  const termsHintId = useId();
   const [termsAgreed, setTermsAgreed] = useState(false);
+  const [termsNudge, setTermsNudge] = useState(false);
   const {dict} = useI18n();
+  const hasCodes = Boolean(
+    cart?.discountCodes?.some((d) => d.applicable) ||
+      cart?.appliedGiftCards?.length,
+  );
 
   return (
     <div aria-labelledby={summaryId} className={className}>
-      <h4 id={summaryId}>{dict.cart.totals}</h4>
-      <dl role="group" className="cart-subtotal">
+      <h2 id={summaryId} className="cart-summary-heading">
+        {dict.cart.totals}
+      </h2>
+      <dl className="cart-subtotal">
         <dt>{dict.cart.subtotal}</dt>
         <dd>
           {cart?.cost?.subtotalAmount?.amount ? (
-            <Money data={cart.cost.subtotalAmount} />
+            <Price data={cart.cost.subtotalAmount} />
           ) : (
             '-'
           )}
         </dd>
       </dl>
-      <CartDiscounts
-        discountCodes={cart?.discountCodes as DiscountCodeApplication[] | undefined}
-        discountsHeadingId={discountsHeadingId}
-        discountCodeInputId={discountCodeInputId}
-      />
-      <CartGiftCard
-        giftCardCodes={cart?.appliedGiftCards as GiftCardCode[] | undefined}
-        giftCardHeadingId={giftCardHeadingId}
-        giftCardInputId={giftCardInputId}
-      />
       {cart?.checkoutUrl && (
         <TermsAgreement
           checked={termsAgreed}
-          onChange={setTermsAgreed}
+          onChange={(checked) => {
+            setTermsAgreed(checked);
+            if (checked) setTermsNudge(false);
+          }}
           agreementId={termsCheckboxId}
+          hintId={termsHintId}
+          showHint={!termsAgreed}
+          nudge={termsNudge}
         />
       )}
       <CartCheckoutActions
         checkoutUrl={cart?.checkoutUrl}
-        disabled={!termsAgreed}
+        total={cart?.cost?.subtotalAmount}
+        agreed={termsAgreed}
+        hintId={termsHintId}
+        onBlocked={() => {
+          setTermsNudge(true);
+          document.getElementById(termsCheckboxId)?.focus();
+        }}
       />
+      {/* One quiet disclosure instead of two always-open forms with dark
+          buttons competing with checkout. Opens itself when a code is
+          already applied so it can be removed. */}
+      <details className="cart-codes" open={hasCodes || undefined}>
+        <summary>{dict.cart.discountToggle}</summary>
+        <CartDiscounts
+          discountCodes={cart?.discountCodes as DiscountCodeApplication[] | undefined}
+          discountsHeadingId={discountsHeadingId}
+          discountCodeInputId={discountCodeInputId}
+        />
+        <CartGiftCard
+          giftCardCodes={cart?.appliedGiftCards as GiftCardCode[] | undefined}
+          giftCardHeadingId={giftCardHeadingId}
+          giftCardInputId={giftCardInputId}
+        />
+      </details>
     </div>
   );
 }
@@ -84,21 +112,28 @@ function TermsAgreement({
   checked,
   onChange,
   agreementId,
+  hintId,
+  showHint,
+  nudge,
 }: {
   checked: boolean;
   onChange: (checked: boolean) => void;
   agreementId: string;
+  hintId: string;
+  showHint: boolean;
+  nudge: boolean;
 }) {
   const {dict, to} = useI18n();
   const t = dict.cart.terms ?? {};
   return (
-    <div className="cart-terms">
+    <div className={`cart-terms${nudge ? ' is-nudged' : ''}`}>
       <label htmlFor={agreementId} className="cart-terms-label">
         <input
           id={agreementId}
           type="checkbox"
           checked={checked}
           onChange={(e) => onChange(e.target.checked)}
+          aria-describedby={showHint ? hintId : undefined}
           required
         />
         <span>
@@ -113,43 +148,75 @@ function TermsAgreement({
           {t.suffix ?? ''}
         </span>
       </label>
+      {showHint ? (
+        <p id={hintId} className="cart-terms-hint" role={nudge ? 'alert' : undefined}>
+          {t.requiredHint ?? 'Please agree to the terms to continue to checkout'}
+        </p>
+      ) : null}
     </div>
   );
 }
 
+/**
+ * The money action: always a full-width primary button. Until the terms box
+ * is ticked it stays visible (never a ghosted text link) but is
+ * aria-disabled, points at the hint, and moves focus to the checkbox.
+ */
 function CartCheckoutActions({
   checkoutUrl,
-  disabled,
+  total,
+  agreed,
+  hintId,
+  onBlocked,
 }: {
   checkoutUrl?: string | null;
-  disabled: boolean;
+  total?: MoneyLike | null;
+  agreed: boolean;
+  hintId: string;
+  onBlocked: () => void;
 }) {
   const {dict} = useI18n();
   if (!checkoutUrl) return null;
-  const t = dict.cart.terms ?? {};
-  if (disabled) {
-    return (
-      <div>
+  const content = (
+    <>
+      <LockIcon />
+      <span>{dict.cart.checkout}</span>
+      {total?.amount ? (
+        <>
+          <span aria-hidden="true">·</span>
+          <Price data={total} />
+        </>
+      ) : null}
+    </>
+  );
+  return (
+    <div className="cart-checkout">
+      {agreed ? (
+        <a href={checkoutUrl} target="_self" className="cart-checkout-btn">
+          {content}
+        </a>
+      ) : (
         <button
           type="button"
-          className="cart-checkout-disabled"
-          disabled
+          className="cart-checkout-btn is-blocked"
           aria-disabled="true"
-          title={t.requiredHint ?? 'Please agree to the terms to continue'}
+          aria-describedby={hintId}
+          onClick={onBlocked}
         >
-          <p>{dict.cart.checkout}</p>
+          {content}
         </button>
-        <br />
-      </div>
-    );
-  }
-  return (
-    <div>
-      <a href={checkoutUrl} target="_self">
-        <p>{dict.cart.checkout}</p>
-      </a>
-      <br />
+      )}
+      <p className="cart-checkout-note">{dict.cart.checkoutSecure}</p>
     </div>
+  );
+}
+
+function LockIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="5" y="11" width="14" height="10" rx="2" />
+      <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+    </svg>
   );
 }
 
@@ -179,9 +246,12 @@ function CartDiscounts({
               role="group"
               aria-labelledby={discountsHeadingId}
             >
-              <code>{codes?.join(', ')}</code>
-              &nbsp;
-              <button type="submit" aria-label={dict.cart.discountRemove}>
+              <code dir="ltr">{codes?.join(', ')}</code>
+              <button
+                type="submit"
+                className="cart-code-remove"
+                aria-label={dict.cart.discountRemove}
+              >
                 {dict.cart.removeBtn}
               </button>
             </div>
@@ -190,7 +260,7 @@ function CartDiscounts({
       </dl>
 
       <UpdateDiscountForm discountCodes={codes}>
-        <div>
+        <div className="cart-code-row">
           <label htmlFor={discountCodeInputId} className="sr-only">
             {dict.cart.discountCode}
           </label>
@@ -199,9 +269,16 @@ function CartDiscounts({
             type="text"
             name="discountCode"
             placeholder={dict.cart.discountCode}
+            dir="ltr"
+            autoCapitalize="characters"
+            autoComplete="off"
+            spellCheck={false}
           />
-          &nbsp;
-          <button type="submit" aria-label={dict.cart.discountApplyAria}>
+          <button
+            type="submit"
+            className="cart-code-apply"
+            aria-label={dict.cart.discountApplyAria}
+          >
             {dict.cart.applyBtn}
           </button>
         </div>
@@ -307,7 +384,7 @@ function CartGiftCard({
               >
                 <code>***{giftCard.lastCharacters}</code>
                 &nbsp;
-                <Money data={giftCard.amountUsed} />
+                <Price data={giftCard.amountUsed} />
               </RemoveGiftCardForm>
             </dd>
           ))}
@@ -315,7 +392,7 @@ function CartGiftCard({
       )}
 
       <AddGiftCardForm fetcherKey="gift-card-add">
-        <div>
+        <div className="cart-code-row">
           <label htmlFor={giftCardInputId} className="sr-only">
             {dict.cart.giftCardCode}
           </label>
@@ -325,10 +402,14 @@ function CartGiftCard({
             name="giftCardCode"
             placeholder={dict.cart.giftCardCode}
             ref={giftCardCodeInput}
+            dir="ltr"
+            autoCapitalize="characters"
+            autoComplete="off"
+            spellCheck={false}
           />
-          &nbsp;
           <button
             type="submit"
+            className="cart-code-apply"
             disabled={giftCardAddFetcher.state !== 'idle'}
             aria-label={dict.cart.giftCardCodeAria}
           >
@@ -381,9 +462,9 @@ function RemoveGiftCardForm({
       }}
     >
       {children}
-      &nbsp;
       <button
         type="submit"
+        className="cart-code-remove"
         aria-label={`${dict.cart.giftCardRemove} ${lastCharacters}`}
         onClick={onRemoveClick}
         ref={buttonRef}

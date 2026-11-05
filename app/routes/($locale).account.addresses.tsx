@@ -513,6 +513,7 @@ export function AddressForm({
           placeholder="+972000000000"
           pattern="^\+?[1-9]\d{3,14}$"
           type="tel"
+          dir="ltr"
         />
         <div>
           <input

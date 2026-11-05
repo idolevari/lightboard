@@ -8,6 +8,7 @@ import type {CartLineUpdateInput} from '@shopify/hydrogen/storefront-api-types';
 import {useVariantUrl} from '~/lib/variants';
 import {Link} from 'react-router';
 import {ProductPrice} from './ProductPrice';
+import {AutoLang} from './AutoLang';
 import {useAside} from './Aside';
 import {useI18n} from '~/lib/useI18n';
 import {
@@ -80,6 +81,7 @@ export function CartLineItem({layout, line, childrenMap}: CartLineItemProps) {
       <div className="cart-line-inner">
         {image && (
           <Image
+            className="cart-line-image"
             alt={title}
             aspectRatio="1/1"
             data={image}
@@ -99,8 +101,10 @@ export function CartLineItem({layout, line, childrenMap}: CartLineItemProps) {
               }
             }}
           >
-            <p>
-              <strong>{product.title}</strong>
+            <p className="cart-line-title">
+              <strong>
+                <AutoLang text={product.title} />
+              </strong>
             </p>
           </Link>
           <ProductPrice price={line?.cost?.totalAmount} />
@@ -188,29 +192,33 @@ function CartLineQuantity({line}: {line: CartLine}) {
 
   return (
     <div className="cart-line-quantity">
-      <small>{dict.cart.quantity}: {quantity} &nbsp;&nbsp;</small>
+      <small className="cart-line-qty-label">
+        {dict.cart.quantity}: {quantity}
+      </small>
       <CartLineUpdateButton lines={[{id: lineId, quantity: prevQuantity}]}>
         <button
+          type="submit"
+          className="cart-qty-btn"
           aria-label={dict.cart.decreaseQuantity}
           disabled={quantity <= 1 || !!isOptimistic}
           name="decrease-quantity"
           value={prevQuantity}
         >
-          <span>&#8722; </span>
+          <span aria-hidden="true">&#8722;</span>
         </button>
       </CartLineUpdateButton>
-      &nbsp;
       <CartLineUpdateButton lines={[{id: lineId, quantity: nextQuantity}]}>
         <button
+          type="submit"
+          className="cart-qty-btn"
           aria-label={dict.cart.increaseQuantity}
           name="increase-quantity"
           value={nextQuantity}
           disabled={!!isOptimistic}
         >
-          <span>&#43;</span>
+          <span aria-hidden="true">&#43;</span>
         </button>
       </CartLineUpdateButton>
-      &nbsp;
       <CartLineRemoveButton lineIds={[lineId]} disabled={!!isOptimistic} />
     </div>
   );
@@ -236,7 +244,8 @@ function CartLineRemoveButton({
       action={CartForm.ACTIONS.LinesRemove}
       inputs={{lineIds}}
     >
-      <button disabled={disabled} type="submit">
+      {/* Destructive but secondary: a quiet text button, never a dark pill. */}
+      <button disabled={disabled} type="submit" className="cart-line-remove">
         {dict.cart.removeBtn}
       </button>
     </CartForm>

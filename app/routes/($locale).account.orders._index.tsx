@@ -1,3 +1,4 @@
+import {Price} from '~/components/ProductPrice';
 import {
   Link,
   useLoaderData,
@@ -6,7 +7,6 @@ import {
 } from 'react-router';
 import {useRef} from 'react';
 import {
-  Money,
   getPaginationVariables,
   flattenConnection,
 } from '@shopify/hydrogen';
@@ -227,8 +227,10 @@ function OrderItem({order}: {order: OrderItemFragment}) {
         )}
         <p>{order.financialStatus}</p>
         {fulfillmentStatus && <p>{fulfillmentStatus}</p>}
-        <Money data={order.totalPrice} />
-        <Link to={orderHref}>{dict.common.next} →</Link>
+        <Price data={order.totalPrice} />
+        <Link to={orderHref}>
+          {dict.common.next} <span className="arrow" aria-hidden="true">→</span>
+        </Link>
       </fieldset>
       <br />
     </>
