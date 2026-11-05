@@ -2,6 +2,12 @@ import {NavLink, useNavigate} from 'react-router';
 import {useI18n} from '~/lib/useI18n';
 import {telHref, useBusiness, whatsappHref} from '~/lib/brand';
 import {openCookiePreferences} from '~/lib/consent';
+import {
+  LiveLoop,
+  Palms,
+  StampBadge,
+  WaveDivider,
+} from '~/components/illustrations';
 
 export function Footer() {
   const {dict, to} = useI18n();
@@ -13,17 +19,31 @@ export function Footer() {
 
   return (
     <footer className="footer">
+      {/* Waves "break" onto the footer; palms + cypress skyline behind. */}
+      <WaveDivider className="footer-wave" />
+      <Palms className="footer-skyline" />
       <div className="container">
         <div className="footer-grid footer-grid--single">
           <div className="footer-brand">
-            <img
-              src="/lightboard-text.svg"
-              alt="Lightboard"
-              className="footer-wordmark"
-              width="240"
-              height="33"
-              decoding="async"
-            />
+            <LiveLoop className="footer-brand-row">
+              <img
+                src="/lightboard-text.svg"
+                alt="Lightboard"
+                className="footer-wordmark"
+                width="240"
+                height="33"
+                decoding="async"
+              />
+              <StampBadge className="footer-stamp" />
+            </LiveLoop>
+            <span className="footer-tagline" lang="en">
+              living · design · surfing
+            </span>
+            {dict.hand?.footer && (
+              <span className="hand-note" aria-hidden="true">
+                {dict.hand.footer}
+              </span>
+            )}
             <p>{f.brandDesc}</p>
             <div className="footer-social">
               {b?.instagram && (
@@ -76,6 +96,9 @@ export function Footer() {
 
         <div className="footer-bottom">
           <span>© {new Date().getFullYear()} {f.rights}</span>
+          {f.photoCredit && (
+            <span className="footer-credit">{f.photoCredit}</span>
+          )}
           <nav aria-label={f.legalNavLabel}>
             <ul className="footer-legal">
               {f.legal.map((l) => (

@@ -394,7 +394,10 @@ function CartBadge({count, label}: {count: number; label: string}) {
       <span aria-live="polite" aria-atomic="true">
         {count > 0 ? (
           <>
-            <span className="lb-cart-count">{count}</span>
+            {/* Keyed on the count so the badge re-mounts and pops (M11). */}
+            <span className="lb-cart-count" key={count}>
+              {count}
+            </span>
             <span className="sr-only"> {dict.cart.lineItems}</span>
           </>
         ) : null}
