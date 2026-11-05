@@ -14,11 +14,32 @@ inputs:
       environment instead of the environment mapped to the PR head branch.
     required: false
     default: 'false'
+  auth-bypass-token:
+    description: >-
+      'true' adds --auth-bypass-token so end-to-end tests can reach a private
+      (Preview) deployment. The token is never printed: it is masked and only
+      published encrypted (see the auth-bypass-token-encrypted output).
+    required: false
+    default: 'false'
+  auth-bypass-token-duration:
+    description: Hours (1-12) the auth bypass token stays valid.
+    required: false
+    default: '1'
 
 outputs:
   url:
     description: Deployment URL read from h2_deploy_log.json
     value: ${{ steps.deploy.outputs.url }}
+  auth-bypass-token-encrypted:
+    description: >-
+      The Oxygen auth bypass token, AES-256-CBC/PBKDF2-encrypted with the
+      deployment token (`inputs.token`) and base64-encoded, so it can cross
+      job boundaries (GitHub drops job outputs that contain masked values)
+      without ever appearing in plain text in this public repo's logs.
+      Decrypt with:
+      openssl enc -d -aes-256-cbc -pbkdf2 -a -A -pass env:OXYGEN_TOKEN
+      Empty unless auth-bypass-token is 'true'.
+    value: ${{ steps.deploy.outputs.auth-bypass-token-encrypted }}
 
 runs:
   using: composite
@@ -39,11 +60,16 @@ runs:
       env:
         OXYGEN_TOKEN: ${{ inputs.token }}
         PREVIEW: ${{ inputs.preview }}
+        AUTH_BYPASS: ${{ inputs.auth-bypass-token }}
+        AUTH_BYPASS_HOURS: ${{ inputs.auth-bypass-token-duration }}
       run: |
         set -euo pipefail
         args=(--token "$OXYGEN_TOKEN")
         if [ "$PREVIEW" = "true" ]; then
           args+=(--preview)
+        fi
+        if [ "$AUTH_BYPASS" = "true" ]; then
+          args+=(--auth-bypass-token --auth-bypass-token-duration "$AUTH_BYPASS_HOURS")
         fi
         npx shopify hydrogen deploy "${args[@]}"
 
@@ -52,6 +78,20 @@ runs:
           url=$(jq -r '.url // empty' h2_deploy_log.json)
         fi
         echo "url=$url" >> "$GITHUB_OUTPUT"
+
+        encrypted=""
+        if [ "$AUTH_BYPASS" = "true" ]; then
+          bypass=$(jq -r '.authBypassToken // empty' h2_deploy_log.json 2>/dev/null || true)
+          if [ -z "$bypass" ]; then
+            echo "::error::--auth-bypass-token was requested but h2_deploy_log.json has no authBypassToken."
+            exit 1
+          fi
+          echo "::add-mask::$bypass"
+          encrypted=$(printf '%s' "$bypass" | openssl enc -aes-256-cbc -pbkdf2 -salt -a -A -pass env:OXYGEN_TOKEN)
+        fi
+        echo "auth-bypass-token-encrypted=$encrypted" >> "$GITHUB_OUTPUT"
+        # The log holds the plain bypass token; don't leave it in the workspace.
+        rm -f h2_deploy_log.json
         {
           echo "### Oxygen deployment"
           if [ -n "$url" ]; then

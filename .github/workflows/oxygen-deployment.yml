@@ -81,6 +81,10 @@ jobs:
     concurrency:
       group: oxygen-deploy-preview-pr-${{ github.event.pull_request.number }}
       cancel-in-progress: true
+    outputs:
+      url: ${{ steps.deploy.outputs.url }}
+      # Encrypted with the deployment token; only the e2e job decrypts it.
+      auth-bypass-token-encrypted: ${{ steps.deploy.outputs.auth-bypass-token-encrypted }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -92,3 +96,84 @@ jobs:
           # Without --preview the CLI tags the deploy with the PR head branch,
           # so a dev -> main PR would overwrite the "dev" environment.
           preview: 'true'
+          # Private previews need this for the e2e job to get in.
+          auth-bypass-token: 'true'
+          auth-bypass-token-duration: '1'
+
+  e2e:
+    name: E2E (preview)
+    needs: deploy-preview
+    if: needs.deploy-preview.outputs.url != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    concurrency:
+      group: e2e-preview-pr-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    env:
+      E2E_BASE_URL: ${{ needs.deploy-preview.outputs.url }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Resolve Playwright version
+        id: pw
+        run: echo "version=$(npx playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers
+        id: pw-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}-chromium
+
+      - name: Install Chromium
+        if: steps.pw-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: Install Chromium system dependencies
+        if: steps.pw-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+
+      - name: Decrypt Oxygen auth bypass token
+        env:
+          ENCRYPTED: ${{ needs.deploy-preview.outputs.auth-bypass-token-encrypted }}
+          OXYGEN_TOKEN: ${{ secrets.OXYGEN_DEPLOYMENT_TOKEN_1000130179 }}
+        run: |
+          set -euo pipefail
+          if [ -z "$ENCRYPTED" ]; then
+            echo "::warning::No auth bypass token; testing the preview without one."
+            exit 0
+          fi
+          token=$(printf '%s' "$ENCRYPTED" | openssl enc -d -aes-256-cbc -pbkdf2 -a -A -pass env:OXYGEN_TOKEN)
+          echo "::add-mask::$token"
+          echo "OXYGEN_AUTH_BYPASS_TOKEN=$token" >> "$GITHUB_ENV"
+
+      - name: Run Playwright
+        env:
+          # Optional: the preview's PREVIEW_TOKEN, only needed while the
+          # launch gate (COMING_SOON=true) is on in Oxygen's Preview env.
+          E2E_PREVIEW_TOKEN: ${{ secrets.E2E_PREVIEW_TOKEN }}
+        run: npx playwright test
+
+      - name: Upload Playwright report
+        # Traces can hold the bypass token header; it expires within an hour.
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: playwright-report-pr-${{ github.event.pull_request.number }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
