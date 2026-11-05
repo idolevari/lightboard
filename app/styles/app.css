@@ -3492,12 +3492,16 @@ html[lang="he"] :is(
   cursor: pointer;
   flex: 0 0 auto;
 }
-.hero-dots .motion-toggle {
+.hero-dots .motion-toggle,
+.hero-dots .motion-toggle.on {
   width: 36px;
   height: 36px;
   margin-inline-start: 12px;
-  border-color: rgba(251,248,242,0.6);
+  border: 1px solid rgba(251,248,242,0.6);
+  border-radius: 50%;
+  justify-content: center;
 }
+.hero-dots .motion-toggle::before { content: none; }
 .testify .motion-toggle { border-color: var(--rule-strong); color: var(--ink); }
 .testify-stage { position: relative; min-height: clamp(150px, 26vw, 240px); }
 
