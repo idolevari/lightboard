@@ -21,7 +21,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-easy-crop": "^5.5.7",
-    "react-router": "7.16.0",
+    "react-router": "7.18.5",
     "sanitize-html": "^2.18.1"
   },
   "devDependencies": {
@@ -29,8 +29,8 @@
     "@eslint/eslintrc": "^3.2.0",
     "@eslint/js": "^9.18.0",
     "@graphql-codegen/cli": "5.0.2",
-    "@react-router/dev": "7.16.0",
-    "@react-router/fs-routes": "7.16.0",
+    "@react-router/dev": "7.18.5",
+    "@react-router/fs-routes": "7.18.5",
     "@shopify/cli": "3.93.2",
     "@shopify/hydrogen-codegen": "0.3.3",
     "@shopify/mini-oxygen": "4.2.3",
@@ -63,5 +63,11 @@
   },
   "engines": {
     "node": "^22 || ^24"
+  },
+  "overrides": {
+    "@shopify/hydrogen": {
+      "react-router": "$react-router",
+      "@react-router/dev": "$@react-router/dev"
+    }
   }
 }
