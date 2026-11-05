@@ -102,10 +102,13 @@ type PrivacyBannerWindow = Window & {
 /**
  * Cookie-settings link in the footer: lets a visitor reopen consent choices.
  *
- * TODO(consent): the platform branch exposes a consent helper. When it lands,
- * replace the body of `openCookieSettings` with that helper and drop the
- * fallbacks below. Until then we use Shopify's privacy-banner API if it is
- * loaded, otherwise we send the visitor to the privacy policy.
+ * TODO(consent): when fix/platform-security merges, replace this component's
+ * body with the helper from `~/lib/consent`:
+ *   const canOpen = useCookiePreferencesAvailable();
+ *   <button type="button" className="footer-cookie-btn"
+ *     onClick={openCookiePreferences} hidden={!canOpen}>{label}</button>
+ * and drop the fallbacks below. Until then we use Shopify's privacy-banner
+ * API if it is loaded, otherwise we send the visitor to the privacy policy.
  */
 function CookieSettingsButton({label}: {label: string}) {
   const {to} = useI18n();

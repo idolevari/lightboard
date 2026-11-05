@@ -3519,7 +3519,8 @@ body.a11y-high-contrast :is(
   color: #ffeb3b !important;
   border: 2px solid #ffeb3b !important;
 }
-body.a11y-high-contrast :is(.feat3-swatch.on, .lb-lang-btn.active) {
+/* Higher specificity than the generic control rule above. */
+html body.a11y-high-contrast:not(.x) :is(.feat3-swatch.on, .lb-lang-btn.active):not(.x):not(.y) {
   background: #ffeb3b !important;
   color: #000 !important;
 }
