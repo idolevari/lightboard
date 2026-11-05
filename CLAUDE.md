@@ -7,16 +7,27 @@ Hebrew-first (RTL) Shopify Hydrogen + Oxygen storefront. Migrating from a WordPr
 - **Framework:** Hydrogen (React Router v7, Vite)
 - **Hosting:** Shopify Oxygen
 - **Store:** `kqyxee-us.myshopify.com` (storefront ID `1000130179`)
-- **Language:** JavaScript (not TypeScript)
+- **Language:** TypeScript (strict)
 - **Package manager:** npm
 
 ## URLs
 
 - **GitHub:** https://github.com/idolevari/lightboard
 - **Admin:** https://kqyxee-us.myshopify.com/admin
-- **Oxygen preview:** https://lightboard-87fade0f9f524bc506fc.o2.myshopify.dev
 - **Production domain:** https://lightboard.co.il (DNS at box.co.il, A record → 23.227.38.65, CNAME www → shops.myshopify.com)
+- **Oxygen environments** (`shopify hydrogen env list`):
+  - Production — branch `main` → https://lightboard.co.il
+  - dev — branch `dev` → https://dev-a273e0006171877d729c.o2.myshopify.dev (requires Shopify login)
+  - Preview — no branch
+  - Legacy preview URL https://lightboard-87fade0f9f524bc506fc.o2.myshopify.dev still responds and is still attached as a store domain
 - **GraphiQL (local):** http://localhost:3000/graphiql
+
+## Accounts & CLI access
+
+- **GitHub CLI:** log in as `idolevari` (repo owner). A second account `Ido-Lev-Ari` exists — not the owner.
+- **Shopify CLI:** `shopify auth login` as `levarido@gmail.com` (store owner, org "Lightboard"). Other accounts get 403 on `hydrogen env list`.
+- **Admin reads:** `shopify store auth -s kqyxee-us.myshopify.com --scopes <read_*>` then `shopify store execute --store kqyxee-us.myshopify.com --query '...'` (mutations need `--allow-mutations`).
+- **Pulling Oxygen env vars:** use `./node_modules/.bin/shopify hydrogen env pull --env <handle> --env-file <path>` — via `npx`, node swallows `--env-file`.
 
 ## Task tracker (Notion)
 
@@ -49,12 +60,12 @@ Every push to `main` auto-deploys to Oxygen via `.github/workflows/oxygen-deploy
 
 ## Coming Soon / Launch Gate
 
-When the launch gate is on, public visitors see `app/components/ComingSoon.jsx` and no other route can fetch data. Gate logic lives in `app/lib/coming-soon.js` and is enforced server-side by:
+When the launch gate is on, public visitors see `app/components/ComingSoon.tsx` and no other route can fetch data. Gate logic lives in `app/lib/.server/coming-soon.server.ts` and is enforced server-side by:
 
-- `app/root.jsx` — returns minimal data (no header/footer/cart/shop/consent) when gated
-- `app/routes/($locale).jsx` — redirects every non-`/` customer-facing path to `/`
-- `app/routes/($locale)._index.jsx` — short-circuits the homepage loader
-- `app/routes/api.photos.upload.jsx` — returns 404 while gated
+- `app/root.tsx` — returns minimal data (no header/footer/cart/shop/consent) when gated
+- `app/routes/($locale).tsx` — redirects every non-`/` customer-facing path to `/`
+- `app/routes/($locale)._index.tsx` — short-circuits the homepage loader
+- `app/routes/api.photos.upload.ts` — returns 404 while gated
 
 **Controls:**
 
@@ -68,7 +79,7 @@ When the launch gate is on, public visitors see `app/components/ComingSoon.jsx` 
 ## Brand
 
 - **Palette** (in `app/styles/app.css`): `--color-sand` `#FDF8F0`, `--color-cream` `#F5EBD8`, `--color-wood` `#2D2419`, `--color-terracotta` `#C67B5C`, `--color-sage` `#8FA68E`, `--color-tan` `#D4A574`
-- **Fonts** (Google Fonts, loaded in `app/root.jsx`): Heebo (body), Rubik (display), DM Serif Display (accents)
+- **Fonts** (Google Fonts, loaded in `app/root.tsx`): Heebo (body), Rubik (display), DM Serif Display (accents)
 - **Logo:** `public/favicon.png` (teal LIGHT / lime BOARD with sun rays — from the original WordPress site)
 - **Tagline:** "living · design · surfing"
 
@@ -141,12 +152,12 @@ Guiding rule: anything a merchant edits without a code deploy lives in Shopify. 
 
 ### Hardcoded in code (intentional)
 
-- `app/lib/productOptionLabels.js` — `OPTION_VALUE_HEX` swatch hex fallback map
-- `app/lib/photo-canvas.js` — ALLOWED_PHOTO_TYPES, MAX_PHOTO_BYTES
-- `app/routes/api.photos.upload.jsx` — magic-byte signatures (JPEG/PNG/WebP)
-- `app/lib/brand.js` — `formatPhoneDisplay()` Israeli phone format helper
-- `app/lib/coming-soon.js` — gate cookie name, TTL constants
-- `app/routes/($locale)._index.jsx` — `HERO_SLIDES` constant as fallback when no `hero_slide` metaobjects are configured
+- `app/lib/productOptionLabels.ts` — `OPTION_VALUE_HEX` swatch hex fallback map
+- `app/lib/photo-canvas.ts` — ALLOWED_PHOTO_TYPES, MAX_PHOTO_BYTES
+- `app/routes/api.photos.upload.ts` — magic-byte signatures (JPEG/PNG/WebP)
+- `app/lib/brand.ts` — `formatPhoneDisplay()` Israeli phone format helper
+- `app/lib/.server/coming-soon.server.ts` — gate cookie name, TTL constants
+- `app/routes/($locale)._index.tsx` — `HERO_SLIDES` constant as fallback when no `hero_slide` metaobjects are configured
 
 ## Environment variables
 
@@ -156,7 +167,7 @@ Guiding rule: anything a merchant edits without a code deploy lives in Shopify. 
 | `PUBLIC_STOREFRONT_ID` | `1000130179` | Yes |
 | `PUBLIC_STOREFRONT_API_TOKEN` | Storefront API public token | Yes |
 | `PRIVATE_STOREFRONT_API_TOKEN` | Server-only storefront token | Yes |
-| `PRIVATE_SHOPIFY_ADMIN_API_TOKEN` | Used by `api.photos.upload.jsx` for Files upload | Yes |
+| `PRIVATE_SHOPIFY_ADMIN_API_TOKEN` | Used by `api.photos.upload.ts` for Files upload (custom app "Lightboard Files", scopes read_files/write_files only) | Yes |
 | `PUBLIC_CHECKOUT_DOMAIN` | Checkout subdomain | Yes |
 | `PUBLIC_CUSTOMER_ACCOUNT_API_CLIENT_ID` | Customer Account API | Yes |
 | `PUBLIC_CUSTOMER_ACCOUNT_API_URL` | Customer Account API | Yes |
@@ -184,16 +195,36 @@ Tables of interest: `vxd_posts` (products as `post_type='product'`, orders as `p
 
 ## Migration Status
 
-- **Customers:** 970 / 972 imported via Shopify CSV (2 skipped due to invalid phone numbers)
-- **Orders:** ~1,131 in SQL dump, not yet migrated. Shopify has no native CSV order import — use Admin API or the Shopify Store Importer app
+- **Customers:** 970 / 972 imported via Shopify CSV on 2026-04-22 (2 skipped due to invalid phone numbers). Store count on 2026-11-05: **958**
+- **Orders:** ~1,131 in SQL dump, not yet migrated (store has **0** orders). Shopify has no native CSV order import — use Admin API or the Shopify Store Importer app
 - **Products:** 1 created manually (Lightboard). ~17 more to migrate from WooCommerce
 
 Migration CSV generator is kept locally at `scripts/woo-to-shopify.py` (gitignored). Outputs to `~/Downloads/shopify-import/`.
 
+## Store state (snapshot 2026-11-05)
+
+Re-check with `shopify store execute` before relying on these numbers.
+
+- **Shop:** "Lightboard", Basic plan, ILS, `Asia/Jerusalem`, contact email `lightboardshop@gmail.com`
+- **Launch gate:** off in production (`COMING_SOON=false`) — the site is live. `PREVIEW_TOKEN` not set in any environment. Production has no `PUBLIC_CHECKOUT_DOMAIN` (code falls back to `PUBLIC_STORE_DOMAIN`)
+- **Languages / markets:** `he` primary + `en` published. One market: Israel
+- **Sales channels:** Online Store, Point of Sale, `lightboard` (Hydrogen). The online store theme is the default **Horizon** (MAIN)
+- **Product:** Lightboard, ₪279, variants Light Blue / Cream / Pink, tag `requires-photos`, no SKUs. Inventory policy CONTINUE (oversell allowed — made to order)
+- **Collections / pages / blogs:** `frontpage` collection; pages `contact`, `accessibility`; blog `news`; all four policies filled
+- **Metaobject counts:** faq 5, testimonial 4, product_spec 4, homepage_hero 1, homepage_story 1, story_stat 3, **hero_slide 0** (homepage uses the code fallback `HERO_SLIDES`)
+- **Shopify menus** `main-menu` / `footer` still have default items pointing at the myshopify host
+- **Shipping:** Domestic (IL) "רגיל" ₪0 on all orders. An International zone (27 countries, ₪60) exists but is unreachable because the only market is Israel
+
+### Known issues in store config
+
+- **Primary domain is still `kqyxee-us.myshopify.com`.** `lightboard.co.il` is connected (SSL on) but not primary — this affects customer emails and checkout links. Extra attached domains: the legacy Oxygen preview URL and `lightboard-9016.myshopify.com`
+- **Shipping vs copy mismatch:** shipping is free on all orders, but the `homepage_hero` tape says "Free shipping over ₪299" (and the product is ₪279)
+- **Horizon theme is published on the Online Store channel** — anyone visiting the myshopify host may see it instead of Hydrogen
+
 ## Project Conventions
 
 - **TypeScript, strict** — see `tsconfig.json`. All sources are `.ts`/`.tsx`. JSDoc `@type`/`@typedef` is no longer used.
-- **RTL + Hebrew** — `<html lang="he" dir="rtl">` set in `app/root.jsx`
+- **RTL + Hebrew** — `<html lang="he" dir="rtl">` set in `app/root.tsx`
 - **Flat repo structure** — app is at the root, not in a subdirectory (keeps CI and Shopify CLI assumptions aligned)
 - **Gitignored:** `.env`, `.shopify/`, `.claude/`, `.idea/`, `.cursor/`, `scripts/`, `node_modules/`, build artifacts
 
