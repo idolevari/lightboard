@@ -47,28 +47,80 @@ export function Price({
   return <bdi className={className}>{text}</bdi>;
 }
 
+/**
+ * Display-size price: same Intl formatting as `formatMoney`, but the
+ * currency symbol gets its own span so it can be set small and warm
+ * (`--sunset-ink`). Read as one string by screen readers.
+ */
+export function DisplayPrice({data}: {data: MoneyLike | null | undefined}) {
+  const {locale} = useI18n();
+  const text = formatMoney(data, locale);
+  if (!text || !data?.amount) return null;
+  let parts: Array<Intl.NumberFormatPart> = [];
+  try {
+    const value = Number(data.amount);
+    const whole = Number.isInteger(value);
+    parts = new Intl.NumberFormat(locale === 'en' ? 'en-IL' : 'he-IL', {
+      style: 'currency',
+      currency: data.currencyCode || 'ILS',
+      minimumFractionDigits: whole ? 0 : 2,
+      maximumFractionDigits: 2,
+    }).formatToParts(value);
+  } catch {
+    return <bdi className="price-display">{text}</bdi>;
+  }
+  return (
+    <bdi className="price-display">
+      <span className="sr-only">{text}</span>
+      {parts
+        .filter((p) => !/^[\u200e\u200f]+$/.test(p.value))
+        .map((p, i) =>
+          p.type === 'currency' ? (
+            // eslint-disable-next-line react/no-array-index-key -- static parts list
+            <span key={i} className="cur" aria-hidden="true">
+              {p.value}
+            </span>
+          ) : p.type === 'literal' ? null : (
+            // eslint-disable-next-line react/no-array-index-key -- static parts list
+            <span key={i} className="num" aria-hidden="true">
+              {p.value}
+            </span>
+          ),
+        )}
+    </bdi>
+  );
+}
+
 type ProductPriceProps = {
   price?: MoneyV2 | null;
   compareAtPrice?: MoneyV2 | null;
+  /** Large editorial price with a separate currency glyph (PDP). */
+  display?: boolean;
 };
 
-export function ProductPrice({price, compareAtPrice}: ProductPriceProps) {
+export function ProductPrice({price, compareAtPrice, display}: ProductPriceProps) {
   const {dict} = useI18n();
   return (
     <div
       aria-label={dict.product.priceLabel}
-      className="product-price"
+      className={`product-price${display ? ' product-price--display' : ''}`}
       role="group"
     >
       {compareAtPrice ? (
         <div className="product-price-on-sale">
-          {price ? <Price data={price} /> : null}
+          {price ? (
+            display ? <DisplayPrice data={price} /> : <Price data={price} />
+          ) : null}
           <s>
             <Price data={compareAtPrice} />
           </s>
         </div>
       ) : price ? (
-        <Price data={price} />
+        display ? (
+          <DisplayPrice data={price} />
+        ) : (
+          <Price data={price} />
+        )
       ) : (
         <span>&nbsp;</span>
       )}

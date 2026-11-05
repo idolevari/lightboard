@@ -1,5 +1,6 @@
 import {useRef} from 'react';
 import type {ChangeEvent, DragEvent} from 'react';
+import {Doodle} from '~/components/illustrations';
 
 type SlotRect = {
   left: number;
@@ -148,7 +149,7 @@ export function BoardCanvas({
             onClick={surprise.onPick}
             disabled={surprise.disabled}
           >
-            <span className="board-canvas__surprise-icon" aria-hidden="true">✨</span>
+            <Doodle name="sparkle" size={16} className="board-canvas__surprise-icon" />
             <span className="board-canvas__surprise-label">{surpriseLabel}</span>
           </button>
         ) : null}
