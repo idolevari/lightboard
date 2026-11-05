@@ -159,7 +159,10 @@ export async function loader(args: Route.LoaderArgs) {
       // subdomain) so the Customer Privacy API can initialise.
       checkoutDomain: env.PUBLIC_CHECKOUT_DOMAIN || env.PUBLIC_STORE_DOMAIN,
       storefrontAccessToken: env.PUBLIC_STOREFRONT_API_TOKEN,
-      withPrivacyBanner: false,
+      // Shopify's cookie banner. Which regions see it is set in Admin →
+      // Settings → Customer privacy → Cookie banner (must include Israel /
+      // "All regions"). Meta Pixel waits for an explicit marketing "yes".
+      withPrivacyBanner: true,
       // localize the privacy banner
       country: args.context.storefront.i18n.country,
       language: args.context.storefront.i18n.language,
