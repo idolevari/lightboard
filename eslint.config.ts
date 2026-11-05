@@ -32,6 +32,8 @@ export default [
       '**/.react-router/',
       // Not part of tsconfig's project, so the type-aware parser can't load it.
       'eslint.config.ts',
+      '**/playwright-report/',
+      '**/test-results/',
     ],
   },
   ...fixupConfigRules(
@@ -66,7 +68,7 @@ export default [
       sourceType: 'module',
       parser: tsParser,
       parserOptions: {
-        project: './tsconfig.json',
+        project: ['./tsconfig.json', './tsconfig.e2e.json'],
         tsconfigRootDir: __dirname,
         ecmaFeatures: {jsx: true},
       },
@@ -122,6 +124,13 @@ export default [
         {prefer: 'type-imports', fixStyle: 'separate-type-imports'},
       ],
       'import/no-unresolved': ['error', {ignore: ['^virtual:']}],
+    },
+  },
+  {
+    // Playwright fixtures call `use()`, which is not a React hook.
+    files: ['e2e/**/*.ts', 'playwright.config.ts'],
+    rules: {
+      'react-hooks/rules-of-hooks': 'off',
     },
   },
   {
