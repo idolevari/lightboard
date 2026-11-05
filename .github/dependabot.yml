@@ -1,0 +1,44 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Asia/Jerusalem
+    target-branch: dev
+    open-pull-requests-limit: 5
+    groups:
+      npm-minor-patch:
+        update-types: [minor, patch]
+    ignore:
+      # These need a coordinated manual migration (`npx shopify hydrogen upgrade`),
+      # not piecemeal Dependabot bumps.
+      - dependency-name: '@shopify/hydrogen'
+        # CalVer: YYYY.Q.x. A new quarter is a "minor" bump but tracks a new
+        # Storefront API version with breaking changes, so ignore minors too.
+        update-types: ['version-update:semver-major', 'version-update:semver-minor']
+      - dependency-name: '@shopify/cli'
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@shopify/mini-oxygen'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'react-router*'
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@react-router/*'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'vite'
+        update-types: ['version-update:semver-major']
+
+  - package-ecosystem: github-actions
+    # Workflows plus the local composite action (it pins setup-node too).
+    directories: ['/', '/.github/actions/*']
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Asia/Jerusalem
+    target-branch: dev
+    groups:
+      github-actions:
+        patterns: ['*']
