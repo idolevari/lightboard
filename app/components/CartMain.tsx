@@ -6,6 +6,7 @@ import type {CartLine} from '~/components/CartLineItem';
 import {CartSummary} from './CartSummary';
 import {SHOP_PATH} from '~/components/Header';
 import {useI18n} from '~/lib/useI18n';
+import {Van, WaveDivider} from '~/components/illustrations';
 import type {CartApiQueryFragment} from 'storefrontapi.generated';
 
 export type CartLayout = 'page' | 'aside';
@@ -94,6 +95,13 @@ function CartEmpty({hidden = false}: {hidden?: boolean}) {
   const {dict, to} = useI18n();
   return (
     <div hidden={hidden} className="cart-empty">
+      <div className="cart-empty-art" aria-hidden="true">
+        <Van className="cart-empty-van" />
+        <WaveDivider className="cart-empty-road" />
+      </div>
+      {dict.cart.emptyTitle ? (
+        <p className="cart-empty-title">{dict.cart.emptyTitle}</p>
+      ) : null}
       <p>{dict.cart.empty}</p>
       <Link
         to={to(SHOP_PATH)}

@@ -125,7 +125,7 @@ export function CartLineItem({layout, line, childrenMap}: CartLineItemProps) {
           </ul>
           {photoUrls ? (
             <div className="cart-line-photos">
-              <div className="cart-line-photos__thumbs">
+              <div className="cart-line-photos__thumbs is-polaroids">
                 {photoUrls.map((url, i) => (
                   <img
                     key={i}

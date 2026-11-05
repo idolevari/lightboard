@@ -6,6 +6,8 @@ import {useEffect, useId, useRef, useState} from 'react';
 import type {ReactNode, Ref} from 'react';
 import {useFetcher} from 'react-router';
 import {useI18n} from '~/lib/useI18n';
+import {Doodle} from '~/components/illustrations';
+import type {DoodleName} from '~/components/illustrations';
 import type {CartApiQueryFragment} from 'storefrontapi.generated';
 import type {CartLayout} from '~/components/CartMain';
 
@@ -207,7 +209,25 @@ function CartCheckoutActions({
         </button>
       )}
       <p className="cart-checkout-note">{dict.cart.checkoutSecure}</p>
+      <CartTrust />
     </div>
+  );
+}
+
+/** Small doodle trust row under the checkout CTA (drawer + /cart). */
+function CartTrust() {
+  const {dict} = useI18n();
+  const items = (dict.cart.trust ?? []) as Array<{icon: string; label: string}>;
+  if (items.length === 0) return null;
+  return (
+    <ul className="cart-trust" role="list">
+      {items.map((item) => (
+        <li key={item.label}>
+          <Doodle name={item.icon as DoodleName} size={20} />
+          <span>{item.label}</span>
+        </li>
+      ))}
+    </ul>
   );
 }
 
