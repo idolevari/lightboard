@@ -1,5 +1,6 @@
 import {createHydrogenContext} from '@shopify/hydrogen';
 import {AppSession} from '~/lib/.server/session.server';
+import {primePreviewCookie} from '~/lib/.server/coming-soon.server';
 import {CART_QUERY_FRAGMENT} from '~/lib/fragments';
 import {detectLocaleFromRequest, getLocaleConfig} from '~/lib/i18n';
 
@@ -34,6 +35,9 @@ export async function createHydrogenRouterContext(
   const [cache, session] = await Promise.all([
     caches.open('hydrogen'),
     AppSession.init(request, [env.SESSION_SECRET]),
+    // Launch-gate bypass cookie is an HMAC; compute the expected value
+    // before any (synchronous) gate check runs. No-op when the gate is off.
+    primePreviewCookie(env),
   ]);
 
   const hydrogenContext = createHydrogenContext(

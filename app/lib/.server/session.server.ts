@@ -27,6 +27,8 @@ export class AppSession {
         httpOnly: true,
         path: '/',
         sameSite: 'lax',
+        // HTTPS-only outside `npm run dev` (holds Customer Account tokens).
+        secure: process.env.NODE_ENV !== 'development',
         secrets,
       },
     });
