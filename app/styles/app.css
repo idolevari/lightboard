@@ -73,12 +73,12 @@
   /* Type stacks — Hebrew-first with Latin fallbacks. Ploni sits in
      every stack (sans / serif / mono / script). Its `unicode-range`
      limits it to Hebrew glyphs, so it wins for HE copy in every role
-     while Fraunces (serif), Heebo (sans), JetBrains (mono) and Caveat
-     (script) still win for Latin. */
-  --serif: "Fraunces", "Ploni", "Frank Ruhl Libre", Georgia, serif;
-  --sans: "Ploni", "Heebo", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+     while Fraunces (serif), Heebo (sans) and JetBrains (mono) still win
+     for Latin. Caveat was dropped: the .script class is unused. */
+  --serif: "Fraunces", "Ploni", Georgia, serif;
+  --sans: "Ploni", "Heebo", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
   --mono: "JetBrains Mono", "Ploni", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  --script: "Caveat", "Ploni", "Gloria Hallelujah", cursive;
+  --script: "Ploni", cursive;
 
   --font-body: var(--sans);
   --font-display: var(--serif);

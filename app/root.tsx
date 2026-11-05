@@ -81,10 +81,6 @@ export function links() {
     },
     {
       rel: 'preconnect',
-      href: 'https://shop.app',
-    },
-    {
-      rel: 'preconnect',
       href: 'https://fonts.googleapis.com',
     },
     {
@@ -92,9 +88,24 @@ export function links() {
       href: 'https://fonts.gstatic.com',
       crossOrigin: 'anonymous',
     },
+    // Hebrew body/display text renders in self-hosted Ploni (app.css,
+    // unicode-range limited). Preload the light cut: it paints the hero and
+    // most Hebrew copy, so the LCP text isn't waiting on font discovery.
+    {
+      rel: 'preload',
+      href: '/fonts/ploni-light-aaa.woff2',
+      as: 'font',
+      type: 'font/woff2',
+      crossOrigin: 'anonymous',
+    },
+    // Only the Latin families app.css actually uses: Fraunces (serif,
+    // weights 300-500 + italic; the SOFT/WONK axes were ~100 KB and are
+    // dropped), Heebo (sans fallback for Latin), JetBrains Mono (labels).
+    // Removed: Inter and Frank Ruhl Libre (shadowed by Ploni/Heebo) and
+    // Caveat (the .script class is unused).
     {
       rel: 'stylesheet',
-      href: 'https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..700,0..100,0..1;1,9..144,300..700,0..100,0..1&family=Frank+Ruhl+Libre:wght@300..900&family=Heebo:wght@300;400;500;700;800&family=Inter:wght@300..700&family=JetBrains+Mono:wght@400;500;600&family=Caveat:wght@400..700&display=swap',
+      href: 'https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..500;1,9..144,300..500&family=Heebo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap',
     },
     {rel: 'icon', type: 'image/png', href: '/favicon.png'},
   ];
