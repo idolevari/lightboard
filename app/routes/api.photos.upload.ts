@@ -2,6 +2,10 @@ import {data} from 'react-router';
 import {uploadImageToShopifyFiles} from '~/lib/.server/shopify-admin.server';
 import {ALLOWED_PHOTO_TYPES, MAX_PHOTO_BYTES} from '~/lib/photo-canvas';
 import {isLaunchGateActive} from '~/lib/.server/coming-soon.server';
+import {
+  guardPhotoUpload,
+  stripJpegLocationMetadata,
+} from '~/lib/.server/photo-upload.server';
 import type {Route} from './+types/api.photos.upload';
 
 /**
@@ -10,12 +14,17 @@ import type {Route} from './+types/api.photos.upload';
  * Expects a multipart POST with these fields (all optional, presence-based):
  *   cropped_0, cropped_1, cropped_2  — square JPEGs ready for fulfillment
  *   original_0, original_1, original_2 — full-resolution originals (for re-edit)
- *   cartId                            — used as a filename hint for grouping
+ *   cartId                            — ignored (kept for client compat)
  *
  * Returns:
  *   { cropped: string[], originals: string[] }   parallel arrays of CDN URLs.
  *
- * On any failure, returns 4xx/5xx with `{error: string}`.
+ * On any failure, returns 4xx/5xx with a short, fixed `{error: string}` code.
+ * Internal details (Admin API errors, file GIDs) are only logged server-side.
+ *
+ * Abuse controls (same-origin, signed session grant from the PDP, per-session
+ * and per-IP rate limits, Content-Length cap) live in photo-upload.server.ts.
+ * JPEG uploads have GPS/XMP metadata stripped before reaching the public CDN.
  */
 
 type UploadKind = 'cropped' | 'original';
@@ -36,6 +45,11 @@ export async function action({request, context}: Route.ActionArgs) {
     return data({error: 'not-found'}, {status: 404});
   }
 
+  const denied = await guardPhotoUpload(request, context.session);
+  if (denied) {
+    return data({error: denied.error}, {status: denied.status});
+  }
+
   let form: FormData;
   try {
     form = await request.formData();
@@ -43,11 +57,10 @@ export async function action({request, context}: Route.ActionArgs) {
     return data({error: 'invalid-form-data'}, {status: 400});
   }
 
-  const cartId = sanitizeCartId(String(form.get('cartId') ?? ''));
-
   const croppedFiles = SLOTS.map((i) => form.get(`cropped_${i}`));
   const originalFiles = SLOTS.map((i) => form.get(`original_${i}`));
 
+  const detectedTypes = new Map<File, DetectedImageType>();
   for (const file of [...croppedFiles, ...originalFiles]) {
     if (file && !(file instanceof File)) {
       return data({error: 'invalid-field'}, {status: 400});
@@ -66,48 +79,38 @@ export async function action({request, context}: Route.ActionArgs) {
       if (file.type && detected !== file.type) {
         return data({error: 'content-type-mismatch'}, {status: 415});
       }
+      detectedTypes.set(file, detected);
     }
+  }
+  if (detectedTypes.size === 0) {
+    return data({error: 'no-files'}, {status: 400});
   }
 
   try {
     const tasks: Promise<UploadResultPart>[] = [];
+    const queue = (kind: UploadKind, slot: number, file: File) => {
+      const mimeType = detectedTypes.get(file) ?? 'image/jpeg';
+      tasks.push(
+        prepareUpload(file, mimeType)
+          .then((blob) =>
+            uploadImageToShopifyFiles(context.env, {
+              blob,
+              filename: photoFilename(kind, mimeType),
+              mimeType,
+              alt:
+                kind === 'cropped'
+                  ? `Lightboard photo ${slot + 1}`
+                  : `Lightboard original ${slot + 1}`,
+            }),
+          )
+          .then((res): UploadResultPart => ({kind, slot, url: res.url})),
+      );
+    };
     SLOTS.forEach((i) => {
       const cropped = croppedFiles[i];
-      if (cropped instanceof File) {
-        tasks.push(
-          uploadImageToShopifyFiles(context.env, {
-            blob: cropped,
-            filename: photoFilename({
-              cartId,
-              kind: 'cropped',
-              slot: i,
-              mimeType: cropped.type,
-            }),
-            mimeType: cropped.type || 'image/jpeg',
-            alt: `Lightboard photo ${i + 1}`,
-          }).then(
-            (res): UploadResultPart => ({kind: 'cropped', slot: i, url: res.url}),
-          ),
-        );
-      }
+      if (cropped instanceof File) queue('cropped', i, cropped);
       const original = originalFiles[i];
-      if (original instanceof File) {
-        tasks.push(
-          uploadImageToShopifyFiles(context.env, {
-            blob: original,
-            filename: photoFilename({
-              cartId,
-              kind: 'original',
-              slot: i,
-              mimeType: original.type,
-            }),
-            mimeType: original.type || 'application/octet-stream',
-            alt: `Lightboard original ${i + 1}`,
-          }).then(
-            (res): UploadResultPart => ({kind: 'original', slot: i, url: res.url}),
-          ),
-        );
-      }
+      if (original instanceof File) queue('original', i, original);
     });
 
     const results = await Promise.all(tasks);
@@ -121,36 +124,29 @@ export async function action({request, context}: Route.ActionArgs) {
 
     return data({cropped, originals});
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'upload-failed';
-    return data({error: message}, {status: 502});
+    // Details (Admin API userErrors, file GIDs) stay in server logs only.
+    console.error('[photo-upload] upload failed', err);
+    return data({error: 'upload-failed'}, {status: 502});
   }
+}
+
+/** JPEGs get GPS/XMP stripped; other types are forwarded as-is. */
+async function prepareUpload(file: File, mimeType: string): Promise<Blob> {
+  if (mimeType !== 'image/jpeg') return file;
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  return new Blob([stripJpegLocationMetadata(bytes)], {type: mimeType});
 }
 
 export async function loader() {
   return data({error: 'method-not-allowed'}, {status: 405});
 }
 
-function sanitizeCartId(raw: string): string {
-  if (!raw) return 'anon';
-  // Cart IDs look like gid://shopify/Cart/abc123. Pull the trailing token.
-  const match = raw.match(/[A-Za-z0-9_-]+$/);
-  return match ? match[0].slice(0, 32) : 'anon';
-}
-
-function photoFilename({
-  cartId,
-  kind,
-  slot,
-  mimeType,
-}: {
-  cartId: string;
-  kind: UploadKind;
-  slot: number;
-  mimeType: string;
-}): string {
-  const ext = extensionForMimeType(mimeType);
-  const stamp = Date.now();
-  return `lightboard-${kind}-${cartId}-${slot + 1}-${stamp}.${ext}`;
+/**
+ * Random, unguessable filename. Never derived from the cart (its key is a
+ * secret) or from a timestamp alone (enumerable on the public CDN).
+ */
+function photoFilename(kind: UploadKind, mimeType: string): string {
+  return `lightboard-${kind}-${crypto.randomUUID()}.${extensionForMimeType(mimeType)}`;
 }
 
 function extensionForMimeType(mimeType: string): string {
@@ -177,9 +173,9 @@ function extensionForMimeType(mimeType: string): string {
  * Returns one of 'image/jpeg' | 'image/png' | 'image/webp', or null if the
  * bytes don't match a supported signature.
  */
-async function detectImageType(
-  file: File,
-): Promise<'image/jpeg' | 'image/png' | 'image/webp' | null> {
+type DetectedImageType = 'image/jpeg' | 'image/png' | 'image/webp';
+
+async function detectImageType(file: File): Promise<DetectedImageType | null> {
   let head: Uint8Array;
   try {
     head = new Uint8Array(await file.slice(0, 12).arrayBuffer());

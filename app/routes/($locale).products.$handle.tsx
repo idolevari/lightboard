@@ -16,6 +16,7 @@ import {redirectIfHandleIsLocalized} from '~/lib/.server/redirect.server';
 import {checkForTrailingEncodedSpaces} from '~/lib/.server/url.server';
 import {detectLocaleFromRequest} from '~/lib/i18n';
 import {sanitizeShopifyHtml} from '~/lib/sanitize';
+import {grantPhotoUploads} from '~/lib/.server/photo-upload.server';
 import {JsonLd} from '~/components/JsonLd';
 import {RouteError} from '~/components/RouteError';
 import {absoluteUrl, productSeo} from '~/lib/.server/seo.server';
@@ -74,6 +75,9 @@ async function loadCriticalData({context, params, request}: Route.LoaderArgs) {
 
   const requiresPhotos =
     Array.isArray(product.tags) && product.tags.includes(REQUIRES_PHOTOS_TAG);
+  // Signed-session proof that this visitor rendered a photo product page;
+  // /api/photos/upload rejects requests without it.
+  if (requiresPhotos) grantPhotoUploads(context.session);
 
   let initialPhotoState: PhotoCustomizerInitialState | null = null;
   let resolvedEditLineId: string | null = null;
