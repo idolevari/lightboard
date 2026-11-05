@@ -6,36 +6,89 @@ on:
   push:
     branches: [main, dev]
   pull_request:
-    branches: [dev]
+    branches: [main, dev]
 
 permissions:
   contents: read
-  deployments: write
+
+# PRs: a new commit supersedes the in-flight verify + preview for that PR.
+# Pushes: one run per branch at a time, never cancelled mid-flight.
+concurrency:
+  group: oxygen-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  deploy:
-    name: Deploy to Oxygen
-    timeout-minutes: 30
+  verify:
+    uses: ./.github/workflows/verify.yml
+    permissions:
+      contents: read
+
+  deploy-production:
+    name: Deploy production
+    needs: verify
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.url }}
+    concurrency:
+      group: oxygen-deploy-production
+      cancel-in-progress: false
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          node-version: 'lts/*'
-          check-latest: true
-
-      - name: Cache node modules
-        uses: actions/cache@v4
+          persist-credentials: false
+      - id: deploy
+        uses: ./.github/actions/oxygen-deploy
         with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
+          token: ${{ secrets.OXYGEN_DEPLOYMENT_TOKEN_1000130179 }}
 
-      - name: Install dependencies
-        run: npm ci
+  deploy-dev:
+    name: Deploy dev
+    needs: verify
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    concurrency:
+      group: oxygen-deploy-dev
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - id: deploy
+        uses: ./.github/actions/oxygen-deploy
+        with:
+          token: ${{ secrets.OXYGEN_DEPLOYMENT_TOKEN_1000130179 }}
 
-      - name: Build and deploy to Oxygen
-        run: npx shopify hydrogen deploy --token "${{ secrets.OXYGEN_DEPLOYMENT_TOKEN_1000130179 }}"
+  deploy-preview:
+    name: Deploy preview
+    needs: verify
+    # Fork and Dependabot PRs get no repo secrets, so they stop after verify.
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.user.login != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    concurrency:
+      group: oxygen-deploy-preview-pr-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - id: deploy
+        uses: ./.github/actions/oxygen-deploy
+        with:
+          token: ${{ secrets.OXYGEN_DEPLOYMENT_TOKEN_1000130179 }}
+          # Without --preview the CLI tags the deploy with the PR head branch,
+          # so a dev -> main PR would overwrite the "dev" environment.
+          preview: 'true'
