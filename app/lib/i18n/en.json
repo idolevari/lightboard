@@ -12,7 +12,10 @@
     "cart": "Cart",
     "search": "Search",
     "account": "Account",
-    "menu": "Menu"
+    "menu": "Menu",
+    "faq": "FAQ",
+    "primaryLabel": "Main navigation",
+    "language": "Language"
   },
   "common": {
     "loading": "Loading…",
@@ -33,7 +36,9 @@
     "yes": "Yes",
     "no": "No",
     "or": "or",
-    "and": "and"
+    "and": "and",
+    "pause": "Pause",
+    "play": "Play"
   },
   "aside": {
     "cart": "Cart",
@@ -41,7 +46,10 @@
     "menu": "Menu"
   },
   "hero": {
-    "slideAria": "slide"
+    "slideAria": "slide",
+    "pause": "Pause slideshow",
+    "play": "Play slideshow",
+    "regionLabel": "Opening photos"
   },
   "featured": {
     "finishLabel": "Color",
@@ -55,7 +63,11 @@
   "testify": {
     "eyebrow": "— FROM YOUR WALLS",
     "prev": "Previous",
-    "next": "Next"
+    "next": "Next",
+    "dotLabel": "Review {n} of {total}",
+    "regionLabel": "Reviews",
+    "pause": "Pause reviews",
+    "play": "Play reviews"
   },
   "product": {
     "metaSuffix": "Product",
@@ -63,7 +75,8 @@
     "addToCart": "Add to cart",
     "soldOut": "Sold out for now",
     "optionLabels": {},
-    "optionValues": {}
+    "optionValues": {},
+    "priceLabel": "Price"
   },
   "photoCustomizer": {
     "heading": "Your photos",
@@ -92,12 +105,21 @@
       "heic": "iPhone HEIC photos aren't supported. Save it as JPG and try again.",
       "badType": "That file type isn't supported. Use JPG, PNG or WebP.",
       "tooLarge": "That file's too big. 15MB max.",
-      "tooSmall": "Too small to print. We need at least 1200×1200 pixels.",
+      "tooSmall": "Too small to print. We need at least {min}×{min} pixels.",
       "loadFailed": "Couldn't open that file. Try another photo.",
       "renderFailed": "The preview didn't load. Try again.",
       "cannotEdit": "This photo can't be edited. Pick a new one.",
       "uploadFailed": "Upload failed. Check your connection and try again."
-    }
+    },
+    "progress": "{n}/3 photos",
+    "needPhotos": "Choose {n} more photos to continue",
+    "needOnePhoto": "Choose 1 more photo to continue",
+    "needApprove": "Approve your photos to continue",
+    "ready": "3/3 photos ready",
+    "replaceConfirm": "Replace the photos you chose with gallery photos?",
+    "lowRes": "This photo is on the small side, so the print may look less sharp.",
+    "cropHint": "Drag to position, or use the arrow keys.",
+    "slotsLabel": "Your photos"
   },
   "cart": {
     "metaTitle": "Lightboard | Cart",
@@ -135,7 +157,9 @@
       "linkLabel": "terms of service",
       "suffix": "",
       "requiredHint": "Please agree to the terms to continue to checkout"
-    }
+    },
+    "discountToggle": "Have a code or gift card?",
+    "checkoutSecure": "Secure checkout"
   },
   "search": {
     "metaTitle": "Lightboard | Search",
@@ -264,7 +288,8 @@
     "readableFont": "Readable font",
     "reset": "Reset",
     "statementLink": "Accessibility statement",
-    "skipToContent": "Skip to main content"
+    "skipToContent": "Skip to main content",
+    "quickActions": "Help and accessibility"
   },
   "whatsapp": {
     "label": "Talk to us on WhatsApp",
@@ -288,7 +313,30 @@
       {
         "label": "Accessibility",
         "to": "/pages/accessibility"
+      },
+      {
+        "label": "Shipping",
+        "to": "/policies/shipping-policy"
+      },
+      {
+        "label": "Returns",
+        "to": "/policies/refund-policy"
       }
-    ]
+    ],
+    "cookieSettings": "Cookie settings",
+    "legalNavLabel": "Legal"
+  },
+  "contact": {
+    "title": "Talk to us",
+    "kicker": "A question about your order, photos or shipping? WhatsApp is fastest.",
+    "whatsapp": "WhatsApp",
+    "phone": "Phone",
+    "email": "Email",
+    "instagram": "Instagram"
+  },
+  "comingSoon": {
+    "titleBefore": "Something",
+    "titleEm": "new",
+    "titleAfter": "is coming."
   }
 }

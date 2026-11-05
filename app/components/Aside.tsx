@@ -91,6 +91,7 @@ export function Aside({children, heading, type}: AsideProps) {
 
   return (
     <div
+      id={asideDomId(type)}
       aria-modal={expanded ? 'true' : undefined}
       aria-hidden={expanded ? undefined : 'true'}
       className={`overlay ${expanded ? 'expanded' : ''}`}
@@ -106,20 +107,26 @@ export function Aside({children, heading, type}: AsideProps) {
       />
       <aside ref={asideRef} {...(expanded ? {} : {inert: ''})}>
         <header>
-          <h3 id={id}>{heading}</h3>
+          <h2 id={id}>{heading}</h2>
           <button
             type="button"
             className="close reset"
             onClick={close}
             aria-label={dict.common.close}
           >
-            &times;
+            <span aria-hidden="true">&times;</span>
           </button>
         </header>
-        <main>{children}</main>
+        {/* Not a <main>: the page has exactly one main landmark (#main). */}
+        <div className="aside-body">{children}</div>
       </aside>
     </div>
   );
+}
+
+/** Stable DOM id for an aside, so toggles can point `aria-controls` at it. */
+export function asideDomId(type: AsideType) {
+  return `aside-${type}`;
 }
 
 const AsideContext = createContext<AsideContextValue | null>(null);

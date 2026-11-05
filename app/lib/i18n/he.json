@@ -12,7 +12,10 @@
     "cart": "סל",
     "search": "חיפוש",
     "account": "חשבון",
-    "menu": "תפריט"
+    "menu": "תפריט",
+    "faq": "שאלות נפוצות",
+    "primaryLabel": "ניווט ראשי",
+    "language": "שפה"
   },
   "common": {
     "loading": "טוען…",
@@ -33,7 +36,9 @@
     "yes": "כן",
     "no": "לא",
     "or": "או",
-    "and": "ו"
+    "and": "ו",
+    "pause": "השהיה",
+    "play": "הפעלה"
   },
   "aside": {
     "cart": "סל הקניות",
@@ -41,7 +46,10 @@
     "menu": "תפריט"
   },
   "hero": {
-    "slideAria": "שקופית"
+    "slideAria": "שקופית",
+    "pause": "עצירת המצגת",
+    "play": "הפעלת המצגת",
+    "regionLabel": "תמונות פתיחה"
   },
   "featured": {
     "finishLabel": "צבע",
@@ -55,7 +63,11 @@
   "testify": {
     "eyebrow": "— מהקירות שלכם",
     "prev": "הקודם",
-    "next": "הבא"
+    "next": "הבא",
+    "dotLabel": "המלצה {n} מתוך {total}",
+    "regionLabel": "המלצות",
+    "pause": "עצירת ההמלצות",
+    "play": "הפעלת ההמלצות"
   },
   "product": {
     "metaSuffix": "מוצר",
@@ -69,7 +81,8 @@
       "Light Blue": "תכלת",
       "Cream": "קרם",
       "Pink": "ורוד"
-    }
+    },
+    "priceLabel": "מחיר"
   },
   "photoCustomizer": {
     "heading": "התמונות שלכם",
@@ -98,12 +111,21 @@
       "heic": "תמונות HEIC מאייפון לא נתמכות. שמרו את התמונה כ‑JPG ונסו שוב.",
       "badType": "הקובץ הזה לא נתמך. אפשר JPG, ‏PNG או WebP.",
       "tooLarge": "הקובץ גדול מדי. עד 15MB.",
-      "tooSmall": "התמונה קטנה מדי להדפסה. צריך לפחות 1200×1200 פיקסלים.",
+      "tooSmall": "התמונה קטנה מדי להדפסה. צריך לפחות {min}×{min} פיקסלים.",
       "loadFailed": "לא הצלחנו לפתוח את הקובץ. נסו תמונה אחרת.",
       "renderFailed": "התצוגה המקדימה לא נטענה. נסו שוב.",
       "cannotEdit": "אי אפשר לערוך את התמונה הזו. בחרו תמונה חדשה.",
       "uploadFailed": "ההעלאה נכשלה. בדקו את החיבור ונסו שוב."
-    }
+    },
+    "progress": "{n}/3 תמונות",
+    "needPhotos": "בחרו עוד {n} תמונות כדי להמשיך",
+    "needOnePhoto": "בחרו עוד תמונה אחת כדי להמשיך",
+    "needApprove": "אשרו את התמונות כדי להמשיך",
+    "ready": "3/3 התמונות מוכנות",
+    "replaceConfirm": "להחליף את התמונות שבחרתם בתמונות מהגלריה?",
+    "lowRes": "התמונה קטנה יחסית, ולכן ההדפסה עלולה לצאת פחות חדה.",
+    "cropHint": "גררו כדי למקם, או השתמשו בחיצים במקלדת.",
+    "slotsLabel": "התמונות שבחרתם"
   },
   "cart": {
     "metaTitle": "Lightboard | סל",
@@ -141,7 +163,9 @@
       "linkLabel": "התקנון",
       "suffix": "",
       "requiredHint": "צריך לאשר את התקנון כדי להמשיך לתשלום"
-    }
+    },
+    "discountToggle": "יש לכם קופון או כרטיס מתנה?",
+    "checkoutSecure": "תשלום מאובטח"
   },
   "search": {
     "metaTitle": "Lightboard | חיפוש",
@@ -270,7 +294,8 @@
     "readableFont": "פונט קריא",
     "reset": "איפוס",
     "statementLink": "הצהרת נגישות",
-    "skipToContent": "דילוג לתוכן הראשי"
+    "skipToContent": "דילוג לתוכן הראשי",
+    "quickActions": "עזרה ונגישות"
   },
   "whatsapp": {
     "label": "דברו איתנו בוואטסאפ",
@@ -294,7 +319,30 @@
       {
         "label": "נגישות",
         "to": "/pages/accessibility"
+      },
+      {
+        "label": "משלוחים",
+        "to": "/policies/shipping-policy"
+      },
+      {
+        "label": "ביטולים והחזרות",
+        "to": "/policies/refund-policy"
       }
-    ]
+    ],
+    "cookieSettings": "הגדרות עוגיות",
+    "legalNavLabel": "מידע משפטי"
+  },
+  "contact": {
+    "title": "דברו איתנו",
+    "kicker": "שאלה על ההזמנה, על התמונות או על המשלוח? הכי מהר בוואטסאפ.",
+    "whatsapp": "וואטסאפ",
+    "phone": "טלפון",
+    "email": "מייל",
+    "instagram": "אינסטגרם"
+  },
+  "comingSoon": {
+    "titleBefore": "משהו",
+    "titleEm": "חדש",
+    "titleAfter": "בדרך."
   }
 }
