@@ -30,6 +30,8 @@ export default [
       '**/*.graphql.ts',
       '**/*.generated.d.ts',
       '**/.react-router/',
+      // Not part of tsconfig's project, so the type-aware parser can't load it.
+      'eslint.config.ts',
     ],
   },
   ...fixupConfigRules(
@@ -105,7 +107,16 @@ export default [
       '@typescript-eslint/no-non-null-asserted-optional-chain': 'off',
       '@typescript-eslint/no-unused-vars': ['warn', {argsIgnorePattern: '^_'}],
       '@typescript-eslint/no-floating-promises': 'error',
-      '@typescript-eslint/no-misused-promises': 'error',
+      // Async React event handlers (onClick={asyncFn}) are fine as long as
+      // they handle their own rejections; keep the check for everything else
+      // (conditionals, spreads, arguments).
+      '@typescript-eslint/no-misused-promises': [
+        'error',
+        {checksVoidReturn: {attributes: false}},
+      ],
+      // Safari/VoiceOver drops list semantics from `list-style: none` lists,
+      // so an explicit role="list" on <ul>/<ol> is intentional, not redundant.
+      'jsx-a11y/no-redundant-roles': ['error', {ul: ['list'], ol: ['list']}],
       '@typescript-eslint/consistent-type-imports': [
         'error',
         {prefer: 'type-imports', fixStyle: 'separate-type-imports'},
