@@ -1,5 +1,6 @@
 import {test as base, expect} from '@playwright/test';
 import type {Page, Route} from '@playwright/test';
+import {BYPASS_HEADER} from './env';
 import he from '../app/lib/i18n/he.json' with {type: 'json'};
 import en from '../app/lib/i18n/en.json' with {type: 'json'};
 
@@ -34,14 +35,29 @@ type Fixtures = {
 };
 
 /**
- * Base test for browser specs. Every page is guarded so the live store is
- * never written to by accident:
+ * Base test for browser specs. Requests to the storefront origin carry the
+ * Oxygen auth bypass header when one is configured, and every page is
+ * guarded so the live store is never written to by accident:
  *   - POST /api/photos/upload is fulfilled locally with a mocked success
  *     (it would otherwise write into Shopify Files);
  *   - the Shopify privacy banner, if shown, is declined so it can't cover
  *     the controls under test.
  */
 export const test = base.extend<Fixtures>({
+  context: async ({context, baseURL}, use) => {
+    const token = process.env.OXYGEN_AUTH_BYPASS_TOKEN;
+    if (token && baseURL) {
+      const origin = new URL(baseURL).origin;
+      await context.route(
+        (url) => url.origin === origin,
+        (route) =>
+          route.continue({
+            headers: {...route.request().headers(), [BYPASS_HEADER]: token},
+          }),
+      );
+    }
+    await use(context);
+  },
   uploadCalls: async ({page}, use) => {
     const calls = {count: 0};
     await page.route('**/api/photos/upload', async (route: Route) => {

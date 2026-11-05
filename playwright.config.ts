@@ -1,4 +1,5 @@
 import {defineConfig, devices} from '@playwright/test';
+import {STORAGE_STATE} from './e2e/env';
 
 /**
  * End-to-end tests against a running storefront.
@@ -7,8 +8,9 @@ import {defineConfig, devices} from '@playwright/test';
  *                              CI sets it to the Oxygen preview deployment URL.
  *   OXYGEN_AUTH_BYPASS_TOKEN   Token from `shopify hydrogen deploy
  *                              --auth-bypass-token`. Sent as the
- *                              `oxygen-auth-bypass-token` header so private
- *                              Oxygen previews let the browser in.
+ *                              `oxygen-auth-bypass-token` header (to the
+ *                              storefront origin only) so private Oxygen
+ *                              previews let the tests in.
  *   E2E_PREVIEW_TOKEN          Optional PREVIEW_TOKEN of the target deployment.
  *                              Only needed when the launch gate (COMING_SOON)
  *                              is on there; global-setup trades it for the
@@ -21,10 +23,7 @@ const baseURL = (process.env.E2E_BASE_URL || 'http://localhost:3000').replace(
   /\/+$/,
   '',
 );
-const bypassToken = process.env.OXYGEN_AUTH_BYPASS_TOKEN;
 const isCI = Boolean(process.env.CI);
-
-export const STORAGE_STATE = 'test-results/.auth/state.json';
 
 export default defineConfig({
   testDir: './e2e',
@@ -43,9 +42,8 @@ export default defineConfig({
   use: {
     baseURL,
     storageState: STORAGE_STATE,
-    extraHTTPHeaders: bypassToken
-      ? {'oxygen-auth-bypass-token': bypassToken}
-      : undefined,
+    // The Oxygen bypass header is added per request to our origin only
+    // (e2e/support.ts and the API specs), never globally.
     // The site honours reduced motion; it also stops idle "nudge" animations
     // that would otherwise keep buttons from ever being "stable" for clicks.
     contextOptions: {reducedMotion: 'reduce'},

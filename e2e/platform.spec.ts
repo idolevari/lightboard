@@ -1,5 +1,6 @@
 import {expect, test} from '@playwright/test';
 import type {APIRequestContext} from '@playwright/test';
+import {bypassHeaders} from './env';
 import {PRODUCT_PATH, PRODUCT_PRICE} from './support';
 
 /**
@@ -7,6 +8,8 @@ import {PRODUCT_PATH, PRODUCT_PRICE} from './support';
  * viewport, so they run once (mobile project only).
  */
 test.skip(({isMobile}) => !isMobile, 'HTTP-only checks run in one project');
+// API-only file (no pages), so the bypass header can go on every request.
+test.use({extraHTTPHeaders: bypassHeaders()});
 
 type JsonLdNode = {'@type'?: string | string[]; [key: string]: unknown};
 

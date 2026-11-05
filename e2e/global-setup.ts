@@ -2,7 +2,7 @@ import {mkdir, writeFile} from 'node:fs/promises';
 import {dirname} from 'node:path';
 import {request} from '@playwright/test';
 import type {FullConfig} from '@playwright/test';
-import {STORAGE_STATE} from '../playwright.config';
+import {STORAGE_STATE, bypassHeaders} from './env';
 
 /**
  * Prepares the shared storage state every test starts from.
@@ -15,13 +15,16 @@ export default async function globalSetup(config: FullConfig) {
   await mkdir(dirname(STORAGE_STATE), {recursive: true});
 
   const previewToken = process.env.E2E_PREVIEW_TOKEN;
-  const {baseURL, extraHTTPHeaders} = config.projects[0].use;
+  const {baseURL} = config.projects[0].use;
   if (!previewToken || !baseURL) {
     await writeFile(STORAGE_STATE, JSON.stringify({cookies: [], origins: []}));
     return;
   }
 
-  const ctx = await request.newContext({baseURL, extraHTTPHeaders});
+  const ctx = await request.newContext({
+    baseURL,
+    extraHTTPHeaders: bypassHeaders(),
+  });
   const res = await ctx.get(
     `/preview?token=${encodeURIComponent(previewToken)}`,
     {maxRedirects: 0},
