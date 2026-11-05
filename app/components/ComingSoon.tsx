@@ -1,9 +1,13 @@
 import {mailtoHref, useBusiness, whatsappHref} from '~/lib/brand';
+import {useI18n} from '~/lib/useI18n';
 
 export function ComingSoon() {
   const b = useBusiness();
   const whatsapp = whatsappHref(b);
   const mailto = mailtoHref(b);
+  const {dict} = useI18n();
+  const c = dict.comingSoon;
+  const contact = dict.contact;
 
   return (
     <div className="coming-soon">
@@ -20,7 +24,7 @@ export function ComingSoon() {
         />
 
         <h1 className="coming-soon-title">
-          אתר <em>חדש</em> בדרך.
+          {c.titleBefore} <em>{c.titleEm}</em> {c.titleAfter}
         </h1>
 
         <div className="coming-soon-contact">
@@ -31,12 +35,12 @@ export function ComingSoon() {
               target="_blank"
               rel="noreferrer"
             >
-              WhatsApp
+              {contact.whatsapp}
             </a>
           )}
           {mailto && (
             <a className="coming-soon-link" href={mailto}>
-              Email
+              {contact.email}
             </a>
           )}
           {b?.instagram && (
@@ -46,7 +50,7 @@ export function ComingSoon() {
               target="_blank"
               rel="noreferrer"
             >
-              Instagram
+              {contact.instagram}
             </a>
           )}
         </div>
