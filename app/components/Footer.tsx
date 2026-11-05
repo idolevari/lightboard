@@ -1,6 +1,7 @@
 import {NavLink, useNavigate} from 'react-router';
 import {useI18n} from '~/lib/useI18n';
 import {telHref, useBusiness, whatsappHref} from '~/lib/brand';
+import {openCookiePreferences} from '~/lib/consent';
 
 export function Footer() {
   const {dict, to} = useI18n();
@@ -95,30 +96,16 @@ export function Footer() {
   );
 }
 
-type PrivacyBannerWindow = Window & {
-  privacyBanner?: {showPreferences?: () => void};
-};
-
 /**
  * Cookie-settings link in the footer: lets a visitor reopen consent choices.
- *
- * TODO(consent): when fix/platform-security merges, replace this component's
- * body with the helper from `~/lib/consent`:
- *   const canOpen = useCookiePreferencesAvailable();
- *   <button type="button" className="footer-cookie-btn"
- *     onClick={openCookiePreferences} hidden={!canOpen}>{label}</button>
- * and drop the fallbacks below. Until then we use Shopify's privacy-banner
- * API if it is loaded, otherwise we send the visitor to the privacy policy.
+ * Opens Shopify's privacy-banner preferences when the banner script is loaded;
+ * otherwise falls back to the privacy policy so the link is never dead.
  */
 function CookieSettingsButton({label}: {label: string}) {
   const {to} = useI18n();
   const navigate = useNavigate();
   function openCookieSettings() {
-    const w = window as PrivacyBannerWindow;
-    if (typeof w.privacyBanner?.showPreferences === 'function') {
-      w.privacyBanner.showPreferences();
-      return;
-    }
+    if (openCookiePreferences()) return;
     void navigate(to('/policies/privacy-policy'));
   }
   return (
