@@ -56,7 +56,23 @@ There was historically a duplicate `Status 1` column — it's been removed. Only
 
 ## Deployment
 
-Every push to `main` auto-deploys to Oxygen via `.github/workflows/oxygen-deployment.yml`. Secret name: `OXYGEN_DEPLOYMENT_TOKEN_1000130179`.
+Pipeline (`.github/workflows/oxygen-deployment.yml`, reusable `verify.yml`, local action `.github/actions/oxygen-deploy`):
+
+- **Push to `main`** → `verify` → production deploy (GitHub environment `production`, never cancelled mid-flight)
+- **Push to `dev`** → `verify` → dev environment deploy
+- **PR into `main`/`dev`** → `verify` → Oxygen preview deploy (`--preview`, URL in the run summary) → `e2e` (Playwright against the preview, using an Oxygen auth-bypass token). Fork and Dependabot PRs run `verify` only.
+- `verify` = `npm ci` → codegen + fail on `*.generated.d.ts` drift → `npm run typecheck` → `npm run lint` → `npm run build`. Required status check name: `verify / verify`.
+- Node is pinned by `.nvmrc` (24). Actions are pinned by commit SHA. Dependabot (`.github/dependabot.yml`) runs weekly against `dev`; majors of Hydrogen / Shopify CLI / react-router / vite are ignored (manual migrations).
+- `security-review.yml` runs the Claude security review on same-repo PRs.
+- Secret: `OXYGEN_DEPLOYMENT_TOKEN_1000130179`. Optional `E2E_PREVIEW_TOKEN` only if the Preview environment has the launch gate on.
+
+**Workflow:** branch → PR into `main` → check the preview + e2e → merge. Don't push to `main` directly.
+
+## Testing
+
+- **E2E:** Playwright in `e2e/` (`playwright.config.ts`, `tsconfig.e2e.json`). `npm run e2e:install` once, then `E2E_BASE_URL=http://localhost:3120 npm run e2e` against `npx shopify hydrogen preview --build --port 3120`. Projects: mobile (390×844, he-IL, touch) and desktop.
+- Suites: `purchase` (home → PDP → color → gallery photos → approve → cart → checkout redirect, aborted — never pays), `navigation`, `platform` (robots, sitemap, llms.txt, legacy 301, JSON-LD, CSP, upload rejection), `accessibility` (axe, fails on serious/critical).
+- The photo upload endpoint is always mocked in tests — never write to Shopify Files from tests.
 
 ## Coming Soon / Launch Gate
 
@@ -71,17 +87,38 @@ When the launch gate is on, public visitors see `app/components/ComingSoon.tsx` 
 
 - `env.COMING_SOON='true'` → enables the gate (any other value = off)
 - **Localhost** (`localhost` / `127.0.0.1`) → always bypasses, so `npm run dev` works
-- **Bypass cookie** `lb_preview=1` (httpOnly, Secure, SameSite=Lax, 30 days) → set by `/preview`
+- **Bypass cookie** `lb_preview=<HMAC-SHA256(SESSION_SECRET, "lb_preview:"+PREVIEW_TOKEN)>` (httpOnly, Secure, SameSite=Lax, 30 days) → set by `/preview`; rotating either secret revokes issued cookies
 - **`/preview?token=<env.PREVIEW_TOKEN>`** → constant-time check, sets the cookie, redirects to `/`. Unknown/missing token returns 404. Set `PREVIEW_TOKEN` in the Oxygen env to enable bypass; without it nobody can preview.
 
 **Launching:** set `COMING_SOON=false` (or remove the env var). No code change needed.
 
 ## Brand
 
-- **Palette** (in `app/styles/app.css`): `--color-sand` `#FDF8F0`, `--color-cream` `#F5EBD8`, `--color-wood` `#2D2419`, `--color-terracotta` `#C67B5C`, `--color-sage` `#8FA68E`, `--color-tan` `#D4A574`
-- **Fonts** (Google Fonts, loaded in `app/root.tsx`): Heebo (body), Rubik (display), DM Serif Display (accents)
+- **Direction:** "Golden Hour Van" — California van-life / surf, warm golden-hour light, hand-drawn illustrations.
+- **Palette** (tokens in `app/styles/app.css` `:root`): base `--cream` `#f4ede0` / `--cream-2` / `--cream-3`, `--ink` `#0b3a4a`, `--teal` (brand teal) and `--lime` (brand lime). Warm accents: `--sun` `#f6c95b`, `--sunset`, `--glow`, `--fog`. **Text-safe** variants (≥4.5:1 on cream): `--teal-ink`/`--teal-text` `#0e6f78`, `--sunset-ink`, `--driftwood` `#725a41`. `--sun`/`--sunset` are decorative or ≥24px only. Legacy `--color-*` names alias these.
+- **Fonts:** Ploni (self-hosted Hebrew display, `public/fonts`, preloaded), Heebo 400–700 (body), Fraunces (Latin display), JetBrains Mono (labels) via Google Fonts in `app/root.tsx`; Amatic SC loaded lazily with `text=` for a few hand-written notes. Keep the font budget small.
+- **Illustrations:** `app/components/illustrations/index.tsx` (SunRays, WaveDivider, WaveLayers, StringLights, StampBadge, Van, Surfboard, Palms) + `public/illustrations/doodles.svg` sprite. Decorative, `aria-hidden`.
+- **Photos:** licensed Unsplash photos uploaded to Shopify Files; URLs + licenses in `app/lib/photos.ts`. Hero fallback slides (`HERO_SLIDES` in `app/routes/($locale)._index.tsx`) use them until `hero_slide` metaobjects exist.
+- **Motion:** CSS-first, transform/opacity only, paused off-screen, disabled under `prefers-reduced-motion` and by the accessibility menu's "stop animations" switch.
+- **Voice (copy):** native Hebrew, plural address (אתם), short and confident, no slash forms; brand spelled **לייטבורד**. Facts: free shipping on all orders in Israel, handmade in Tel Aviv (legal address Hod Hasharon), 7–10 business days, since 2019. Code-side facts live in `app/lib/brand-facts.ts`.
 - **Logo:** `public/favicon.png` (teal LIGHT / lime BOARD with sun rays — from the original WordPress site)
 - **Tagline:** "living · design · surfing"
+
+## SEO & AI visibility
+
+- **Meta:** `routeMeta()` in `app/lib/seo-urls.ts` (canonical, hreflang he/en/x-default, OG/Twitter); home/product copy in `app/lib/meta.ts`. Hebrew at `/`, English under `/en`.
+- **Structured data:** one `@graph` from `siteJsonLd()` in `app/lib/.server/seo.server.ts` (OnlineStore, WebSite, MerchantReturnPolicy, FAQPage, ProductGroup + variants, BreadcrumbList), rendered via `app/components/JsonLd.tsx` (escaped). Brand is always "Lightboard" regardless of the Shopify Vendor field.
+- **Crawling:** `[robots.txt].ts` explicitly allows AI crawlers (GPTBot, OAI-SearchBot, ClaudeBot, PerplexityBot, Google-Extended, …); custom sitemaps in `[sitemap.xml].ts` + `sitemap.$type.$page[.xml].ts` (always `https://lightboard.co.il`).
+- **GEO:** `/llms.txt` and `/llms-full.txt` built from live Shopify data (`app/lib/.server/llms.server.ts`).
+- **Legacy URLs:** old WooCommerce/WordPress paths 301 via `app/lib/.server/legacy-redirects.ts` (hooked in `server.ts` before `storefrontRedirect`).
+
+## Privacy, consent & security
+
+- Shopify privacy banner is on (`withPrivacyBanner: true` in `app/root.tsx`). Meta Pixel (`app/lib/meta-pixel.tsx`) loads `fbevents.js` only after explicit marketing consent; helpers in `app/lib/consent.ts` (footer "הגדרות עוגיות" uses `openCookiePreferences`). **Requires** Shopify Admin → Customer privacy → Cookie banner → All regions, otherwise nobody can opt in.
+- CSP + `Referrer-Policy` + `Permissions-Policy` in `app/entry.server.tsx` (dev check is `process.env.NODE_ENV === 'development'` — Oxygen doesn't set `env.NODE_ENV`).
+- `/api/photos/upload`: same-origin only, needs a signed-session upload grant (set by the PDP loader), per-session/IP rate limits, size caps, JPEG GPS/XMP scrub, UUID filenames, generic client errors.
+- Shopify HTML is sanitized server-side only (`app/lib/.server/sanitize.server.ts`) — never import sanitize-html into client code.
+- react-router is held at 7.18.x via `overrides` (above Hydrogen 2026.4's declared range, for security advisories). Hydrogen 2026.10 / CLI 5 is a planned separate migration.
 
 ## Content architecture
 
