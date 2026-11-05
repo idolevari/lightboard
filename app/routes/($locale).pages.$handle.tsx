@@ -1,7 +1,9 @@
 import {useLoaderData} from 'react-router';
+import {useI18n} from '~/lib/useI18n';
+import {mailtoHref, telHref, useBusiness, whatsappHref} from '~/lib/brand';
 import {redirectIfHandleIsLocalized} from '~/lib/.server/redirect.server';
 import {checkForTrailingEncodedSpaces} from '~/lib/.server/url.server';
-import {sanitizeShopifyHtml} from '~/lib/sanitize';
+import {sanitizeShopifyHtml} from '~/lib/.server/sanitize.server';
 import {detectLocaleFromRequest} from '~/lib/i18n';
 import {absoluteUrl, simpleSeo} from '~/lib/.server/seo.server';
 import {routeMeta} from '~/lib/seo-urls';
@@ -57,7 +59,7 @@ async function loadCriticalData({context, request, params}: Route.LoaderArgs) {
   });
 
   return {
-    page,
+    page: {...page, body: sanitizeShopifyHtml(page.body)},
     seo,
   };
 }
@@ -71,16 +73,102 @@ function loadDeferredData() {
   return {};
 }
 
+const CONTACT_HANDLE = 'contact';
+
+function stripTags(html: string | null | undefined) {
+  return String(html ?? '')
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .trim();
+}
+
 export default function Page() {
   const {page} = useLoaderData<typeof loader>();
+  const {dict} = useI18n();
+  const isContact = page.handle === CONTACT_HANDLE;
+  const hasBody = stripTags(page.body).length > 0;
+  // Shopify page bodies (e.g. the accessibility statement) often carry
+  // their own <h1>. Only add one when the body doesn't, so every page has
+  // exactly one.
+  const bodyHasH1 = /<h1[\s>]/i.test(page.body ?? '');
+  const title = isContact ? dict.contact.title : page.title;
 
   return (
     <article className="page">
-      <div
-        className="page-body"
-        dangerouslySetInnerHTML={{__html: sanitizeShopifyHtml(page.body)}}
-      />
+      {!bodyHasH1 ? <h1>{title}</h1> : null}
+      {isContact ? <ContactBlock /> : null}
+      {hasBody ? (
+        <div
+          className="page-body"
+          dangerouslySetInnerHTML={{__html: page.body}}
+        />
+      ) : null}
     </article>
+  );
+}
+
+/**
+ * Built-in contact channels, rendered from the shop `business.*`
+ * metafields already loaded by the root loader — so /pages/contact is never
+ * a blank dead end even when the Shopify page body is empty.
+ */
+function ContactBlock() {
+  const {dict} = useI18n();
+  const c = dict.contact;
+  const b = useBusiness();
+  const wa = whatsappHref(b, dict.whatsapp?.prefill);
+  const tel = telHref(b);
+  const mail = mailtoHref(b);
+  return (
+    <section aria-label={c.title}>
+      <p className="contact-kicker">{c.kicker}</p>
+      <ul className="contact-actions">
+        {wa ? (
+          <li>
+            <a
+              className="contact-btn contact-btn--primary"
+              href={wa}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <img src="/whatsapp.svg" alt="" width="26" height="26" />
+              <span>{dict.whatsapp?.label ?? c.whatsapp}</span>
+            </a>
+          </li>
+        ) : null}
+        {tel && b.phoneDisplay ? (
+          <li>
+            <a className="contact-btn" href={tel}>
+              <span className="contact-btn__label">{c.phone}</span>
+              <bdi dir="ltr">{b.phoneDisplay}</bdi>
+            </a>
+          </li>
+        ) : null}
+        {mail ? (
+          <li>
+            <a className="contact-btn" href={mail}>
+              <span className="contact-btn__label">{c.email}</span>
+              <bdi dir="ltr">{b.email}</bdi>
+            </a>
+          </li>
+        ) : null}
+        {b.instagram ? (
+          <li>
+            <a
+              className="contact-btn"
+              href={b.instagram}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <span className="contact-btn__label">{c.instagram}</span>
+              <bdi dir="ltr">
+                {b.instagram.replace(/^https?:\/\/(www\.)?instagram\.com\//, '@').replace(/\/$/, '')}
+              </bdi>
+            </a>
+          </li>
+        ) : null}
+      </ul>
+    </section>
   );
 }
 

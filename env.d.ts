@@ -21,7 +21,6 @@ declare global {
     COMING_SOON?: string;
     PREVIEW_TOKEN?: string;
     META_PIXEL_ID?: string;
-    NODE_ENV?: string;
   }
 }
 

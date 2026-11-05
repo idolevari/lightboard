@@ -1,3 +1,4 @@
+import {Price} from '~/components/ProductPrice';
 import {
   Link,
   useLoaderData,
@@ -6,7 +7,6 @@ import {
 } from 'react-router';
 import {useRef} from 'react';
 import {
-  Money,
   getPaginationVariables,
   flattenConnection,
 } from '@shopify/hydrogen';
@@ -22,7 +22,7 @@ import {PaginatedResourceSection} from '~/components/PaginatedResourceSection';
 import {useI18n} from '~/lib/useI18n';
 import {detectLocaleFromRequest, getDictionary} from '~/lib/i18n';
 import {absoluteUrl, simpleSeo} from '~/lib/.server/seo.server';
-import {routeMeta} from '~/lib/seo-urls';
+import {NO_INDEX, routeMeta} from '~/lib/seo-urls';
 import type {
   CustomerOrdersFragment,
   OrderItemFragment,
@@ -30,7 +30,7 @@ import type {
 import type {Route} from './+types/($locale).account.orders._index';
 
 export const meta: Route.MetaFunction = ({data, matches}) =>
-  routeMeta({matches, data});
+  routeMeta({matches, data, overrides: NO_INDEX});
 
 export async function loader({request, context}: Route.LoaderArgs) {
   const {customerAccount} = context;
@@ -227,8 +227,10 @@ function OrderItem({order}: {order: OrderItemFragment}) {
         )}
         <p>{order.financialStatus}</p>
         {fulfillmentStatus && <p>{fulfillmentStatus}</p>}
-        <Money data={order.totalPrice} />
-        <Link to={orderHref}>{dict.common.next} →</Link>
+        <Price data={order.totalPrice} />
+        <Link to={orderHref}>
+          {dict.common.next} <span className="arrow" aria-hidden="true">→</span>
+        </Link>
       </fieldset>
       <br />
     </>

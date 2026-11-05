@@ -2,19 +2,24 @@ import {Suspense, useEffect, useState} from 'react';
 import {Await, Link, NavLink, useAsyncValue, useLocation} from 'react-router';
 import {useAnalytics, useOptimisticCart} from '@shopify/hydrogen';
 import type {CartReturn} from '@shopify/hydrogen';
-import {useAside} from '~/components/Aside';
+import {asideDomId, useAside} from '~/components/Aside';
 import {useI18n} from '~/lib/useI18n';
 import {
   SUPPORTED_LOCALES,
   getLocaleConfig,
+  parseLocaleFromPath,
   swapLocaleInPath,
 } from '~/lib/i18n';
+import {useBusiness, telHref, whatsappHref} from '~/lib/brand';
 import type {
   CartApiQueryFragment,
   HeaderQuery,
 } from 'storefrontapi.generated';
 
 const HOME_PATH_RE = /^\/([a-z]{2}\/?)?$/;
+
+/** The one product the store sells — "Shop" goes straight to it. */
+export const SHOP_PATH = '/products/lightboard';
 
 type ResolvedCart = CartApiQueryFragment | CartReturn | null;
 type HeaderCart = Promise<ResolvedCart> | ResolvedCart;
@@ -25,6 +30,52 @@ export type HeaderProps = {
   isLoggedIn: Promise<boolean>;
   publicStoreDomain: string;
 };
+
+type NavItem = {
+  key: string;
+  to: string;
+  label: string;
+  /** Homepage anchor this item points at ('' for none). */
+  hash: string;
+};
+
+/**
+ * Curated primary navigation. Labels come from i18n rather than the Shopify
+ * `main-menu` (whose item titles are English-only), so HE and EN both read
+ * natively and the drawer never shows mixed-language links.
+ */
+export function usePrimaryNav(): NavItem[] {
+  const {dict, to} = useI18n();
+  return [
+    {key: 'shop', to: to(SHOP_PATH), label: dict.nav.shop, hash: ''},
+    {key: 'about', to: to('/#story'), label: dict.nav.about, hash: '#story'},
+    {key: 'faq', to: to('/#faq'), label: dict.nav.faq, hash: '#faq'},
+    {
+      key: 'contact',
+      to: to('/pages/contact'),
+      label: dict.nav.contact,
+      hash: '',
+    },
+  ];
+}
+
+/**
+ * NavLink's isActive ignores the hash, so on the homepage `/#story` and
+ * `/#faq` would both match. Resolve the single active item ourselves.
+ */
+function useActiveNavKey(items: NavItem[]): string | null {
+  const location = useLocation();
+  const isHome = HOME_PATH_RE.test(location.pathname);
+  if (isHome) {
+    return items.find((i) => i.hash && i.hash === location.hash)?.key ?? null;
+  }
+  // Root data doesn't revalidate on client navigation, so derive the
+  // locale-less path from the live location.
+  const path = parseLocaleFromPath(location.pathname).rest || '/';
+  if (path.startsWith(SHOP_PATH)) return 'shop';
+  if (path.startsWith('/pages/contact')) return 'contact';
+  return null;
+}
 
 export function Header({isLoggedIn, cart}: HeaderProps) {
   const {dict, to} = useI18n();
@@ -42,40 +93,43 @@ export function Header({isLoggedIn, cart}: HeaderProps) {
     return () => window.removeEventListener('scroll', onScroll);
   }, [isHome]);
 
-  const menu = [
-    {to: to('/'), label: dict.nav.home, hash: ''},
-    {to: to('/#story'), label: dict.nav.about, hash: '#story'},
-  ];
-  // NavLink's isActive compares pathname only and ignores the hash, so on the
-  // homepage both '/' and '/#story' would match. Drive the underline from the
-  // current hash instead so exactly one nav link is active.
-  const activeHash = isHome ? location.hash : null;
-  const rightMenu = [{to: to('/pages/contact'), label: dict.nav.contact}];
+  const items = usePrimaryNav();
+  const activeKey = useActiveNavKey(items);
+  const startItems = items.filter((i) => i.key !== 'contact');
+  const endItems = items.filter((i) => i.key === 'contact');
+
+  const renderLink = (item: NavItem) => {
+    const isActive = item.key === activeKey;
+    return (
+      <NavLink
+        key={item.key}
+        to={item.to}
+        prefetch="intent"
+        aria-current={isActive ? 'page' : undefined}
+        className={() =>
+          `lb-nav-link lb-nav-link--desktop${isActive ? ' active' : ''}`
+        }
+      >
+        {item.label}
+      </NavLink>
+    );
+  };
 
   return (
     <header className={`header lb-nav ${scrolled ? 'scrolled' : ''}`}>
       <div className="container lb-nav-inner">
-        <nav className="lb-nav-left" role="navigation">
+        <nav className="lb-nav-left" aria-label={dict.nav.primaryLabel}>
           <MenuToggle label={dict.nav.menu} />
-          {menu.map((item) => {
-            const isActive = item.hash === activeHash;
-            return (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                prefetch="intent"
-                aria-current={isActive ? 'page' : undefined}
-                className={() =>
-                  `lb-nav-link lb-nav-link--desktop${isActive ? ' active' : ''}`
-                }
-              >
-                {item.label}
-              </NavLink>
-            );
-          })}
+          {startItems.map(renderLink)}
         </nav>
 
-        <NavLink to={to('/')} prefetch="intent" end aria-label="Lightboard" className="lb-logo-link">
+        <NavLink
+          to={to('/')}
+          prefetch="intent"
+          end
+          aria-label="Lightboard"
+          className="lb-logo-link"
+        >
           <img
             src="/lightboard-text.svg"
             alt="Lightboard"
@@ -87,18 +141,8 @@ export function Header({isLoggedIn, cart}: HeaderProps) {
         </NavLink>
 
         <div className="lb-nav-right">
-          {rightMenu.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              prefetch="intent"
-              className={({isActive}) =>
-                `lb-nav-link lb-nav-link--desktop${isActive ? ' active' : ''}`
-              }
-            >
-              {item.label}
-            </NavLink>
-          ))}
+          {endItems.map(renderLink)}
+          <LangToggle className="lb-lang-toggle--desktop" />
           <SearchToggle label={dict.nav.search} />
           <AccountLink isLoggedIn={isLoggedIn} label={dict.nav.account} />
           <CartToggle cart={cart} label={dict.nav.cart} />
@@ -108,11 +152,15 @@ export function Header({isLoggedIn, cart}: HeaderProps) {
   );
 }
 
-function LangToggle() {
-  const {locale} = useI18n();
+export function LangToggle({className = ''}: {className?: string}) {
+  const {locale, dict} = useI18n();
   const location = useLocation();
   return (
-    <div className="lb-lang-toggle" role="group" aria-label="Language">
+    <div
+      className={`lb-lang-toggle ${className}`.trim()}
+      role="group"
+      aria-label={dict.nav.language}
+    >
       {SUPPORTED_LOCALES.map((code) => {
         const cfg = getLocaleConfig(code);
         const href = swapLocaleInPath(
@@ -127,9 +175,11 @@ function LangToggle() {
             prefetch="intent"
             className={`lb-lang-btn${isActive ? ' active' : ''}`}
             aria-current={isActive ? 'true' : undefined}
-            aria-label={cfg.label}
+            lang={cfg.htmlLang}
+            hrefLang={cfg.htmlLang}
           >
-            {cfg.shortLabel}
+            <span aria-hidden="true">{cfg.shortLabel}</span>
+            <span className="sr-only">{cfg.label}</span>
           </Link>
         );
       })}
@@ -137,63 +187,111 @@ function LangToggle() {
   );
 }
 
-type HeaderMenuProps = {
-  menu: HeaderQuery['menu'] | null | undefined;
-  primaryDomainUrl?: string;
-  viewport: 'desktop' | 'mobile';
-  publicStoreDomain: string;
-};
+/**
+ * Body of the mobile menu drawer: large primary links, then utilities
+ * (search, account, language), then the human channels (WhatsApp / phone)
+ * and the policy links shoppers look for before buying.
+ */
+export function MobileMenu() {
+  const {close, open} = useAside();
+  const {dict, to} = useI18n();
+  const items = usePrimaryNav();
+  const activeKey = useActiveNavKey(items);
+  const business = useBusiness();
+  const whatsapp = whatsappHref(business, dict.whatsapp?.prefill);
+  const tel = telHref(business);
 
-export function HeaderMenu({
-  menu,
-  primaryDomainUrl,
-  viewport,
-  publicStoreDomain,
-}: HeaderMenuProps) {
-  const className = `header-menu-${viewport}`;
-  const {close} = useAside();
-  const {to, dict} = useI18n();
-  const items = (menu || FALLBACK_HEADER_MENU).items;
   return (
-    <nav className={className} role="navigation">
-      {viewport === 'mobile' && (
-        <NavLink end onClick={close} prefetch="intent" to={to('/')}>
-          {dict.nav.home}
+    <div className="mobile-menu">
+      <nav aria-label={dict.nav.primaryLabel}>
+        <ul className="mobile-menu__list">
+          {items.map((item) => {
+            const isActive = item.key === activeKey;
+            return (
+              <li key={item.key}>
+                <NavLink
+                  to={item.to}
+                  prefetch="intent"
+                  onClick={close}
+                  aria-current={isActive ? 'page' : undefined}
+                  className={() =>
+                    `mobile-menu__link${isActive ? ' is-active' : ''}`
+                  }
+                >
+                  {item.label}
+                </NavLink>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+
+      <div className="mobile-menu__utils">
+        <button
+          type="button"
+          className="mobile-menu__util"
+          onClick={() => open('search')}
+        >
+          <SearchIcon />
+          <span>{dict.nav.search}</span>
+        </button>
+        <NavLink
+          to={to('/account')}
+          prefetch="intent"
+          onClick={close}
+          className="mobile-menu__util"
+        >
+          <AccountIcon />
+          <span>{dict.nav.account}</span>
         </NavLink>
+        <LangToggle className="lb-lang-toggle--menu" />
+      </div>
+
+      {(whatsapp || tel) && (
+        <div className="mobile-menu__contact">
+          {whatsapp && (
+            <a
+              href={whatsapp}
+              target="_blank"
+              rel="noreferrer"
+              className="mobile-menu__wa"
+            >
+              <img src="/whatsapp.svg" alt="" width="24" height="24" />
+              <span>{dict.whatsapp?.label}</span>
+            </a>
+          )}
+          {tel && business.phoneDisplay && (
+            <a href={tel} className="mobile-menu__tel">
+              <span>{dict.footer.metaPhoneLabel}: </span>
+              <bdi dir="ltr">{business.phoneDisplay}</bdi>
+            </a>
+          )}
+        </div>
       )}
-      {items.map((item) => {
-        if (!item.url) return null;
-        const url =
-          item.url.includes('myshopify.com') ||
-          (publicStoreDomain && item.url.includes(publicStoreDomain)) ||
-          (primaryDomainUrl && item.url.includes(primaryDomainUrl))
-            ? new URL(item.url).pathname
-            : item.url;
-        const href = url.startsWith('/') ? to(url) : url;
-        return (
-          <NavLink
-            className="header-menu-item"
-            end
-            key={item.id}
-            onClick={close}
-            prefetch="intent"
-            to={href}
-          >
-            {item.title}
-          </NavLink>
-        );
-      })}
-    </nav>
+
+      <ul className="mobile-menu__legal">
+        {dict.footer.legal.map((l) => (
+          <li key={l.to}>
+            <NavLink to={to(l.to)} prefetch="intent" onClick={close}>
+              {l.label}
+            </NavLink>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
 function MenuToggle({label}: {label: string}) {
-  const {open} = useAside();
+  const {open, type} = useAside();
   return (
     <button
       type="button"
       className="lb-nav-burger"
       aria-label={label}
+      aria-expanded={type === 'mobile'}
+      aria-controls={asideDomId('mobile')}
+      aria-haspopup="dialog"
       onClick={() => open('mobile')}
     >
       <span aria-hidden="true">
@@ -205,19 +303,37 @@ function MenuToggle({label}: {label: string}) {
   );
 }
 
+function SearchIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
+      <circle cx="11" cy="11" r="7" />
+      <path d="m21 21-4.3-4.3" />
+    </svg>
+  );
+}
+
+function AccountIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8" />
+    </svg>
+  );
+}
+
 function SearchToggle({label}: {label: string}) {
-  const {open} = useAside();
+  const {open, type} = useAside();
   return (
     <button
       className="lb-icon-btn"
       onClick={() => open('search')}
       aria-label={label}
+      aria-expanded={type === 'search'}
+      aria-controls={asideDomId('search')}
+      aria-haspopup="dialog"
       type="button"
     >
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-        <circle cx="11" cy="11" r="7" />
-        <path d="m21 21-4.3-4.3" />
-      </svg>
+      <SearchIcon />
     </button>
   );
 }
@@ -237,21 +353,9 @@ function AccountLink({
       className="lb-icon-btn"
       aria-label={label}
     >
-      <Suspense
-        fallback={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-            <circle cx="12" cy="8" r="4" />
-            <path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8" />
-          </svg>
-        }
-      >
+      <Suspense fallback={<AccountIcon />}>
         <Await resolve={isLoggedIn} errorElement={null}>
-          {() => (
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-              <circle cx="12" cy="8" r="4" />
-              <path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8" />
-            </svg>
-          )}
+          {() => <AccountIcon />}
         </Await>
       </Suspense>
     </NavLink>
@@ -259,7 +363,8 @@ function AccountLink({
 }
 
 function CartBadge({count, label}: {count: number; label: string}) {
-  const {open} = useAside();
+  const {open, type} = useAside();
+  const {dict} = useI18n();
   const {publish, shop, cart, prevCart} = useAnalytics();
   return (
     <button
@@ -273,16 +378,30 @@ function CartBadge({count, label}: {count: number; label: string}) {
           url: (typeof window !== 'undefined' && window.location.href) || '',
         });
       }}
-      aria-label={label}
+      aria-expanded={type === 'cart'}
+      aria-controls={asideDomId('cart')}
+      aria-haspopup="dialog"
       type="button"
     >
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <path d="M5 8h14v10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z" />
         <path d="M8 8V6a1.5 1.5 0 0 1 3 0v2" />
         <path d="M13 8V6a1.5 1.5 0 0 1 3 0v2" />
       </svg>
-      <span>{label}</span>
-      <span className="lb-cart-count">{count}</span>
+      {/* Visible on desktop, visually hidden on phones — never display:none,
+          so the accessible name always reads "סל, 2 פריטים". */}
+      <span className="lb-cart-label">{label}</span>
+      <span aria-live="polite" aria-atomic="true">
+        {count > 0 ? (
+          <>
+            {/* Keyed on the count so the badge re-mounts and pops (M11). */}
+            <span className="lb-cart-count" key={count}>
+              {count}
+            </span>
+            <span className="sr-only"> {dict.cart.lineItems}</span>
+          </>
+        ) : null}
+      </span>
     </button>
   );
 }
@@ -302,12 +421,3 @@ function CartBanner({label}: {label: string}) {
   const cart = useOptimisticCart(originalCart);
   return <CartBadge count={cart?.totalQuantity ?? 0} label={label} />;
 }
-
-const FALLBACK_HEADER_MENU = {
-  id: 'gid://shopify/Menu/199655587896',
-  items: [
-    {id: '1', resourceId: null, tags: [], title: 'Shop', type: 'HTTP', url: '/collections', items: []},
-    {id: '2', resourceId: null, tags: [], title: 'Journal', type: 'HTTP', url: '/blogs/journal', items: []},
-    {id: '3', resourceId: null, tags: [], title: 'About', type: 'PAGE', url: '/pages/about', items: []},
-  ],
-};

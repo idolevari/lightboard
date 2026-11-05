@@ -6,23 +6,30 @@ import {useI18n} from '~/lib/useI18n';
 import {detectLocaleFromRequest, getDictionary} from '~/lib/i18n';
 import {isSameOriginPath} from '~/lib/.server/redirect.server';
 import {absoluteUrl, simpleSeo} from '~/lib/.server/seo.server';
-import {routeMeta} from '~/lib/seo-urls';
+import {NO_INDEX, routeMeta} from '~/lib/seo-urls';
 import type {Route} from './+types/($locale).cart';
 
 export const meta: Route.MetaFunction = ({data, matches}) =>
-  routeMeta({matches, data});
+  routeMeta({matches, data, overrides: NO_INDEX});
 
 export const headers: Route.HeadersFunction = ({actionHeaders}) => actionHeaders;
 
 export async function action({request, context}: Route.ActionArgs) {
   const {cart} = context;
 
-  const formData = await request.formData();
-
-  const {action, inputs} = CartForm.getFormInput(formData);
+  let formData: FormData;
+  let cartInput: ReturnType<typeof CartForm.getFormInput>;
+  try {
+    formData = await request.formData();
+    cartInput = CartForm.getFormInput(formData);
+  } catch {
+    // Malformed body / cartFormInput JSON: client error, not a 500.
+    return data({error: 'invalid-form-data'}, {status: 400});
+  }
+  const {action, inputs} = cartInput;
 
   if (!action) {
-    throw new Error('No action provided');
+    return data({error: 'invalid-action'}, {status: 400});
   }
 
   let status = 200;
@@ -75,7 +82,8 @@ export async function action({request, context}: Route.ActionArgs) {
       break;
     }
     default:
-      throw new Error(`${action} cart action is not defined`);
+      // Unknown action from a crafted form: client error, not a 500.
+      return data({error: 'invalid-action'}, {status: 400});
   }
 
   const cartId = result?.cart?.id;

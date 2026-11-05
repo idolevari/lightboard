@@ -1,4 +1,6 @@
-import {useAnalytics} from '@shopify/hydrogen';
+import {useAnalytics, useNonce} from '@shopify/hydrogen';
+import {useLocation} from 'react-router';
+import {hasExplicitMarketingConsent} from '~/lib/consent';
 import {useEffect, useRef, useState} from 'react';
 
 const DEFAULT_CURRENCY = 'ILS';
@@ -18,18 +20,19 @@ type MetaPixelScriptProps = {
   nonce?: string;
 };
 
+const FBEVENTS_SRC = 'https://connect.facebook.net/en_US/fbevents.js';
+const FBEVENTS_SCRIPT_ID = 'meta-pixel-fbevents';
+
 /**
- * Loads the fbq SDK shim. Does NOT call fbq('init') or fbq('track') —
- * those are gated on visitor marketing consent and fired from <MetaPixel />
- * after Shopify's Customer Privacy API confirms consent.
- *
- * Loading the shim itself before consent is safe: it only sets up
- * window.fbq with a no-op queue. Network calls to facebook.com/tr only
- * happen when fbq('init'|'track', ...) is called.
+ * Inline queue stub ONLY: defines `window.fbq` so early calls are buffered.
+ * It makes no network request. Meta's SDK (fbevents.js) is injected by
+ * <MetaPixel /> via loadFbevents() only after the visitor explicitly grants
+ * marketing consent, so nothing reaches Meta (no request, no _fbp cookie)
+ * before that.
  */
 export function MetaPixelScript({pixelId, nonce}: MetaPixelScriptProps) {
   if (!pixelId) return null;
-  const snippet = `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');`;
+  const snippet = `!function(f){if(f.fbq)return;var n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[]}(window);`;
   return (
     <script
       nonce={nonce}
@@ -38,21 +41,46 @@ export function MetaPixelScript({pixelId, nonce}: MetaPixelScriptProps) {
       // ("Server: null Client: <nonce>") even though the nonce is correctly
       // attached at runtime. Silencing the benign mismatch.
       suppressHydrationWarning
-      // eslint-disable-next-line react/no-danger
       dangerouslySetInnerHTML={{__html: snippet}}
     />
+  );
+}
+
+/** Inject Meta's SDK once. Only call after explicit marketing consent. */
+function loadFbevents(nonce: string | undefined): void {
+  if (typeof document === 'undefined') return;
+  if (document.getElementById(FBEVENTS_SCRIPT_ID)) return;
+  const script = document.createElement('script');
+  script.id = FBEVENTS_SCRIPT_ID;
+  script.async = true;
+  script.src = FBEVENTS_SRC;
+  if (nonce) script.nonce = nonce;
+  document.head.appendChild(script);
+}
+
+/**
+ * Pages that render the signed-in customer's own email/name/address. Meta's
+ * Automatic Advanced Matching scrapes and hashes such values with every
+ * event, so we never init or forward events while on these paths.
+ */
+function isSensitivePath(): boolean {
+  if (typeof window === 'undefined') return true;
+  return /^\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?account(?:\/|$)/i.test(
+    window.location.pathname,
   );
 }
 
 function track(event: string, params?: Record<string, unknown>): void {
   if (typeof window === 'undefined') return;
   if (typeof window.fbq !== 'function') return;
+  if (isSensitivePath()) return;
   window.fbq('track', event, params);
 }
 
 function trackCustom(event: string, params?: Record<string, unknown>): void {
   if (typeof window === 'undefined') return;
   if (typeof window.fbq !== 'function') return;
+  if (isSensitivePath()) return;
   window.fbq('trackCustom', event, params);
 }
 
@@ -84,25 +112,19 @@ function productPayload(product: AnalyticsProduct | null | undefined) {
   };
 }
 
-function cartPayload(
-  products: Array<AnalyticsProduct> | null | undefined,
-) {
+function cartPayload(products: Array<AnalyticsProduct> | null | undefined) {
   if (!Array.isArray(products) || products.length === 0) return null;
   const currency =
     products[0]?.currency ??
     products[0]?.priceV2?.currencyCode ??
     DEFAULT_CURRENCY;
   const value = products.reduce<number>((sum, p) => {
-    const price = parseFloat(
-      String(p?.price ?? p?.priceV2?.amount ?? 0),
-    );
+    const price = parseFloat(String(p?.price ?? p?.priceV2?.amount ?? 0));
     const qty = p?.quantity ?? 1;
     return sum + (Number.isFinite(price) ? price * qty : 0);
   }, 0);
   return {
-    content_ids: products.map(
-      (p) => p?.productGid ?? p?.variantId ?? p?.id,
-    ),
+    content_ids: products.map((p) => p?.productGid ?? p?.variantId ?? p?.id),
     content_type: 'product',
     contents: products.map((p) => ({
       id: p?.productGid ?? p?.variantId ?? p?.id,
@@ -119,10 +141,18 @@ type MetaPixelProps = {pixelId: string | null | undefined};
  * Subscribes to Hydrogen's analytics events and forwards them to Meta.
  * Must be rendered inside <Analytics.Provider>.
  *
- * fbq('init', pixelId) and the initial PageView fire ONCE, only after
- * Shopify's Customer Privacy API confirms marketing consent. Subsequent
- * analytics events are also gated on the same consent state via a ref
- * read inside each callback — no events leak before consent.
+ * Consent model (strict opt-in):
+ *   - Nothing Meta-related loads until the visitor explicitly accepts
+ *     marketing cookies in Shopify's privacy banner
+ *     (`currentVisitorConsent().marketing === 'yes'`). `marketingAllowed()`
+ *     alone isn't used because Shopify reports it as true for regions where
+ *     no banner is configured (e.g. Israel) even though no choice was made.
+ *   - On consent: fbevents.js is injected, autoConfig is turned off (no
+ *     automatic button/page-metadata scraping), then init + PageView fire.
+ *   - If the visitor later withdraws consent (via the banner's preferences
+ *     dialog), fbq('consent', 'revoke') stops further sends and events stop
+ *     being forwarded.
+ *   - Never inits or forwards events on /account pages (customer PII).
  *
  * Implementation note: Hydrogen's `subscribe` returns void (no
  * unsubscribe), so we subscribe once and gate inside each callback.
@@ -131,6 +161,8 @@ type MetaPixelProps = {pixelId: string | null | undefined};
  */
 export function MetaPixel({pixelId}: MetaPixelProps) {
   const {subscribe, customerPrivacy} = useAnalytics();
+  const nonce = useNonce();
+  const {pathname} = useLocation();
   const [consented, setConsented] = useState(false);
   const consentRef = useRef(false);
   const initRef = useRef(false);
@@ -139,52 +171,40 @@ export function MetaPixel({pixelId}: MetaPixelProps) {
   // page_viewed flush that lands right after init fires PageView.
   const lastPageViewAtRef = useRef<number>(0);
 
-  // Keep the ref in sync so subscribe callbacks always read latest.
+  // Keep the ref in sync so subscribe callbacks always read latest, and tell
+  // an already-initialised pixel when consent is withdrawn or re-granted.
   useEffect(() => {
     consentRef.current = consented;
+    if (initRef.current && typeof window.fbq === 'function') {
+      window.fbq('consent', consented ? 'grant' : 'revoke');
+    }
   }, [consented]);
 
-  // Detect when marketing consent is granted. Hydrogen's customerPrivacy
-  // API is loaded asynchronously and exposed via the analytics context
-  // once ready. Poll briefly until it appears and reports marketing
-  // tracking is allowed. The polling stops as soon as consent is granted
-  // (safe default: stays off forever otherwise).
+  // Track the visitor's explicit marketing choice. The Customer Privacy API
+  // loads asynchronously (customerPrivacy flips from null once ready), and
+  // `visitorConsentCollected` fires whenever the visitor saves a choice in
+  // the banner or the preferences dialog.
   useEffect(() => {
     if (!pixelId) return;
     if (typeof window === 'undefined') return;
 
     const check = () => {
-      const cp = customerPrivacy ?? (
-        (window as unknown as {
-          Shopify?: {
-            customerPrivacy?: {
-              marketingAllowed?: () => boolean;
-            };
-          };
-        }).Shopify?.customerPrivacy ?? null
-      );
-      const allowed = cp?.marketingAllowed?.() ?? false;
-      if (allowed) {
-        setConsented(true);
-        return true;
-      }
-      return false;
+      const allowed = hasExplicitMarketingConsent(customerPrivacy);
+      setConsented(allowed);
+      return allowed;
     };
 
-    if (check()) return;
+    check();
 
-    // Re-check whenever the visitor records a consent decision.
     const onConsentCollected = () => {
       check();
     };
     document.addEventListener('visitorConsentCollected', onConsentCollected);
 
-    // Fallback poll in case the event fires before our listener is
-    // attached, or the API only becomes ready after Provider mounts.
+    // Fallback poll in case the API becomes ready before Hydrogen updates the
+    // analytics context, or a stored "yes" is only readable a moment later.
     const interval = window.setInterval(() => {
-      if (check()) {
-        window.clearInterval(interval);
-      }
+      if (check()) window.clearInterval(interval);
     }, 500);
     const timeout = window.setTimeout(() => {
       window.clearInterval(interval);
@@ -200,20 +220,21 @@ export function MetaPixel({pixelId}: MetaPixelProps) {
     };
   }, [pixelId, customerPrivacy]);
 
-  // Fire fbq('init', ...) + initial PageView once, after consent. This
-  // guarantees a landing PageView even if Hydrogen flushes its queued
-  // page_viewed before our subscription callback can read consent. The
-  // page_viewed subscription below dedupes by checking how long ago init
-  // fired and skipping the duplicate flush.
+  // Load the SDK and fire init + the landing PageView once, after consent and
+  // outside /account. Re-runs on navigation so a visitor who lands on an
+  // account page and then browses on still gets tracked (if consented).
   useEffect(() => {
     if (!consented || !pixelId || initRef.current) return;
     if (typeof window === 'undefined') return;
     if (typeof window.fbq !== 'function') return;
+    if (isSensitivePath()) return;
+    loadFbevents(nonce);
+    window.fbq('set', 'autoConfig', false, pixelId);
     window.fbq('init', pixelId);
     window.fbq('track', 'PageView');
     initRef.current = true;
     lastPageViewAtRef.current = Date.now();
-  }, [consented, pixelId]);
+  }, [consented, pixelId, nonce, pathname]);
 
   // Subscribe to Hydrogen analytics events once. Each callback consults
   // consentRef before forwarding so events stay gated even if consent is
@@ -265,16 +286,17 @@ export function MetaPixel({pixelId}: MetaPixelProps) {
 
     subscribe('product_added_to_cart', ({currentLine}) => {
       if (!consentRef.current) return;
-      const product: AnalyticsProduct | null | undefined = currentLine?.merchandise
-        ? {
-            productGid: currentLine.merchandise.product?.id,
-            variantId: currentLine.merchandise.id,
-            title: currentLine.merchandise.product?.title,
-            price: currentLine.cost?.totalAmount?.amount,
-            currency: currentLine.cost?.totalAmount?.currencyCode,
-            quantity: currentLine.quantity,
-          }
-        : (currentLine as AnalyticsProduct | null | undefined);
+      const product: AnalyticsProduct | null | undefined =
+        currentLine?.merchandise
+          ? {
+              productGid: currentLine.merchandise.product?.id,
+              variantId: currentLine.merchandise.id,
+              title: currentLine.merchandise.product?.title,
+              price: currentLine.cost?.totalAmount?.amount,
+              currency: currentLine.cost?.totalAmount?.currencyCode,
+              quantity: currentLine.quantity,
+            }
+          : (currentLine as AnalyticsProduct | null | undefined);
       track('AddToCart', productPayload(product));
     });
 
@@ -292,12 +314,18 @@ export function MetaPixel({pixelId}: MetaPixelProps) {
         quantity?: number;
       }> = Array.isArray(linesRaw)
         ? (linesRaw as Array<{
-            merchandise?: {id?: string; product?: {id?: string; title?: string}};
+            merchandise?: {
+              id?: string;
+              product?: {id?: string; title?: string};
+            };
             cost?: {totalAmount?: {amount?: string; currencyCode?: string}};
             quantity?: number;
           }>)
         : ((linesRaw?.nodes ?? []) as Array<{
-            merchandise?: {id?: string; product?: {id?: string; title?: string}};
+            merchandise?: {
+              id?: string;
+              product?: {id?: string; title?: string};
+            };
             cost?: {totalAmount?: {amount?: string; currencyCode?: string}};
             quantity?: number;
           }>);

@@ -16,7 +16,18 @@ export const ALLOWED_PHOTO_TYPES: ReadonlyArray<string> = [
 const HEIC_TYPES: ReadonlyArray<string> = ['image/heic', 'image/heif'];
 
 export const MAX_PHOTO_BYTES = 15 * 1024 * 1024; // 15 MB
-export const MIN_PHOTO_DIMENSION = 1200;
+/**
+ * Photo size thresholds (short side, px).
+ *
+ * The print is a small square on the board (a few cm per side) and every
+ * crop is re-rendered to CROPPED_OUTPUT_SIZE. 800px over a ~6 cm print is
+ * ~340 dpi, comfortably above the ~300 dpi photo-print rule of thumb, so it
+ * is a safe hard floor. The old 1200px floor rejected Instagram saves
+ * (1080px) and most WhatsApp-forwarded photos for no visible print gain.
+ * Between MIN and RECOMMENDED we accept the photo but show a soft warning.
+ */
+export const MIN_PHOTO_DIMENSION = 800;
+export const RECOMMENDED_PHOTO_DIMENSION = 1200;
 export const CROPPED_OUTPUT_SIZE = 1200;
 export const CROPPED_OUTPUT_QUALITY = 0.9;
 
@@ -31,6 +42,8 @@ export type ValidationResult = {
   ok: boolean;
   /** i18n key under photoCustomizer.errors */
   reason?: string;
+  /** Accepted, but below the recommended print size. */
+  lowRes?: boolean;
 };
 
 export type LoadedImage = {
@@ -76,10 +89,11 @@ export function validatePhotoDimensions({
   width: number;
   height: number;
 }): ValidationResult {
-  if (width < MIN_PHOTO_DIMENSION || height < MIN_PHOTO_DIMENSION) {
+  const shortSide = Math.min(width, height);
+  if (shortSide < MIN_PHOTO_DIMENSION) {
     return {ok: false, reason: 'tooSmall'};
   }
-  return {ok: true};
+  return {ok: true, lowRes: shortSide < RECOMMENDED_PHOTO_DIMENSION};
 }
 
 /**

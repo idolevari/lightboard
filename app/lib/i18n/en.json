@@ -1,23 +1,26 @@
 {
   "meta": {
-    "title": "Lightboard · Wall pieces for sideways living",
-    "description": "Handcrafted wall pieces from a Tel Aviv workshop — surfboard-shaped photo hangers, ocean prints, metal designs. California soul, Mediterranean craft."
+    "title": "Lightboard · A surfboard light for your wall, with your photos",
+    "description": "A solid-pine surfboard with warm lights and three photos you choose. Handmade to order in light blue, cream or pink."
   },
   "nav": {
     "home": "Home",
     "shop": "Shop",
-    "about": "Story",
+    "about": "About",
     "journal": "Journal",
-    "contact": "Contact",
+    "contact": "Talk to us",
     "cart": "Cart",
     "search": "Search",
     "account": "Account",
-    "menu": "Menu"
+    "menu": "Menu",
+    "faq": "FAQ",
+    "primaryLabel": "Main navigation",
+    "language": "Language"
   },
   "common": {
     "loading": "Loading…",
-    "loadMore": "Load more",
-    "loadPrevious": "Load previous",
+    "loadMore": "More",
+    "loadPrevious": "Previous",
     "close": "Close",
     "open": "Open",
     "remove": "Remove",
@@ -33,7 +36,9 @@
     "yes": "Yes",
     "no": "No",
     "or": "or",
-    "and": "and"
+    "and": "and",
+    "pause": "Pause",
+    "play": "Play"
   },
   "aside": {
     "cart": "Cart",
@@ -41,63 +46,89 @@
     "menu": "Menu"
   },
   "hero": {
-    "slideAria": "slide"
+    "slideAria": "slide",
+    "pause": "Pause slideshow",
+    "play": "Play slideshow",
+    "regionLabel": "Opening photos",
+    "srTitle": "Lightboard · A surfboard light for your wall, with your photos"
   },
   "featured": {
-    "finishLabel": "Finish",
-    "ctaPrimary": "Customize & order"
+    "finishLabel": "Color",
+    "ctaPrimary": "Choose your photos"
   },
   "faq": {
-    "eyebrow": "— FREQUENTLY ASKED",
+    "eyebrow": "— FAQ",
     "titleLine1": "Before you",
     "titleLine2": "ask."
   },
   "testify": {
-    "eyebrow": "— WHAT PEOPLE SAY",
-    "prev": "previous",
-    "next": "next"
+    "eyebrow": "— FROM YOUR WALLS",
+    "prev": "Previous",
+    "next": "Next",
+    "dotLabel": "Review {n} of {total}",
+    "regionLabel": "Reviews",
+    "pause": "Pause reviews",
+    "play": "Play reviews"
   },
   "product": {
     "metaSuffix": "Product",
     "description": "Description",
     "addToCart": "Add to cart",
-    "soldOut": "Sold out",
+    "soldOut": "Sold out for now",
     "optionLabels": {},
-    "optionValues": {}
+    "optionValues": {},
+    "priceLabel": "Price",
+    "specsTitle": "Specs",
+    "inYourHome": {
+      "eyebrow": "— In your home",
+      "title": "How it looks on the wall",
+      "caption": "Warm light, solid wood and the three photos you chose."
+    },
+    "stickyLabel": "Quick buy",
+    "choosePhotos": "Choose photos"
   },
   "photoCustomizer": {
-    "heading": "Make it yours",
-    "subheading": "Upload three photos, crop each to a square, and see your Lightboard come together.",
+    "heading": "Your photos",
+    "subheading": "Pick three photos, crop them square, and see how they look on the board.",
     "slotLabel": "Photo {n}",
     "pick": "Choose photo",
-    "editCrop": "Edit crop",
+    "editCrop": "Crop",
     "remove": "Remove",
     "approve": "Approve photos",
     "saveChanges": "Save changes",
     "saveAndReturn": "Save & return to cart",
-    "approvedNote": "Photos locked in. You can add to cart.",
+    "approvedNote": "Photos saved. Add to cart when you're ready.",
     "savedNote": "Changes saved.",
     "uploading": "Uploading…",
-    "cropSave": "Save crop",
+    "cropSave": "Save",
     "cropCancel": "Cancel",
     "zoom": "Zoom",
     "editFromCart": "Edit photos",
     "surprise": {
-      "helper": "Don't have photos handy?",
-      "button": "Pick three from our gallery",
-      "swap": "Surprise me again"
+      "helper": "No photos handy?",
+      "button": "Pick for me",
+      "swap": "Another round"
     },
     "errors": {
       "noFile": "Pick a photo",
-      "heic": "iPhone HEIC isn't supported in browsers. Save the photo as JPG and try again.",
-      "badType": "Unsupported file type. Use JPG, PNG, or WebP.",
-      "tooLarge": "File too large. 15MB maximum.",
-      "tooSmall": "Image too small for print. Minimum 1200×1200 pixels.",
-      "loadFailed": "Couldn't load that file. Try a different photo.",
-      "renderFailed": "Couldn't generate the preview.",
-      "cannotEdit": "Can't edit this photo — please pick a new one.",
+      "heic": "iPhone HEIC photos aren't supported. Save it as JPG and try again.",
+      "badType": "That file type isn't supported. Use JPG, PNG or WebP.",
+      "tooLarge": "That file's too big. 15MB max.",
+      "tooSmall": "Too small to print. We need at least {min}×{min} pixels.",
+      "loadFailed": "Couldn't open that file. Try another photo.",
+      "renderFailed": "The preview didn't load. Try again.",
+      "cannotEdit": "This photo can't be edited. Pick a new one.",
       "uploadFailed": "Upload failed. Check your connection and try again."
-    }
+    },
+    "progress": "{n}/3 photos",
+    "needPhotos": "Choose {n} more photos to continue",
+    "needOnePhoto": "Choose 1 more photo to continue",
+    "needApprove": "Approve your photos to continue",
+    "ready": "3/3 photos ready",
+    "replaceConfirm": "Replace the photos you chose with gallery photos?",
+    "lowRes": "This photo is on the small side, so the print may look less sharp.",
+    "cropHint": "Drag to position, or use the arrow keys.",
+    "slotsLabel": "Your photos"
   },
   "cart": {
     "metaTitle": "Lightboard | Cart",
@@ -106,11 +137,11 @@
     "asideDrawer": "Cart drawer",
     "lineItems": "Line items",
     "lineItemsWith": "Line items with",
-    "empty": "Looks like you haven't added anything yet, let's get you started!",
-    "continueShopping": "Continue shopping →",
+    "empty": "Your cart is empty. For now.",
+    "continueShopping": "Shop →",
     "totals": "Totals",
     "subtotal": "Subtotal",
-    "checkout": "Continue to Checkout →",
+    "checkout": "Checkout →",
     "discounts": "Discounts",
     "discountsLabel": "Discounts",
     "discountCode": "Discount code",
@@ -122,7 +153,7 @@
     "giftCardsLabel": "Gift cards",
     "giftCardCode": "Gift card code",
     "giftCardCodeAria": "Apply gift card code",
-    "giftCardsApplied": "Applied Gift Card(s)",
+    "giftCardsApplied": "Applied gift cards",
     "giftCardRemove": "Remove gift card",
     "removeBtn": "Remove",
     "applyBtn": "Apply",
@@ -131,23 +162,40 @@
     "increaseQuantity": "Increase quantity",
     "loading": "Loading cart…",
     "terms": {
-      "prefix": "I have read and agree to the ",
+      "prefix": "I've read and agree to the ",
       "linkLabel": "terms of service",
       "suffix": "",
-      "requiredHint": "Please agree to the terms before continuing to checkout"
-    }
+      "requiredHint": "Please agree to the terms to continue to checkout"
+    },
+    "discountToggle": "Have a code or gift card?",
+    "checkoutSecure": "Secure checkout",
+    "emptyTitle": "The van is still empty",
+    "trust": [
+      {
+        "icon": "van",
+        "label": "Free shipping"
+      },
+      {
+        "icon": "hand",
+        "label": "Handmade"
+      },
+      {
+        "icon": "sun",
+        "label": "7–10 business days"
+      }
+    ]
   },
   "search": {
     "metaTitle": "Lightboard | Search",
     "pageTitle": "Search",
-    "placeholder": "Search…",
+    "placeholder": "What are you looking for?",
     "submit": "Search",
-    "noResults": "No results, try a different search.",
-    "noResultsFor": "No results found for",
+    "noResults": "Nothing here. Try another word.",
+    "noResultsFor": "No results for",
     "viewAll": "View all results for",
     "products": "Products",
     "pages": "Pages",
-    "articles": "Articles",
+    "articles": "Posts",
     "collections": "Collections"
   },
   "pagination": {
@@ -188,7 +236,7 @@
   "account": {
     "metaSuffix": "Account",
     "myAccount": "My account",
-    "welcome": "Welcome",
+    "welcome": "Hey",
     "signOut": "Sign out",
     "signIn": "Sign in",
     "ordersTitle": "My orders",
@@ -204,8 +252,8 @@
     "searchBtn": "Search",
     "clearBtn": "Clear",
     "active": "active",
-    "clearFilters": "Clear filters →",
-    "startShopping": "Start shopping →",
+    "clearFilters": "Clear filters",
+    "startShopping": "Shop →",
     "noOrders": "No orders yet.",
     "orderTable": {
       "product": "Product",
@@ -218,7 +266,7 @@
       "totalRow": "Total"
     },
     "shippingAddress": "Shipping address",
-    "noShippingAddress": "No shipping address defined",
+    "noShippingAddress": "No shipping address yet",
     "status": "Status",
     "myProfile": "My profile",
     "personalInfo": "Personal information",
@@ -227,29 +275,29 @@
     "phone": "Phone",
     "email": "Email",
     "addressesTitle": "Addresses",
-    "createAddress": "Create address",
+    "createAddress": "Add address",
     "existingAddresses": "Existing addresses",
     "company": "Company",
-    "addressLine1": "Address line 1",
-    "addressLine1Required": "Address line 1*",
-    "addressLine2": "Address line 2",
+    "addressLine1": "Street and number",
+    "addressLine1Required": "Street and number*",
+    "addressLine2": "Apartment, floor, entrance",
     "city": "City",
-    "stateProvince": "State / Province",
+    "stateProvince": "District",
     "zip": "Zip",
-    "zipPlaceholder": "Zip / Postal code",
+    "zipPlaceholder": "Zip code",
     "country": "Country",
     "countryCode": "Country code",
     "phoneNumber": "Phone number",
     "setAsDefault": "Set as default address"
   },
   "notFound": {
-    "title": "Page not found",
-    "kicker": "Maybe this link washed out. Head back home and pick a different break.",
-    "cta": "Back to home"
+    "title": "This wave's gone.",
+    "kicker": "The link is broken or the page moved. Let's head home.",
+    "cta": "Back home"
   },
   "discount": {
-    "applied": "Discount applied!",
-    "applyError": "We couldn't apply this code."
+    "applied": "Code applied.",
+    "applyError": "That code didn't work. Check it and try again."
   },
   "a11y": {
     "open": "Open accessibility menu",
@@ -264,22 +312,88 @@
     "readableFont": "Readable font",
     "reset": "Reset",
     "statementLink": "Accessibility statement",
-    "skipToContent": "Skip to main content"
+    "skipToContent": "Skip to main content",
+    "quickActions": "Help and accessibility",
+    "stopAnimations": "Stop animations"
   },
   "whatsapp": {
-    "label": "Chat with us on WhatsApp",
-    "prefill": "Hi Lightboard! I have a question about your products."
+    "label": "Talk to us on WhatsApp",
+    "prefill": "Hi Lightboard, I have a question:"
   },
   "footer": {
-    "brandDesc": "California soul, Mediterranean craft. Handmade wall pieces for the surf, snow, and skate obsessed. Shipped from Tel Aviv with aloha.",
+    "brandDesc": "Solid-wood surfboards for your wall, with warm light and your photos. Handmade in Tel Aviv since 2019.",
     "metaAddressLabel": "Address",
     "metaPhoneLabel": "Phone",
     "metaEmailLabel": "Email",
     "rights": "LIGHTBOARD · ALL RIGHTS RESERVED",
     "legal": [
-      {"label": "Privacy & Cookies", "to": "/policies/privacy-policy"},
-      {"label": "Terms", "to": "/policies/terms-of-service"},
-      {"label": "Accessibility", "to": "/pages/accessibility"}
+      {
+        "label": "Privacy & Cookies",
+        "to": "/policies/privacy-policy"
+      },
+      {
+        "label": "Terms",
+        "to": "/policies/terms-of-service"
+      },
+      {
+        "label": "Accessibility",
+        "to": "/pages/accessibility"
+      },
+      {
+        "label": "Shipping",
+        "to": "/policies/shipping-policy"
+      },
+      {
+        "label": "Returns",
+        "to": "/policies/refund-policy"
+      }
+    ],
+    "cookieSettings": "Cookie settings",
+    "legalNavLabel": "Legal",
+    "photoCredit": "Photos: Unsplash"
+  },
+  "contact": {
+    "title": "Talk to us",
+    "kicker": "A question about your order, photos or shipping? WhatsApp is fastest.",
+    "whatsapp": "WhatsApp",
+    "phone": "Phone",
+    "email": "Email",
+    "instagram": "Instagram"
+  },
+  "comingSoon": {
+    "titleBefore": "Something",
+    "titleEm": "new",
+    "titleAfter": "is coming."
+  },
+  "usp": {
+    "label": "Why Lightboard",
+    "items": [
+      {
+        "icon": "van",
+        "label": "Free delivery to your door"
+      },
+      {
+        "icon": "hand",
+        "label": "Handmade in Tel Aviv"
+      },
+      {
+        "icon": "sun",
+        "label": "7–10 business days"
+      },
+      {
+        "icon": "photo",
+        "label": "With your own photos"
+      }
     ]
+  },
+  "finalCta": {
+    "title": "Ready to light up your wall?",
+    "kicker": "Three photos you love, twenty warm bulbs and one wooden board waiting for them.",
+    "cta": "Choose photos"
+  },
+  "hand": {
+    "stamp": "Handmade in Tel Aviv · since 2019",
+    "customizer": "Your photos go here ↓",
+    "footer": "Handmade in Tel Aviv"
   }
 }

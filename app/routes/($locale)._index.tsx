@@ -1,8 +1,10 @@
 import {Await, Link, useLoaderData} from 'react-router';
-import {Suspense, useEffect, useState} from 'react';
+import {Suspense, useCallback, useEffect, useState} from 'react';
+import type {FocusEvent} from 'react';
 import {Image} from '@shopify/hydrogen';
 import {useI18n} from '~/lib/useI18n';
 import {useInView} from '~/lib/useInView';
+import {MOTION_EVENT, prefersNoMotion} from '~/lib/motion';
 import {getDictionary, detectLocaleFromRequest} from '~/lib/i18n';
 import {
   getOptionValueHex,
@@ -10,9 +12,31 @@ import {
 } from '~/lib/productOptionLabels';
 import {isLaunchGateActive} from '~/lib/.server/coming-soon.server';
 import {absoluteUrl, simpleSeo} from '~/lib/.server/seo.server';
-import {routeMeta} from '~/lib/seo-urls';
-import {sanitizeShopifyHtml} from '~/lib/sanitize';
+import {metaLocale, routeMeta} from '~/lib/seo-urls';
+import {homeSeoCopy} from '~/lib/meta';
+import {sanitizeShopifyHtml} from '~/lib/.server/sanitize.server';
 import {RouteError} from '~/components/RouteError';
+import {AutoLang} from '~/components/AutoLang';
+import {
+  Doodle,
+  LiveLoop,
+  StampBadge,
+  StringLights,
+  SunRays,
+  Surfboard,
+  Van,
+  WaveDivider,
+  WaveLayers,
+} from '~/components/illustrations';
+import type {DoodleName} from '~/components/illustrations';
+import {
+  PHOTOS,
+  SHOPIFY_FILES_CDN,
+  cropSrcSet,
+  widthSrcSet,
+  withParams,
+} from '~/lib/photos';
+import type {BrandPhoto} from '~/lib/photos';
 import type {Route} from './+types/($locale)._index';
 
 // ---- Local shape types for the GraphQL responses on this route ----
@@ -71,7 +95,9 @@ type ProductSpecNode = {
 type HeroSlideField = {
   key: string;
   value?: string | null;
-  reference?: {image?: {url: string} | null} | null;
+  reference?: {
+    image?: {url: string; width?: number | null; height?: number | null} | null;
+  } | null;
 };
 
 type HeroSlideNode = {
@@ -119,6 +145,8 @@ type StorySection = {
 type HeroSlide = {
   id: string;
   img: string | null;
+  width: number | null;
+  height: number | null;
   label: string;
   mobilePos: string | undefined;
   position: number;
@@ -131,7 +159,7 @@ type MetaobjectFieldRecord = {
 };
 
 export const meta: Route.MetaFunction = ({data, matches}) =>
-  routeMeta({matches, data});
+  routeMeta({matches, data, overrides: homeSeoCopy(metaLocale(matches))});
 
 type SimpleMetaobjectQueryResponse = {
   metaobjects?: {nodes?: Array<SimpleMetaobjectNode>} | null;
@@ -149,8 +177,6 @@ export async function loader(args: Route.LoaderArgs) {
       url: absoluteUrl('/', locale),
     });
     return {
-      isShopLinked: false,
-      featuredCollection: null,
       featuredProduct: null,
       faqs: Promise.resolve(
         null,
@@ -172,14 +198,32 @@ export async function loader(args: Route.LoaderArgs) {
   return {...deferredData, ...criticalData};
 }
 
+/**
+ * The featured product's `headline_*` metafields are rendered as HTML.
+ * Sanitize them here (server only) so sanitize-html stays out of the client
+ * bundle; the component renders the already-clean string.
+ */
+function sanitizeFeaturedHeadline<
+  T extends {
+    headline_he?: {value: string} | null;
+    headline_en?: {value: string} | null;
+  },
+>(product: T | null): T | null {
+  if (!product) return null;
+  const clean = (field: {value: string} | null | undefined) =>
+    field ? {...field, value: sanitizeShopifyHtml(field.value)} : field;
+  return {
+    ...product,
+    headline_he: clean(product.headline_he),
+    headline_en: clean(product.headline_en),
+  };
+}
+
 async function loadCriticalData({context, request}: Route.LoaderArgs) {
   const locale = detectLocaleFromRequest(request);
   const dict = getDictionary(locale);
   const {storefront} = context;
-  const [{collections}, productData, heroData, homepageData] = await Promise.all([
-    storefront.query(FEATURED_COLLECTION_QUERY, {
-      cache: storefront.CacheLong(),
-    }),
+  const [productData, heroData, homepageData] = await Promise.all([
     storefront
       .query(FEATURED_PRODUCT_QUERY, {cache: storefront.CacheShort()})
       .catch((error) => {
@@ -199,15 +243,15 @@ async function loadCriticalData({context, request}: Route.LoaderArgs) {
         return null;
       }),
   ]);
-  const featuredProduct = productData?.shop?.featured?.reference ?? null;
+  const featuredProduct = sanitizeFeaturedHeadline(
+    productData?.shop?.featured?.reference ?? null,
+  );
   const {seo: baseSeo, jsonLd} = simpleSeo({
     title: dict.meta.title,
     description: dict.meta.description,
     url: absoluteUrl('/', locale),
   });
   return {
-    isShopLinked: Boolean(context.env.PUBLIC_STORE_DOMAIN),
-    featuredCollection: collections?.nodes?.[0] ?? null,
     featuredProduct,
     heroSlides: extractHeroSlides(heroData?.metaobjects?.nodes),
     hero: extractHeroSection(homepageData?.shop?.hero?.reference, locale),
@@ -337,10 +381,12 @@ function extractHeroSlides(
         (node.fields ?? []).map((f) => [f.key, f]),
       );
       const imageField = byKey.image;
-      const url = imageField?.reference?.image?.url ?? null;
+      const image = imageField?.reference?.image;
       return {
         id: node.id,
-        img: url,
+        img: image?.url ?? null,
+        width: image?.width ?? null,
+        height: image?.height ?? null,
         label: byKey.label?.value ?? '',
         mobilePos: byKey.mobile_position?.value ?? undefined,
         position: parseInt(byKey.position?.value ?? '0', 10) || 0,
@@ -388,6 +434,7 @@ export default function Homepage() {
     <>
       <Hero slides={data.heroSlides} content={data.hero} />
       <FeaturedLightboard featuredProduct={data.featuredProduct} />
+      <UspStrip />
       <Story content={data.story} />
       <Suspense fallback={<DeferredSectionFallback />}>
         <Await resolve={data.faqs}>
@@ -425,6 +472,7 @@ export default function Homepage() {
           }}
         </Await>
       </Suspense>
+      <FinalCta handle={data.featuredProduct?.handle} />
     </>
   );
 }
@@ -467,13 +515,22 @@ function CountUp({value, active, duration = 1400}: CountUpProps) {
   const match = /^(\D*)([\d,]+)(.*)$/.exec(String(value));
   const target = match ? parseInt(match[2].replace(/,/g, ''), 10) : 0;
   const hasMatch = Boolean(match);
-  const [n, setN] = useState(0);
+  // Server HTML (and no-JS / crawlers / reduced motion) gets the real final
+  // number. Only on the client, before the stat scrolls into view, do we
+  // reset to 0 so the count-up can play.
+  const [n, setN] = useState(target);
+  const [armed, setArmed] = useState(false);
+  useEffect(() => {
+    if (!hasMatch || active) return;
+    if (prefersNoMotion()) return;
+    setN(0);
+    setArmed(true);
+    // Mount-only: arm once, before the first intersection.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   useEffect(() => {
     if (!hasMatch || !active) return undefined;
-    if (
-      typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    ) {
+    if (!armed) {
       setN(target);
       return undefined;
     }
@@ -525,57 +582,230 @@ function StoryStat({n, k, delay}: {n: string; k: string; delay: number}) {
   );
 }
 
+/* ---------------- AUTO-ROTATE ---------------- */
+
+/**
+ * Shared carousel timing for the hero and testimonials (WCAG 2.2.2):
+ * - never auto-advances under prefers-reduced-motion;
+ * - a visible pause/play button (`userPaused`) wins over everything;
+ * - pauses while hovered, while keyboard focus is inside, and while the
+ *   tab is hidden.
+ */
+function useAutoRotate(count: number, intervalMs: number) {
+  const [index, setIndex] = useState(0);
+  const [userPaused, setUserPaused] = useState(false);
+  const [hoverPaused, setHoverPaused] = useState(false);
+  const [focusPaused, setFocusPaused] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const [hidden, setHidden] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    // OS setting, or the accessibility menu's "stop animations" switch.
+    const sync = () => setReducedMotion(prefersNoMotion());
+    sync();
+    mq.addEventListener('change', sync);
+    window.addEventListener(MOTION_EVENT, sync);
+    const onVis = () => setHidden(document.visibilityState === 'hidden');
+    document.addEventListener('visibilitychange', onVis);
+    return () => {
+      mq.removeEventListener('change', sync);
+      window.removeEventListener(MOTION_EVENT, sync);
+      document.removeEventListener('visibilitychange', onVis);
+    };
+  }, []);
+
+  const paused =
+    userPaused || hoverPaused || focusPaused || reducedMotion || hidden;
+
+  useEffect(() => {
+    if (paused || count <= 1) return undefined;
+    const id = setInterval(() => setIndex((x) => (x + 1) % count), intervalMs);
+    return () => clearInterval(id);
+  }, [paused, count, intervalMs]);
+
+  const handlers = {
+    onMouseEnter: () => setHoverPaused(true),
+    onMouseLeave: () => setHoverPaused(false),
+    onFocus: () => setFocusPaused(true),
+    onBlur: (e: FocusEvent<HTMLElement>) => {
+      if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+        setFocusPaused(false);
+      }
+    },
+    // Touch: no auto-pause on pointerdown — every scroll gesture over the
+    // hero starts with one. Touch users get the explicit pause button.
+  };
+
+  return {
+    index,
+    setIndex,
+    paused,
+    // The button reflects the visitor's own choice (or reduced motion).
+    stopped: userPaused || reducedMotion,
+    toggle: useCallback(() => {
+      setUserPaused((p) => !(p || reducedMotion));
+      if (reducedMotion) setReducedMotion(false);
+    }, [reducedMotion]),
+    handlers,
+  };
+}
+
+function MotionToggle({
+  stopped,
+  onToggle,
+  pauseLabel,
+  playLabel,
+}: {
+  stopped: boolean;
+  onToggle: () => void;
+  pauseLabel: string;
+  playLabel: string;
+}) {
+  return (
+    <button
+      type="button"
+      className="motion-toggle"
+      onClick={onToggle}
+      aria-label={stopped ? playLabel : pauseLabel}
+    >
+      {stopped ? (
+        <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+          <path d="M4 2.5v11l9-5.5z" fill="currentColor" />
+        </svg>
+      ) : (
+        <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+          <rect x="3.5" y="2.5" width="3" height="11" fill="currentColor" />
+          <rect x="9.5" y="2.5" width="3" height="11" fill="currentColor" />
+        </svg>
+      )}
+    </button>
+  );
+}
+
 /* ---------------- HERO ---------------- */
 
 type HeroSlideForRender = {
   id?: string;
   img: string;
   label?: string;
+  /** Source pixel size — lets us request exact CDN crops (no upscaling). */
+  w?: number;
+  h?: number;
+  /** Desktop object-position, e.g. "50% 60%". */
+  deskPos?: string;
+  /** Horizontal focal point for the portrait phone crop, e.g. "30%". */
   mobilePos?: string;
+  /** Optional dedicated portrait photo for phones. */
+  mobile?: {img: string; w: number; h: number; pos?: string};
 };
 
+const CDN = SHOPIFY_FILES_CDN;
+
+/**
+ * Fallback hero rotation, used while no `hero_slide` metaobjects exist
+ * (Shopify Admin → Content → Metaobjects wins as soon as entries are added).
+ * Warm/cool alternating, ending warm. Photo sources + licences: see
+ * `PHOTOS` in app/lib/photos.ts (all Shopify Files, Unsplash License).
+ */
 const HERO_SLIDES: Array<HeroSlideForRender> = [
   {
-    img: 'https://cdn.shopify.com/s/files/1/0982/9325/2392/files/mikail-mcverry-6WRjFofNhPs-unsplash.jpg?v=1777136172',
-    label: 'VAN LIFE · BEACH PARK',
-    // Van sits in the left ~60% of the frame; pull the mobile crop left
-    // so the van stays visible instead of getting cut by a center crop.
-    mobilePos: '30%',
+    // lightboard-01-van-surfboard-sunset.jpg · Jon Matthews · Unsplash License
+    img: PHOTOS.vanSunset.url,
+    w: PHOTOS.vanSunset.w,
+    h: PHOTOS.vanSunset.h,
+    label: 'COAST · LAST LIGHT',
+    deskPos: '50% 60%',
+    // The bus spans ~60% of the frame, so a 9:16 crop would slice it.
+    // Phones get the native-portrait van-bed frame instead
+    // (lightboard-03-van-bed-ocean-view.jpg · Jeremy Bishop · Unsplash License).
+    mobile: {img: PHOTOS.vanBed.url, w: PHOTOS.vanBed.w, h: PHOTOS.vanBed.h, pos: '55%'},
   },
   {
-    img: 'https://cdn.shopify.com/s/files/1/0982/9325/2392/files/tim-marshall-hIHh4E4_OGA-unsplash.jpg?v=1777138490',
+    img: `${CDN}/tim-marshall-hIHh4E4_OGA-unsplash.jpg?v=1777138490`,
+    w: 3600,
+    h: 2400,
     label: 'SURF · OFFSHORE',
   },
   {
-    img: 'https://cdn.shopify.com/s/files/1/0982/9325/2392/files/leo_visions-SzJo8G7BP8E-unsplash.jpg?v=1777136172',
-    label: 'WAKE UP · OCEAN VIEW',
+    // lightboard-02-golden-hour-wave.jpg · Linus Nylund · Unsplash License
+    img: PHOTOS.goldenWave.url,
+    w: PHOTOS.goldenWave.w,
+    h: PHOTOS.goldenWave.h,
+    label: 'SURF · GOLDEN HOUR',
+    deskPos: '50% 55%',
+    mobilePos: '62%',
   },
   {
-    img: 'https://cdn.shopify.com/s/files/1/0982/9325/2392/files/mads-schmidt-rasmussen-tSp5_w9h5TQ-unsplash.jpg?v=1777136172',
-    label: 'SNOW · GOLDEN HOUR',
-    // Snowboarder is on the left third — keep them in the mobile crop.
+    img: `${CDN}/mikail-mcverry-6WRjFofNhPs-unsplash.jpg?v=1777136172`,
+    w: 4822,
+    h: 3215,
+    label: 'VAN LIFE · BEACH PARK',
     mobilePos: '30%',
   },
   {
-    img: 'https://cdn.shopify.com/s/files/1/0982/9325/2392/files/john-o-nelio-czM5xBzedXA-unsplash.jpg?v=1777136171',
-    label: 'COAST · SUNSET ROAD',
-    // Van anchors the right side of this frame; bias the mobile crop
-    // right so we don't lose the van to a centered crop.
-    mobilePos: '65%',
+    // lightboard-04-van-bluff-sunset.jpg · Daniel J. Schwarz · Unsplash License
+    img: PHOTOS.vanBluff.url,
+    w: PHOTOS.vanBluff.w,
+    h: PHOTOS.vanBluff.h,
+    label: 'VAN LIFE · CLIFF TOP',
+    deskPos: '50% 70%',
+    mobilePos: '45%',
   },
 ];
 
-const HERO_SRCSET_WIDTHS = [900, 1400, 2000, 2800];
+const HERO_DESKTOP_WIDTHS = [900, 1400, 2000, 2800];
+const HERO_MOBILE_WIDTHS = [540, 720, 900, 1080, 1350];
 
-function heroSrcSet(url: string): string {
-  const sep = url.includes('?') ? '&' : '?';
-  return HERO_SRCSET_WIDTHS.map(
-    (w) => `${url}${sep}width=${w} ${w}w`,
-  ).join(', ');
+function portrait(url: string, focalX: string | undefined, w?: number, h?: number) {
+  return cropSrcSet(url, {
+    ratio: 9 / 16,
+    focalX: focalX ?? '50%',
+    srcW: w,
+    srcH: h,
+    widths: HERO_MOBILE_WIDTHS,
+  });
 }
 
-const STORY_IMAGE =
-  'https://cdn.shopify.com/s/files/1/0982/9325/2392/files/paulina-herpel-NYsnCI23XJc-unsplash.jpg?v=1777141874';
+/** Spread helper: React 18 warns on camelCase `fetchPriority`. */
+function fetchPriority(value: 'high' | 'low' | 'auto') {
+  return {fetchpriority: value} as Record<string, string>;
+}
+
+function HeroPicture({
+  slide,
+  eager,
+}: {
+  slide: HeroSlideForRender;
+  eager: boolean;
+}) {
+  const m = slide.mobile;
+  return (
+    <picture>
+      <source
+        media="(max-aspect-ratio: 4/5)"
+        srcSet={
+          m
+            ? portrait(m.img, m.pos, m.w, m.h)
+            : portrait(slide.img, slide.mobilePos, slide.w, slide.h)
+        }
+        sizes="100vw"
+      />
+      <img
+        src={withParams(slide.img, 'width=2000')}
+        srcSet={widthSrcSet(slide.img, HERO_DESKTOP_WIDTHS, slide.w)}
+        // Landscape photo on a viewport narrower than 3:2 is shown at
+        // ~150% of the viewport height wide (object-fit: cover).
+        sizes="(max-aspect-ratio: 3/2) 150svh, 100vw"
+        alt=""
+        loading={eager ? 'eager' : 'lazy'}
+        decoding={eager ? 'sync' : 'async'}
+        {...fetchPriority(eager ? 'high' : 'low')}
+        draggable={false}
+      />
+    </picture>
+  );
+}
 
 function Hero({
   slides,
@@ -598,73 +828,101 @@ function Hero({
             img: s.img,
             label: s.label,
             mobilePos: s.mobilePos,
+            w: s.width ?? undefined,
+            h: s.height ?? undefined,
           }))
       : HERO_SLIDES;
   const tape = content?.tape ?? [];
-  const [i, setI] = useState(0);
-  const [paused, setPaused] = useState(false);
+  const rotate = useAutoRotate(activeSlides.length, 5200);
+  const i = rotate.index;
+  const setI = rotate.setIndex;
+  // Only slide 0 is in the server HTML (it is the LCP image). The others
+  // are mounted after window load + idle time, or on first interaction, so
+  // they never compete with it.
+  const [mountAll, setMountAll] = useState(false);
   useEffect(() => {
-    if (paused) return undefined;
-    const id = setInterval(
-      () => setI((x) => (x + 1) % activeSlides.length),
-      5200,
-    );
-    return () => clearInterval(id);
-  }, [paused, activeSlides.length]);
+    if (mountAll) return undefined;
+    let idleId: number | undefined;
+    let timer: number | undefined;
+    const mount = () => {
+      const ric = (
+        window as Window & {
+          requestIdleCallback?: (cb: () => void, o?: {timeout: number}) => number;
+        }
+      ).requestIdleCallback;
+      if (ric) idleId = ric(() => setMountAll(true), {timeout: 3000});
+      else timer = window.setTimeout(() => setMountAll(true), 1500);
+    };
+    if (document.readyState === 'complete') {
+      timer = window.setTimeout(mount, 1200);
+    } else {
+      window.addEventListener('load', mount, {once: true});
+    }
+    return () => {
+      window.removeEventListener('load', mount);
+      if (timer) window.clearTimeout(timer);
+      const cic = (window as Window & {cancelIdleCallback?: (id: number) => void})
+        .cancelIdleCallback;
+      if (idleId && cic) cic(idleId);
+    };
+  }, [mountAll]);
+  useEffect(() => {
+    if (i !== 0) setMountAll(true);
+  }, [i]);
+  // Wave/stamp loops pause while the hero is off-screen.
+  const [liveRef, live] = useInView<HTMLElement>({
+    once: false,
+    threshold: 0,
+    rootMargin: '0px',
+  });
+  const hasVisibleTitle = Boolean(content?.titleLine1 || content?.titleLine2);
 
   return (
     <section
-      className="hero"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
+      ref={liveRef}
+      className={`hero${rotate.paused ? ' is-paused' : ''}${rotate.stopped ? ' is-stopped' : ''}${live ? ' is-live' : ''}`}
+      aria-label={dict.hero.regionLabel}
+      {...rotate.handlers}
     >
-      {activeSlides.map((s, j) => (
-        <div
-          key={s.id ?? s.img}
-          className="hero-media"
-          style={
-            {
-              opacity: j === i ? 1 : 0,
-              transform: j === i ? 'scale(1.02)' : 'scale(1)',
-              transitionProperty: 'opacity, transform',
-              transitionDuration: '1.2s, 6s',
-              transitionTimingFunction: 'ease',
-              // Per-slide horizontal crop point used by the mobile media
-              // query in app.css. Desktop stays centered.
-              '--hero-pos-mobile': s.mobilePos ?? '50%',
-            } as React.CSSProperties
-          }
-        >
-          <img
-            src={`${s.img}${s.img.includes('?') ? '&' : '?'}width=2000`}
-            srcSet={heroSrcSet(s.img)}
-            sizes="100vw"
-            alt=""
-            loading={j === 0 ? 'eager' : 'lazy'}
-            // React 18 doesn't recognize the camelCase `fetchPriority` prop and
-            // warns at runtime. Pass the DOM-native lowercase attribute via
-            // spread so the browser honours it without React's warning.
-            {...({fetchpriority: j === 0 ? 'high' : 'low'} as Record<string, string>)}
-            draggable={false}
-          />
-        </div>
-      ))}
+      <div className="hero-stage">
+        {activeSlides.map(
+          (s, j) =>
+            (j === 0 || mountAll) && (
+              <div
+                key={s.id ?? s.img}
+                className={`hero-media${j === i ? ' is-active' : ''}`}
+                aria-hidden={j !== i}
+                style={
+                  s.deskPos
+                    ? ({'--hero-pos': s.deskPos} as React.CSSProperties)
+                    : undefined
+                }
+              >
+                <HeroPicture slide={s} eager={j === 0} />
+              </div>
+            ),
+        )}
+      </div>
+      <div className="hero-glow" aria-hidden="true" />
       <div className="container hero-inner">
         {(content?.eyebrow || activeSlides[i]?.label) && (
           <div className="hero-eyebrow">
             <span className="tick" />
             {content?.eyebrow && <span>{content.eyebrow}</span>}
             {content?.eyebrow && activeSlides[i]?.label && (
-              <span style={{opacity: 0.5, margin: '0 8px'}}>/</span>
+              <span className="hero-eyebrow-sep">/</span>
             )}
             {activeSlides[i]?.label && (
-              <span style={{fontFamily: 'var(--mono)', opacity: 0.85}}>
-                {activeSlides[i].label}
+              <span className="hero-eyebrow-label">
+                <AutoLang text={activeSlides[i].label} />
               </span>
             )}
           </div>
         )}
-        {(content?.titleLine1 || content?.titleLine2) && (
+        {/* Exactly one h1 on the homepage: when the merchant clears the
+            hero title, keep a visually-hidden one for structure and SEO. */}
+        {!hasVisibleTitle && <h1 className="sr-only">{dict.hero.srTitle}</h1>}
+        {hasVisibleTitle && (
           <h1 className="hero-title">
             {content?.titleLine1}
             {content?.titleLine1 && content?.titleLine2 && <br />}
@@ -680,23 +938,35 @@ function Hero({
             </a>
           )}
         </div>
-        <div className="hero-dots" role="tablist" aria-label={dict.hero.slideAria}>
+        <div className="hero-dots" role="group" aria-label={dict.hero.slideAria}>
           {activeSlides.map((s, j) => (
             <button
               key={s.id ?? s.img}
               onClick={() => setI(j)}
               aria-label={`${dict.hero.slideAria} ${j + 1}`}
-              aria-selected={j === i}
-              role="tab"
+              aria-current={j === i ? 'true' : undefined}
               className={j === i ? 'on' : ''}
               type="button"
             />
           ))}
-          <span className="count">
+          <span className="count" dir="ltr" aria-hidden="true">
             {String(i + 1).padStart(2, '0')} /{' '}
             {String(activeSlides.length).padStart(2, '0')}
           </span>
+          {activeSlides.length > 1 && (
+            <MotionToggle
+              stopped={rotate.stopped}
+              onToggle={rotate.toggle}
+              pauseLabel={dict.hero.pause}
+              playLabel={dict.hero.play}
+            />
+          )}
         </div>
+      </div>
+
+      <div className="hero-stamp" aria-hidden="true">
+        <StampBadge />
+        {dict.hand?.stamp && <span className="hand-note">{dict.hand.stamp}</span>}
       </div>
 
       <div className="scroll-hint" aria-hidden="true">SCROLL</div>
@@ -709,7 +979,7 @@ function Hero({
                 // The tape is intentionally tripled for seamless scroll; index
                 // is the only stable key since each string repeats three times.
                 // eslint-disable-next-line react/no-array-index-key
-                <span key={k} style={{display: 'inline-flex', alignItems: 'center', gap: 48}}>
+                <span key={k} className="hero-tape-item">
                   <span>{s}</span>
                   <span className="dot-sep" />
                 </span>
@@ -718,6 +988,8 @@ function Hero({
           </div>
         </div>
       )}
+
+      <WaveLayers className="hero-waves" />
     </section>
   );
 }
@@ -810,33 +1082,39 @@ function FeaturedLightboard({
     productImage?.altText || featuredProduct?.title || 'Lightboard';
   return (
     <section className="feat3" id="featured">
+      <LiveLoop className="feat3-lights">
+        <StringLights />
+      </LiveLoop>
       <div className="feat3-grid">
-        <div className="feat3-stage">
-          {productImage ? (
-            <Image
-              data={productImage}
-              alt={altText}
-              className="feat3-photo"
-              sizes="(min-width: 1024px) 50vw, 100vw"
-              loading="eager"
-            />
-          ) : (
-            <img
-              src="/lightboard-lifestyle.png"
-              alt={altText}
-              className="feat3-photo"
-              loading="eager"
-            />
-          )}
-          <div className="feat3-tags">
-            {tagMadeToOrder && (
-              <span className="feat3-tag">{tagMadeToOrder}</span>
+        <LiveLoop className="feat3-media">
+          <div className="feat3-stage">
+            {productImage ? (
+              <Image
+                data={productImage}
+                alt={altText}
+                className="feat3-photo"
+                sizes="(min-width: 980px) 55vw, 100vw"
+                loading="lazy"
+              />
+            ) : (
+              <img
+                src="/lightboard-lifestyle.jpg"
+                alt={altText}
+                className="feat3-photo"
+                loading="lazy"
+              />
             )}
-            {tagDimensions && (
-              <span className="feat3-tag alt">{tagDimensions}</span>
-            )}
+            <div className="feat3-tags">
+              {tagMadeToOrder && (
+                <span className="feat3-tag">{tagMadeToOrder}</span>
+              )}
+              {tagDimensions && (
+                <span className="feat3-tag alt">{tagDimensions}</span>
+              )}
+            </div>
           </div>
-        </div>
+          <StampBadge className="feat3-stamp" />
+        </LiveLoop>
 
         <div className="feat3-rail">
           <Reveal>
@@ -845,7 +1123,7 @@ function FeaturedLightboard({
               <h2
                 className="feat3-title"
                 dangerouslySetInnerHTML={{
-                  __html: sanitizeShopifyHtml(headlineHtml),
+                  __html: headlineHtml,
                 }}
               />
             )}
@@ -943,7 +1221,12 @@ function BuyBar({
         <div className="feat3-price">
           <span className="cur">{currencySymbol(currencyCode)}</span>
           <span className="num">{amount}</span>
-          <span className="note">{note}</span>
+          {note && (
+            <span className="note">
+              <Doodle name="van" size={18} />
+              {note}
+            </span>
+          )}
         </div>
       )}
       <div className="feat3-actions">
@@ -969,6 +1252,30 @@ function currencySymbol(code: string | null | undefined): string {
   }
 }
 
+/* ---------------- USP STRIP ---------------- */
+
+function UspStrip() {
+  const {dict} = useI18n();
+  const items = (dict.usp?.items ?? []) as Array<{icon: string; label: string}>;
+  if (items.length === 0) return null;
+  return (
+    <section className="usp" aria-label={dict.usp.label}>
+      <WaveDivider flip className="band-wave-top" />
+      <ul className="usp-list container" role="list">
+        {items.map((item, idx) => (
+          <li key={item.label} className="usp-item">
+            <Reveal delay={Math.min(idx, 4) * 80} className="usp-reveal">
+              <Doodle name={item.icon as DoodleName} size={30} />
+              <span>{item.label}</span>
+            </Reveal>
+          </li>
+        ))}
+      </ul>
+      <WaveDivider className="section-wave" />
+    </section>
+  );
+}
+
 /* ---------------- STORY ---------------- */
 
 function Story({content}: {content: StorySection | null}) {
@@ -976,22 +1283,55 @@ function Story({content}: {content: StorySection | null}) {
   // `homepage.story` shop metafield. The merchant edits everything (paragraph
   // text, stats, eyebrow, title) from Shopify Admin → Content → Metaobjects.
   if (!content) return null;
-  const altText = content.titleLine2 || content.titleLine1 || 'Story';
+  const main = PHOTOS.vanBed;
+  const small = PHOTOS.camperCliff;
   return (
     <section className="story" id="story">
+      <LiveLoop className="story-sun">
+        <SunRays />
+      </LiveLoop>
       <div className="container">
         <div className="story-grid">
-          <div className="story-media">
-            {content.tag && <span className="tag">{content.tag}</span>}
-            <img
-              src={`${STORY_IMAGE}&width=1200`}
-              srcSet={[600, 900, 1200, 1600]
-                .map((w) => `${STORY_IMAGE}&width=${w} ${w}w`)
-                .join(', ')}
-              sizes="(min-width: 900px) 50vw, 100vw"
-              alt={altText}
-              loading="lazy"
-            />
+          <div className="story-media-wrap">
+            <div className="story-media">
+              {content.tag && <span className="tag">{content.tag}</span>}
+              <img
+                src={withParams(main.url, 'width=900')}
+                srcSet={cropSrcSet(main.url, {
+                  ratio: 4 / 5,
+                  focalX: '55%',
+                  focalY: '60%',
+                  srcW: main.w,
+                  srcH: main.h,
+                  widths: [480, 720, 960, 1280],
+                })}
+                sizes="(min-width: 900px) 40vw, 92vw"
+                alt=""
+                width={1280}
+                height={1600}
+                loading="lazy"
+                decoding="async"
+              />
+            </div>
+            <figure className="story-polaroid" aria-hidden="true">
+              <img
+                src={withParams(small.url, 'width=480')}
+                srcSet={cropSrcSet(small.url, {
+                  ratio: 4 / 5,
+                  focalX: '45%',
+                  focalY: '55%',
+                  srcW: small.w,
+                  srcH: small.h,
+                  widths: [240, 360, 480],
+                })}
+                sizes="(min-width: 900px) 16vw, 38vw"
+                alt=""
+                width={480}
+                height={600}
+                loading="lazy"
+                decoding="async"
+              />
+            </figure>
           </div>
           <div className="story-copy">
             {content.eyebrow && (
@@ -1018,6 +1358,7 @@ function Story({content}: {content: StorySection | null}) {
             )}
             {content.stats?.length > 0 && (
               <div className="story-stats">
+                <Surfboard className="story-board" />
                 {content.stats.map((st, idx) => (
                   <StoryStat
                     key={st.id}
@@ -1031,6 +1372,10 @@ function Story({content}: {content: StorySection | null}) {
           </div>
         </div>
       </div>
+      <LiveLoop className="story-lights">
+        <StringLights />
+      </LiveLoop>
+      <WaveDivider className="section-wave" />
     </section>
   );
 }
@@ -1058,6 +1403,7 @@ function Faq({items}: {items: Array<MetaobjectFieldRecord>}) {
               <em>{f.titleLine2}</em>
             </h2>
           </Reveal>
+          <Van className="faq-van" />
         </header>
         <ul className="faq-list" role="list">
           {items.map((item, idx) => {
@@ -1092,32 +1438,71 @@ function Faq({items}: {items: Array<MetaobjectFieldRecord>}) {
 
 /* ---------------- TESTIMONIALS ---------------- */
 
+function PhotoBandImage({
+  photo,
+  focalX,
+  className,
+}: {
+  photo: BrandPhoto;
+  focalX: string;
+  className: string;
+}) {
+  return (
+    <picture className={className}>
+      <source
+        media="(max-aspect-ratio: 4/5)"
+        srcSet={cropSrcSet(photo.url, {
+          ratio: 4 / 5,
+          focalX,
+          srcW: photo.w,
+          srcH: photo.h,
+          widths: [480, 720, 960, 1200],
+        })}
+        sizes="100vw"
+      />
+      <img
+        src={withParams(photo.url, 'width=1200')}
+        srcSet={widthSrcSet(photo.url, [720, 1200, 1800, 2400], photo.w)}
+        sizes="100vw"
+        alt=""
+        loading="lazy"
+        decoding="async"
+      />
+    </picture>
+  );
+}
+
 function Testimonials({items}: {items: Array<MetaobjectFieldRecord>}) {
   const {dict} = useI18n();
   const t = dict.testify;
   const quotes = Array.isArray(items) ? items : [];
-  const [i, setI] = useState(0);
-  useEffect(() => {
-    if (quotes.length <= 1) return undefined;
-    const id = setInterval(() => setI((x) => (x + 1) % quotes.length), 6200);
-    return () => clearInterval(id);
-  }, [quotes.length]);
+  const rotate = useAutoRotate(quotes.length, 6200);
+  const i = Math.min(rotate.index, Math.max(quotes.length - 1, 0));
+  const setI = rotate.setIndex;
   if (quotes.length === 0) return null;
   const q = quotes[i];
   return (
-    <section className="testify">
+    <section
+      className="testify testify--band"
+      aria-roledescription="carousel"
+      aria-label={t.regionLabel}
+      {...rotate.handlers}
+    >
+      <PhotoBandImage
+        photo={PHOTOS.surferWalk}
+        focalX="60%"
+        className="band-photo"
+      />
+      <WaveDivider flip className="band-wave-top" />
       <div className="container">
         <Reveal>
-          <div
-            className="section-eyebrow"
-            style={{justifyContent: 'center', display: 'inline-flex', marginBottom: 32}}
-          >
+          <div className="section-eyebrow testify-eyebrow">
             <span>{t.eyebrow}</span>
           </div>
         </Reveal>
         <Reveal delay={120}>
-          <div style={{position: 'relative', minHeight: 240}}>
-            <blockquote key={i} style={{animation: 'fadeUp 0.5s ease both'}}>
+          <div className="testify-stage" aria-live={rotate.paused ? 'polite' : 'off'}>
+            <blockquote key={i} className="testify-quote">
               «{q.body}»
             </blockquote>
             <div className="attribution">{q.attribution}</div>
@@ -1126,7 +1511,7 @@ function Testimonials({items}: {items: Array<MetaobjectFieldRecord>}) {
         <div className="testify-nav">
           <button
             type="button"
-            onClick={() => setI((x) => (x - 1 + quotes.length) % quotes.length)}
+            onClick={() => setI((x: number) => (x - 1 + quotes.length) % quotes.length)}
             aria-label={t.prev}
             className="testify-nav-btn"
           >
@@ -1137,7 +1522,10 @@ function Testimonials({items}: {items: Array<MetaobjectFieldRecord>}) {
               <button
                 key={q.id}
                 onClick={() => setI(j)}
-                aria-label={`${t.eyebrow.trim()} ${j + 1}`}
+                aria-label={t.dotLabel
+                  .replace('{n}', String(j + 1))
+                  .replace('{total}', String(quotes.length))}
+                aria-current={j === i ? 'true' : undefined}
                 className={j === i ? 'on' : ''}
                 type="button"
               />
@@ -1145,34 +1533,62 @@ function Testimonials({items}: {items: Array<MetaobjectFieldRecord>}) {
           </div>
           <button
             type="button"
-            onClick={() => setI((x) => (x + 1) % quotes.length)}
+            onClick={() => setI((x: number) => (x + 1) % quotes.length)}
             aria-label={t.next}
             className="testify-nav-btn"
           >
             →
           </button>
+          {quotes.length > 1 && (
+            <MotionToggle
+              stopped={rotate.stopped}
+              onToggle={rotate.toggle}
+              pauseLabel={t.pause}
+              playLabel={t.play}
+            />
+          )}
         </div>
       </div>
     </section>
   );
 }
 
-/* ---------------- QUERIES ---------------- */
+/* ---------------- FINAL CTA ---------------- */
 
-const FEATURED_COLLECTION_QUERY = `#graphql
-  fragment FeaturedCollection on Collection {
-    id
-    title
-    image { id url altText width height }
-    handle
-  }
-  query FeaturedCollection($country: CountryCode, $language: LanguageCode)
-    @inContext(country: $country, language: $language) {
-    collections(first: 1, sortKey: UPDATED_AT, reverse: true) {
-      nodes { ...FeaturedCollection }
-    }
-  }
-`;
+function FinalCta({handle}: {handle?: string | null}) {
+  const {dict, to} = useI18n();
+  const c = dict.finalCta;
+  if (!c?.title) return null;
+  const href = handle ? to(`/products/${handle}`) : '#featured';
+  return (
+    <section className="final-cta" aria-labelledby="final-cta-title">
+      <PhotoBandImage
+        photo={PHOTOS.surferDusk}
+        focalX="52%"
+        className="band-photo"
+      />
+      <LiveLoop className="final-cta-sun">
+        <SunRays />
+      </LiveLoop>
+      <div className="container final-cta-inner">
+        <Reveal>
+          <h2 id="final-cta-title" className="final-cta-title">
+            {c.title}
+          </h2>
+        </Reveal>
+        <Reveal delay={100}>
+          {c.kicker && <p className="final-cta-kicker">{c.kicker}</p>}
+          <Link to={href} prefetch="intent" className="hero-cta final-cta-btn">
+            <span>{c.cta}</span>
+            <span className="arrow" aria-hidden="true">→</span>
+          </Link>
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
+/* ---------------- QUERIES ---------------- */
 
 const FEATURED_PRODUCT_QUERY = `#graphql
   query FeaturedProduct($country: CountryCode, $language: LanguageCode)

@@ -29,7 +29,7 @@ import {
   parseLocaleFromPath,
 } from '~/lib/i18n';
 import {isLaunchGateActive} from '~/lib/.server/coming-soon.server';
-import {rootSeo} from '~/lib/.server/seo.server';
+import {rootSeo, siteJsonLd} from '~/lib/.server/seo.server';
 import {routeMeta} from '~/lib/seo-urls';
 import {MetaPixel, MetaPixelScript} from '~/lib/meta-pixel';
 import type {Route} from './+types/root';
@@ -81,10 +81,6 @@ export function links() {
     },
     {
       rel: 'preconnect',
-      href: 'https://shop.app',
-    },
-    {
-      rel: 'preconnect',
       href: 'https://fonts.googleapis.com',
     },
     {
@@ -92,9 +88,24 @@ export function links() {
       href: 'https://fonts.gstatic.com',
       crossOrigin: 'anonymous',
     },
+    // Hebrew body/display text renders in self-hosted Ploni (app.css,
+    // unicode-range limited). Preload the light cut: it paints the hero and
+    // most Hebrew copy, so the LCP text isn't waiting on font discovery.
+    {
+      rel: 'preload',
+      href: '/fonts/ploni-light-aaa.woff2',
+      as: 'font',
+      type: 'font/woff2',
+      crossOrigin: 'anonymous',
+    },
+    // Only the Latin families app.css actually uses: Fraunces (serif,
+    // weights 300-500 + italic; the SOFT/WONK axes were ~100 KB and are
+    // dropped), Heebo (sans fallback for Latin), JetBrains Mono (labels).
+    // Removed: Inter and Frank Ruhl Libre (shadowed by Ploni/Heebo) and
+    // Caveat (the .script class is unused).
     {
       rel: 'stylesheet',
-      href: 'https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..700,0..100,0..1;1,9..144,300..700,0..100,0..1&family=Frank+Ruhl+Libre:wght@300..900&family=Heebo:wght@300;400;500;700;800&family=Inter:wght@300..700&family=JetBrains+Mono:wght@400;500;600&family=Caveat:wght@400..700&display=swap',
+      href: 'https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..500;1,9..144,300..500&family=Heebo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap',
     },
     {rel: 'icon', type: 'image/png', href: '/favicon.png'},
   ];
@@ -132,6 +143,8 @@ export async function loader(args: Route.LoaderArgs) {
 
   // Start fetching non-critical data without blocking time to first byte
   const deferredData = loadDeferredData(args);
+  // Site-wide JSON-LD @graph from live Shopify data (runs in parallel).
+  const siteGraph = siteJsonLd(args.context.storefront, {locale, pathnameNoLocale});
 
   // Await the critical data required to render initial state of the page
   const criticalData = await loadCriticalData(args);
@@ -145,7 +158,7 @@ export async function loader(args: Route.LoaderArgs) {
     dict,
     pathnameNoLocale,
     seo,
-    jsonLd,
+    jsonLd: await siteGraph,
     publicStoreDomain: env.PUBLIC_STORE_DOMAIN,
     metaPixelId: env.META_PIXEL_ID || null,
     shop: getShopAnalytics({
@@ -159,7 +172,10 @@ export async function loader(args: Route.LoaderArgs) {
       // subdomain) so the Customer Privacy API can initialise.
       checkoutDomain: env.PUBLIC_CHECKOUT_DOMAIN || env.PUBLIC_STORE_DOMAIN,
       storefrontAccessToken: env.PUBLIC_STOREFRONT_API_TOKEN,
-      withPrivacyBanner: false,
+      // Shopify's cookie banner. Which regions see it is set in Admin →
+      // Settings → Customer privacy → Cookie banner (must include Israel /
+      // "All regions"). Meta Pixel waits for an explicit marketing "yes".
+      withPrivacyBanner: true,
       // localize the privacy banner
       country: args.context.storefront.i18n.country,
       language: args.context.storefront.i18n.language,

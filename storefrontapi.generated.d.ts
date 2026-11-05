@@ -389,35 +389,6 @@ export type FooterQuery = {
   >;
 };
 
-export type FeaturedCollectionFragment = Pick<
-  StorefrontAPI.Collection,
-  'id' | 'title' | 'handle'
-> & {
-  image?: StorefrontAPI.Maybe<
-    Pick<StorefrontAPI.Image, 'id' | 'url' | 'altText' | 'width' | 'height'>
-  >;
-};
-
-export type FeaturedCollectionQueryVariables = StorefrontAPI.Exact<{
-  country?: StorefrontAPI.InputMaybe<StorefrontAPI.CountryCode>;
-  language?: StorefrontAPI.InputMaybe<StorefrontAPI.LanguageCode>;
-}>;
-
-export type FeaturedCollectionQuery = {
-  collections: {
-    nodes: Array<
-      Pick<StorefrontAPI.Collection, 'id' | 'title' | 'handle'> & {
-        image?: StorefrontAPI.Maybe<
-          Pick<
-            StorefrontAPI.Image,
-            'id' | 'url' | 'altText' | 'width' | 'height'
-          >
-        >;
-      }
-    >;
-  };
-};
-
 export type FeaturedProductQueryVariables = StorefrontAPI.Exact<{
   country?: StorefrontAPI.InputMaybe<StorefrontAPI.CountryCode>;
   language?: StorefrontAPI.InputMaybe<StorefrontAPI.LanguageCode>;
@@ -1159,6 +1130,40 @@ export type ProductFragment = Pick<
     }
   >;
   seo: Pick<StorefrontAPI.Seo, 'description' | 'title'>;
+  images: {
+    nodes: Array<
+      Pick<StorefrontAPI.Image, 'id' | 'url' | 'altText' | 'width' | 'height'>
+    >;
+  };
+  eyebrow_he?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+  eyebrow_en?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+  headline_he?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+  headline_en?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+  ship_note_he?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+  ship_note_en?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+  specs?: StorefrontAPI.Maybe<{
+    references?: StorefrontAPI.Maybe<{
+      nodes: Array<
+        Pick<StorefrontAPI.Metaobject, 'id'> & {
+          label_he?: StorefrontAPI.Maybe<
+            Pick<StorefrontAPI.MetaobjectField, 'value'>
+          >;
+          label_en?: StorefrontAPI.Maybe<
+            Pick<StorefrontAPI.MetaobjectField, 'value'>
+          >;
+          value_he?: StorefrontAPI.Maybe<
+            Pick<StorefrontAPI.MetaobjectField, 'value'>
+          >;
+          value_en?: StorefrontAPI.Maybe<
+            Pick<StorefrontAPI.MetaobjectField, 'value'>
+          >;
+          position?: StorefrontAPI.Maybe<
+            Pick<StorefrontAPI.MetaobjectField, 'value'>
+          >;
+        }
+      >;
+    }>;
+  }>;
 };
 
 export type ProductQueryVariables = StorefrontAPI.Exact<{
@@ -1277,6 +1282,47 @@ export type ProductQuery = {
         }
       >;
       seo: Pick<StorefrontAPI.Seo, 'description' | 'title'>;
+      images: {
+        nodes: Array<
+          Pick<
+            StorefrontAPI.Image,
+            'id' | 'url' | 'altText' | 'width' | 'height'
+          >
+        >;
+      };
+      eyebrow_he?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+      eyebrow_en?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+      headline_he?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+      headline_en?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+      ship_note_he?: StorefrontAPI.Maybe<
+        Pick<StorefrontAPI.Metafield, 'value'>
+      >;
+      ship_note_en?: StorefrontAPI.Maybe<
+        Pick<StorefrontAPI.Metafield, 'value'>
+      >;
+      specs?: StorefrontAPI.Maybe<{
+        references?: StorefrontAPI.Maybe<{
+          nodes: Array<
+            Pick<StorefrontAPI.Metaobject, 'id'> & {
+              label_he?: StorefrontAPI.Maybe<
+                Pick<StorefrontAPI.MetaobjectField, 'value'>
+              >;
+              label_en?: StorefrontAPI.Maybe<
+                Pick<StorefrontAPI.MetaobjectField, 'value'>
+              >;
+              value_he?: StorefrontAPI.Maybe<
+                Pick<StorefrontAPI.MetaobjectField, 'value'>
+              >;
+              value_en?: StorefrontAPI.Maybe<
+                Pick<StorefrontAPI.MetaobjectField, 'value'>
+              >;
+              position?: StorefrontAPI.Maybe<
+                Pick<StorefrontAPI.MetaobjectField, 'value'>
+              >;
+            }
+          >;
+        }>;
+      }>;
     }
   >;
 };
@@ -1499,6 +1545,72 @@ export type PredictiveSearchQuery = {
   }>;
 };
 
+export type SitemapIndexCountsQueryVariables = StorefrontAPI.Exact<{
+  [key: string]: never;
+}>;
+
+export type SitemapIndexCountsQuery = {
+  products: {
+    pagesCount?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Count, 'count'>>;
+  };
+  collections: {
+    pagesCount?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Count, 'count'>>;
+  };
+  pages: {pagesCount?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Count, 'count'>>};
+  articles: {nodes: Array<Pick<StorefrontAPI.Article, 'id'>>};
+};
+
+export type SitemapResourcesQueryVariables = StorefrontAPI.Exact<{
+  type: StorefrontAPI.SitemapType;
+  page: StorefrontAPI.Scalars['Int']['input'];
+}>;
+
+export type SitemapResourcesQuery = {
+  sitemap: {
+    resources?: StorefrontAPI.Maybe<{
+      items: Array<
+        | Pick<StorefrontAPI.SitemapResource, 'handle' | 'updatedAt'>
+        | Pick<StorefrontAPI.SitemapResourceMetaobject, 'handle' | 'updatedAt'>
+      >;
+    }>;
+  };
+};
+
+export type SitemapArticlesQueryVariables = StorefrontAPI.Exact<{
+  [key: string]: never;
+}>;
+
+export type SitemapArticlesQuery = {
+  articles: {
+    nodes: Array<
+      Pick<StorefrontAPI.Article, 'handle' | 'publishedAt'> & {
+        blog: Pick<StorefrontAPI.Blog, 'handle'>;
+      }
+    >;
+  };
+};
+
+export type SitemapPoliciesQueryVariables = StorefrontAPI.Exact<{
+  [key: string]: never;
+}>;
+
+export type SitemapPoliciesQuery = {
+  shop: {
+    privacyPolicy?: StorefrontAPI.Maybe<
+      Pick<StorefrontAPI.ShopPolicy, 'handle'>
+    >;
+    refundPolicy?: StorefrontAPI.Maybe<
+      Pick<StorefrontAPI.ShopPolicy, 'handle'>
+    >;
+    shippingPolicy?: StorefrontAPI.Maybe<
+      Pick<StorefrontAPI.ShopPolicy, 'handle'>
+    >;
+    termsOfService?: StorefrontAPI.Maybe<
+      Pick<StorefrontAPI.ShopPolicy, 'handle'>
+    >;
+  };
+};
+
 interface GeneratedQueryTypes {
   '#graphql\n  fragment Shop on Shop {\n    id\n    name\n    description\n    primaryDomain {\n      url\n    }\n    brand {\n      logo {\n        image {\n          url\n        }\n      }\n    }\n    phone: metafield(namespace: "business", key: "phone") { value }\n    email: metafield(namespace: "business", key: "email") { value }\n    instagram: metafield(namespace: "business", key: "instagram") { value }\n    legalName: metafield(namespace: "business", key: "legal_name") { value }\n    businessAddress: metafield(namespace: "business", key: "address") { value }\n  }\n  query Header(\n    $country: CountryCode\n    $headerMenuHandle: String!\n    $language: LanguageCode\n  ) @inContext(language: $language, country: $country) {\n    shop {\n      ...Shop\n    }\n    menu(handle: $headerMenuHandle) {\n      ...Menu\n    }\n  }\n  #graphql\n  fragment MenuItem on MenuItem {\n    id\n    resourceId\n    tags\n    title\n    type\n    url\n  }\n  fragment ChildMenuItem on MenuItem {\n    ...MenuItem\n  }\n  fragment ParentMenuItem on MenuItem {\n    ...MenuItem\n    items {\n      ...ChildMenuItem\n    }\n  }\n  fragment Menu on Menu {\n    id\n    items {\n      ...ParentMenuItem\n    }\n  }\n\n': {
     return: HeaderQuery;
@@ -1507,10 +1619,6 @@ interface GeneratedQueryTypes {
   '#graphql\n  query Footer(\n    $country: CountryCode\n    $footerMenuHandle: String!\n    $language: LanguageCode\n  ) @inContext(language: $language, country: $country) {\n    menu(handle: $footerMenuHandle) {\n      ...Menu\n    }\n  }\n  #graphql\n  fragment MenuItem on MenuItem {\n    id\n    resourceId\n    tags\n    title\n    type\n    url\n  }\n  fragment ChildMenuItem on MenuItem {\n    ...MenuItem\n  }\n  fragment ParentMenuItem on MenuItem {\n    ...MenuItem\n    items {\n      ...ChildMenuItem\n    }\n  }\n  fragment Menu on Menu {\n    id\n    items {\n      ...ParentMenuItem\n    }\n  }\n\n': {
     return: FooterQuery;
     variables: FooterQueryVariables;
-  };
-  '#graphql\n  fragment FeaturedCollection on Collection {\n    id\n    title\n    image { id url altText width height }\n    handle\n  }\n  query FeaturedCollection($country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    collections(first: 1, sortKey: UPDATED_AT, reverse: true) {\n      nodes { ...FeaturedCollection }\n    }\n  }\n': {
-    return: FeaturedCollectionQuery;
-    variables: FeaturedCollectionQueryVariables;
   };
   '#graphql\n  query FeaturedProduct($country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    shop {\n      featured: metafield(namespace: "custom", key: "featured_product") {\n        reference {\n          ... on Product {\n            id\n            title\n            handle\n            priceRange {\n              minVariantPrice { amount currencyCode }\n            }\n            featuredImage { id url altText width height }\n            options {\n              id\n              name\n              optionValues {\n                id\n                name\n                swatch { color }\n              }\n            }\n            eyebrow_he: metafield(namespace: "marketing", key: "eyebrow_he") { value }\n            eyebrow_en: metafield(namespace: "marketing", key: "eyebrow_en") { value }\n            headline_he: metafield(namespace: "marketing", key: "headline_he") { value }\n            headline_en: metafield(namespace: "marketing", key: "headline_en") { value }\n            description_he: metafield(namespace: "marketing", key: "description_he") { value }\n            description_en: metafield(namespace: "marketing", key: "description_en") { value }\n            tagMadeToOrder_he: metafield(namespace: "marketing", key: "tag_made_to_order_he") { value }\n            tagMadeToOrder_en: metafield(namespace: "marketing", key: "tag_made_to_order_en") { value }\n            tagDimensions: metafield(namespace: "marketing", key: "tag_dimensions") { value }\n            shipNote_he: metafield(namespace: "marketing", key: "ship_note_he") { value }\n            shipNote_en: metafield(namespace: "marketing", key: "ship_note_en") { value }\n            specs: metafield(namespace: "marketing", key: "specs") {\n              references(first: 20) {\n                nodes {\n                  ... on Metaobject {\n                    id\n                    label_he: field(key: "label_he") { value }\n                    label_en: field(key: "label_en") { value }\n                    value_he: field(key: "value_he") { value }\n                    value_en: field(key: "value_en") { value }\n                    position: field(key: "position") { value }\n                  }\n                }\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n': {
     return: FeaturedProductQuery;
@@ -1568,7 +1676,7 @@ interface GeneratedQueryTypes {
     return: PoliciesQuery;
     variables: PoliciesQueryVariables;
   };
-  '#graphql\n  query Product(\n    $country: CountryCode\n    $handle: String!\n    $language: LanguageCode\n    $selectedOptions: [SelectedOptionInput!]!\n  ) @inContext(country: $country, language: $language) {\n    product(handle: $handle) {\n      ...Product\n    }\n  }\n  #graphql\n  fragment Product on Product {\n    id\n    title\n    vendor\n    handle\n    descriptionHtml\n    description\n    tags\n    featuredImage {\n      url\n      altText\n      width\n      height\n    }\n    encodedVariantExistence\n    encodedVariantAvailability\n    options {\n      name\n      optionValues {\n        name\n        firstSelectableVariant {\n          ...ProductVariant\n        }\n        swatch {\n          color\n          image {\n            previewImage {\n              url\n            }\n          }\n        }\n      }\n    }\n    selectedOrFirstAvailableVariant(selectedOptions: $selectedOptions, ignoreUnknownOptions: true, caseInsensitiveMatch: true) {\n      ...ProductVariant\n    }\n    adjacentVariants (selectedOptions: $selectedOptions) {\n      ...ProductVariant\n    }\n    seo {\n      description\n      title\n    }\n  }\n  #graphql\n  fragment ProductVariant on ProductVariant {\n    availableForSale\n    compareAtPrice {\n      amount\n      currencyCode\n    }\n    id\n    image {\n      __typename\n      id\n      url\n      altText\n      width\n      height\n    }\n    price {\n      amount\n      currencyCode\n    }\n    product {\n      title\n      handle\n    }\n    selectedOptions {\n      name\n      value\n    }\n    sku\n    title\n    unitPrice {\n      amount\n      currencyCode\n    }\n  }\n\n\n': {
+  '#graphql\n  query Product(\n    $country: CountryCode\n    $handle: String!\n    $language: LanguageCode\n    $selectedOptions: [SelectedOptionInput!]!\n  ) @inContext(country: $country, language: $language) {\n    product(handle: $handle) {\n      ...Product\n    }\n  }\n  #graphql\n  fragment Product on Product {\n    id\n    title\n    vendor\n    handle\n    descriptionHtml\n    description\n    tags\n    featuredImage {\n      url\n      altText\n      width\n      height\n    }\n    encodedVariantExistence\n    encodedVariantAvailability\n    options {\n      name\n      optionValues {\n        name\n        firstSelectableVariant {\n          ...ProductVariant\n        }\n        swatch {\n          color\n          image {\n            previewImage {\n              url\n            }\n          }\n        }\n      }\n    }\n    selectedOrFirstAvailableVariant(selectedOptions: $selectedOptions, ignoreUnknownOptions: true, caseInsensitiveMatch: true) {\n      ...ProductVariant\n    }\n    adjacentVariants (selectedOptions: $selectedOptions) {\n      ...ProductVariant\n    }\n    seo {\n      description\n      title\n    }\n    images(first: 12) {\n      nodes {\n        id\n        url\n        altText\n        width\n        height\n      }\n    }\n    eyebrow_he: metafield(namespace: "marketing", key: "eyebrow_he") { value }\n    eyebrow_en: metafield(namespace: "marketing", key: "eyebrow_en") { value }\n    headline_he: metafield(namespace: "marketing", key: "headline_he") { value }\n    headline_en: metafield(namespace: "marketing", key: "headline_en") { value }\n    ship_note_he: metafield(namespace: "marketing", key: "ship_note_he") { value }\n    ship_note_en: metafield(namespace: "marketing", key: "ship_note_en") { value }\n    specs: metafield(namespace: "marketing", key: "specs") {\n      references(first: 20) {\n        nodes {\n          ... on Metaobject {\n            id\n            label_he: field(key: "label_he") { value }\n            label_en: field(key: "label_en") { value }\n            value_he: field(key: "value_he") { value }\n            value_en: field(key: "value_en") { value }\n            position: field(key: "position") { value }\n          }\n        }\n      }\n    }\n  }\n  #graphql\n  fragment ProductVariant on ProductVariant {\n    availableForSale\n    compareAtPrice {\n      amount\n      currencyCode\n    }\n    id\n    image {\n      __typename\n      id\n      url\n      altText\n      width\n      height\n    }\n    price {\n      amount\n      currencyCode\n    }\n    product {\n      title\n      handle\n    }\n    selectedOptions {\n      name\n      value\n    }\n    sku\n    title\n    unitPrice {\n      amount\n      currencyCode\n    }\n  }\n\n\n': {
     return: ProductQuery;
     variables: ProductQueryVariables;
   };
@@ -1579,6 +1687,22 @@ interface GeneratedQueryTypes {
   '#graphql\n  query PredictiveSearch(\n    $country: CountryCode\n    $language: LanguageCode\n    $limit: Int!\n    $limitScope: PredictiveSearchLimitScope!\n    $term: String!\n    $types: [PredictiveSearchType!]\n  ) @inContext(country: $country, language: $language) {\n    predictiveSearch(\n      limit: $limit,\n      limitScope: $limitScope,\n      query: $term,\n      types: $types,\n    ) {\n      articles {\n        ...PredictiveArticle\n      }\n      collections {\n        ...PredictiveCollection\n      }\n      pages {\n        ...PredictivePage\n      }\n      products {\n        ...PredictiveProduct\n      }\n      queries {\n        ...PredictiveQuery\n      }\n    }\n  }\n  #graphql\n  fragment PredictiveArticle on Article {\n    __typename\n    id\n    title\n    handle\n    blog {\n      handle\n    }\n    image {\n      url\n      altText\n      width\n      height\n    }\n    trackingParameters\n  }\n\n  #graphql\n  fragment PredictiveCollection on Collection {\n    __typename\n    id\n    title\n    handle\n    image {\n      url\n      altText\n      width\n      height\n    }\n    trackingParameters\n  }\n\n  #graphql\n  fragment PredictivePage on Page {\n    __typename\n    id\n    title\n    handle\n    trackingParameters\n  }\n\n  #graphql\n  fragment PredictiveProduct on Product {\n    __typename\n    id\n    title\n    handle\n    trackingParameters\n    selectedOrFirstAvailableVariant(\n      selectedOptions: []\n      ignoreUnknownOptions: true\n      caseInsensitiveMatch: true\n    ) {\n      id\n      image {\n        url\n        altText\n        width\n        height\n      }\n      price {\n        amount\n        currencyCode\n      }\n    }\n  }\n\n  #graphql\n  fragment PredictiveQuery on SearchQuerySuggestion {\n    __typename\n    text\n    styledText\n    trackingParameters\n  }\n\n': {
     return: PredictiveSearchQuery;
     variables: PredictiveSearchQueryVariables;
+  };
+  '#graphql\n  query SitemapIndexCounts {\n    products: sitemap(type: PRODUCT) { pagesCount { count } }\n    collections: sitemap(type: COLLECTION) { pagesCount { count } }\n    pages: sitemap(type: PAGE) { pagesCount { count } }\n    articles(first: 1) { nodes { id } }\n  }\n': {
+    return: SitemapIndexCountsQuery;
+    variables: SitemapIndexCountsQueryVariables;
+  };
+  '#graphql\n  query SitemapResources($type: SitemapType!, $page: Int!) {\n    sitemap(type: $type) {\n      resources(page: $page) {\n        items {\n          handle\n          updatedAt\n        }\n      }\n    }\n  }\n': {
+    return: SitemapResourcesQuery;
+    variables: SitemapResourcesQueryVariables;
+  };
+  '#graphql\n  query SitemapArticles {\n    articles(first: 250, sortKey: PUBLISHED_AT, reverse: true) {\n      nodes {\n        handle\n        publishedAt\n        blog { handle }\n      }\n    }\n  }\n': {
+    return: SitemapArticlesQuery;
+    variables: SitemapArticlesQueryVariables;
+  };
+  '#graphql\n  query SitemapPolicies {\n    shop {\n      privacyPolicy { handle }\n      refundPolicy { handle }\n      shippingPolicy { handle }\n      termsOfService { handle }\n    }\n  }\n': {
+    return: SitemapPoliciesQuery;
+    variables: SitemapPoliciesQueryVariables;
   };
 }
 

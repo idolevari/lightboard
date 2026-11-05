@@ -5,6 +5,20 @@ import {renderToReadableStream} from 'react-dom/server';
 import {createContentSecurityPolicy} from '@shopify/hydrogen';
 import type {HydrogenRouterContextProvider} from '@shopify/hydrogen';
 
+/**
+ * Browser features the storefront never needs. The photo customizer uses a
+ * plain <input type="file"> (no getUserMedia), so camera/microphone stay off.
+ * `payment=(self)` keeps the Payment Request API available to first-party
+ * code only; checkout itself runs on Shopify's domain.
+ */
+const PERMISSIONS_POLICY = [
+  'camera=()',
+  'microphone=()',
+  'geolocation=()',
+  'usb=()',
+  'payment=(self)',
+].join(', ');
+
 export default async function handleRequest(
   request: Request,
   responseStatusCode: number,
@@ -12,12 +26,19 @@ export default async function handleRequest(
   reactRouterContext: EntryContext,
   context: HydrogenRouterContextProvider,
 ) {
-  const isDev = context.env.NODE_ENV !== 'production';
+  // Build-time constant (Vite replaces it). Do NOT read NODE_ENV from
+  // `context.env`: Oxygen never injects it, which made production CSPs
+  // allow http://localhost:* and ws://localhost:*.
+  const isDev = process.env.NODE_ENV === 'development';
   const {nonce, header, NonceProvider} = createContentSecurityPolicy({
     shop: {
-      checkoutDomain: context.env.PUBLIC_CHECKOUT_DOMAIN,
+      // Same fallback as root.tsx: PUBLIC_CHECKOUT_DOMAIN isn't always
+      // injected into the worker runtime.
+      checkoutDomain:
+        context.env.PUBLIC_CHECKOUT_DOMAIN || context.env.PUBLIC_STORE_DOMAIN,
       storeDomain: context.env.PUBLIC_STORE_DOMAIN,
     },
+    objectSrc: ["'none'"],
     // Photo customizer creates blob: URLs for in-browser cropping/preview, and
     // pulls Google Fonts stylesheets configured in root.jsx. Both need explicit
     // CSP allowances since Hydrogen's defaults don't include them.
@@ -83,8 +104,10 @@ export default async function handleRequest(
     await body.allReady;
   }
 
-  responseHeaders.set('Content-Type', 'text/html');
+  responseHeaders.set('Content-Type', 'text/html; charset=utf-8');
   responseHeaders.set('Content-Security-Policy', header);
+  responseHeaders.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  responseHeaders.set('Permissions-Policy', PERMISSIONS_POLICY);
 
   return new Response(body, {
     headers: responseHeaders,

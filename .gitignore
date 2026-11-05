@@ -15,3 +15,12 @@ scripts/
 policies/
 .shopify-files-app/
 tsconfig.tsbuildinfo
+.env.*
+!.env.example
+.dev.vars
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/

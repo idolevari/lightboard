@@ -1,5 +1,9 @@
 import {data} from 'react-router';
-import {buildPreviewCookie, tokensMatch} from '~/lib/.server/coming-soon.server';
+import {
+  buildPreviewCookie,
+  getPreviewCookieValue,
+  tokensMatch,
+} from '~/lib/.server/coming-soon.server';
 import type {Route} from './+types/preview';
 
 /**
@@ -7,7 +11,8 @@ import type {Route} from './+types/preview';
  *
  *   GET /preview?token=<env.PREVIEW_TOKEN>
  *
- * Sets `lb_preview=1` (HttpOnly, Secure, SameSite=Lax, 30 days) and redirects
+ * Sets a signed `lb_preview` cookie (HMAC of PREVIEW_TOKEN keyed with
+ * SESSION_SECRET; HttpOnly, Secure, SameSite=Lax, 30 days) and redirects
  * to `/` so the next request renders the real storefront. Any unknown or
  * missing token returns 404 — the gate stays in place and the URL surface is
  * indistinguishable from a typo.
@@ -22,11 +27,15 @@ export async function loader({request, context}: Route.LoaderArgs) {
   if (!provided || !tokensMatch(provided, expected)) {
     return data({error: 'not-found'}, {status: 404});
   }
+  const value = await getPreviewCookieValue(context.env);
+  if (!value) {
+    return data({error: 'not-found'}, {status: 404});
+  }
   return new Response(null, {
     status: 302,
     headers: {
       Location: '/',
-      'Set-Cookie': buildPreviewCookie(),
+      'Set-Cookie': buildPreviewCookie(value),
     },
   });
 }

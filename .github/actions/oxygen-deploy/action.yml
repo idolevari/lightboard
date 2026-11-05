@@ -1,0 +1,104 @@
+name: Deploy to Oxygen
+description: >-
+  Install dependencies and run `shopify hydrogen deploy`, then publish the
+  deployment URL as an output and in the job summary. Expects the repository
+  to be checked out already.
+
+inputs:
+  token:
+    description: Oxygen deployment token (secrets.OXYGEN_DEPLOYMENT_TOKEN_1000130179)
+    required: true
+  preview:
+    description: >-
+      'true' adds --preview so the deploy always lands in Oxygen's Preview
+      environment instead of the environment mapped to the PR head branch.
+    required: false
+    default: 'false'
+  auth-bypass-token:
+    description: >-
+      'true' adds --auth-bypass-token so end-to-end tests can reach a private
+      (Preview) deployment. The token is never printed: it is masked and only
+      published encrypted (see the auth-bypass-token-encrypted output).
+    required: false
+    default: 'false'
+  auth-bypass-token-duration:
+    description: Hours (1-12) the auth bypass token stays valid.
+    required: false
+    default: '1'
+
+outputs:
+  url:
+    description: Deployment URL read from h2_deploy_log.json
+    value: ${{ steps.deploy.outputs.url }}
+  auth-bypass-token-encrypted:
+    description: >-
+      The Oxygen auth bypass token, AES-256-CBC/PBKDF2-encrypted with the
+      deployment token (`inputs.token`) and base64-encoded, so it can cross
+      job boundaries (GitHub drops job outputs that contain masked values)
+      without ever appearing in plain text in this public repo's logs.
+      Decrypt with:
+      openssl enc -d -aes-256-cbc -pbkdf2 -a -A -pass env:OXYGEN_TOKEN
+      Empty unless auth-bypass-token is 'true'.
+    value: ${{ steps.deploy.outputs.auth-bypass-token-encrypted }}
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      with:
+        node-version-file: .nvmrc
+        cache: npm
+
+    - name: Install dependencies
+      shell: bash
+      run: npm ci
+
+    - name: Build and deploy to Oxygen
+      id: deploy
+      shell: bash
+      env:
+        OXYGEN_TOKEN: ${{ inputs.token }}
+        PREVIEW: ${{ inputs.preview }}
+        AUTH_BYPASS: ${{ inputs.auth-bypass-token }}
+        AUTH_BYPASS_HOURS: ${{ inputs.auth-bypass-token-duration }}
+      run: |
+        set -euo pipefail
+        args=(--token "$OXYGEN_TOKEN")
+        if [ "$PREVIEW" = "true" ]; then
+          args+=(--preview)
+        fi
+        if [ "$AUTH_BYPASS" = "true" ]; then
+          args+=(--auth-bypass-token --auth-bypass-token-duration "$AUTH_BYPASS_HOURS")
+        fi
+        npx shopify hydrogen deploy "${args[@]}"
+
+        url=""
+        if [ -f h2_deploy_log.json ]; then
+          url=$(jq -r '.url // empty' h2_deploy_log.json)
+        fi
+        echo "url=$url" >> "$GITHUB_OUTPUT"
+
+        encrypted=""
+        if [ "$AUTH_BYPASS" = "true" ]; then
+          bypass=$(jq -r '.authBypassToken // empty' h2_deploy_log.json 2>/dev/null || true)
+          if [ -z "$bypass" ]; then
+            echo "::error::--auth-bypass-token was requested but h2_deploy_log.json has no authBypassToken."
+            exit 1
+          fi
+          echo "::add-mask::$bypass"
+          encrypted=$(printf '%s' "$bypass" | openssl enc -aes-256-cbc -pbkdf2 -salt -a -A -pass env:OXYGEN_TOKEN)
+        fi
+        echo "auth-bypass-token-encrypted=$encrypted" >> "$GITHUB_OUTPUT"
+        # The log holds the plain bypass token; don't leave it in the workspace.
+        rm -f h2_deploy_log.json
+        {
+          echo "### Oxygen deployment"
+          if [ -n "$url" ]; then
+            echo ""
+            echo "$url"
+          else
+            echo ""
+            echo "Deployment succeeded but no URL was found in h2_deploy_log.json."
+          fi
+        } >> "$GITHUB_STEP_SUMMARY"

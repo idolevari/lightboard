@@ -1,6 +1,13 @@
-import {NavLink} from 'react-router';
+import {NavLink, useNavigate} from 'react-router';
 import {useI18n} from '~/lib/useI18n';
-import {useBusiness, whatsappHref} from '~/lib/brand';
+import {telHref, useBusiness, whatsappHref} from '~/lib/brand';
+import {openCookiePreferences} from '~/lib/consent';
+import {
+  LiveLoop,
+  Palms,
+  StampBadge,
+  WaveDivider,
+} from '~/components/illustrations';
 
 export function Footer() {
   const {dict, to} = useI18n();
@@ -12,17 +19,31 @@ export function Footer() {
 
   return (
     <footer className="footer">
+      {/* Waves "break" onto the footer; palms + cypress skyline behind. */}
+      <WaveDivider className="footer-wave" />
+      <Palms className="footer-skyline" />
       <div className="container">
         <div className="footer-grid footer-grid--single">
           <div className="footer-brand">
-            <img
-              src="/lightboard-text.svg"
-              alt="Lightboard"
-              className="footer-wordmark"
-              width="240"
-              height="33"
-              decoding="async"
-            />
+            <LiveLoop className="footer-brand-row">
+              <img
+                src="/lightboard-text.svg"
+                alt="Lightboard"
+                className="footer-wordmark"
+                width="240"
+                height="33"
+                decoding="async"
+              />
+              <StampBadge className="footer-stamp" />
+            </LiveLoop>
+            <span className="footer-tagline" lang="en">
+              living · design · surfing
+            </span>
+            {dict.hand?.footer && (
+              <span className="hand-note" aria-hidden="true">
+                {dict.hand.footer}
+              </span>
+            )}
             <p>{f.brandDesc}</p>
             <div className="footer-social">
               {b?.instagram && (
@@ -56,12 +77,18 @@ export function Footer() {
             )}
             {b.phoneDisplay && (
               <span>
-                {f.metaPhoneLabel}: <a href={`tel:${b.phone || b.phoneDisplay}`}>{b.phoneDisplay}</a>
+                {f.metaPhoneLabel}:{' '}
+                <a href={telHref(b) ?? `tel:${b.phoneDisplay}`} dir="ltr">
+                  {b.phoneDisplay}
+                </a>
               </span>
             )}
             {b.email && (
               <span>
-                {f.metaEmailLabel}: <a href={`mailto:${b.email}`}>{b.email}</a>
+                {f.metaEmailLabel}:{' '}
+                <a href={`mailto:${b.email}`} dir="ltr">
+                  {b.email}
+                </a>
               </span>
             )}
           </address>
@@ -69,15 +96,49 @@ export function Footer() {
 
         <div className="footer-bottom">
           <span>© {new Date().getFullYear()} {f.rights}</span>
-          <span style={{display: 'flex', gap: 20, flexWrap: 'wrap'}}>
-            {f.legal.map((l) => (
-              <NavLink key={l.label} to={to(l.to)} prefetch="intent">
-                {l.label}
-              </NavLink>
-            ))}
-          </span>
+          {f.photoCredit && (
+            <span className="footer-credit">{f.photoCredit}</span>
+          )}
+          <nav aria-label={f.legalNavLabel}>
+            <ul className="footer-legal">
+              {f.legal.map((l) => (
+                <li key={l.to}>
+                  <NavLink to={to(l.to)} prefetch="intent">
+                    {l.label}
+                  </NavLink>
+                </li>
+              ))}
+              <li>
+                <CookieSettingsButton label={f.cookieSettings} />
+              </li>
+            </ul>
+          </nav>
         </div>
       </div>
     </footer>
+  );
+}
+
+/**
+ * Cookie-settings link in the footer: lets a visitor reopen consent choices.
+ * Opens Shopify's privacy-banner preferences when the banner script is loaded;
+ * otherwise falls back to the privacy policy so the link is never dead.
+ */
+function CookieSettingsButton({label}: {label: string}) {
+  const {to} = useI18n();
+  const navigate = useNavigate();
+  function openCookieSettings() {
+    if (openCookiePreferences()) return;
+    void navigate(to('/policies/privacy-policy'));
+  }
+  return (
+    <button
+      type="button"
+      className="footer-cookie-btn"
+      data-consent-hook="cookie-settings"
+      onClick={openCookieSettings}
+    >
+      {label}
+    </button>
   );
 }

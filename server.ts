@@ -1,6 +1,7 @@
 import * as serverBuild from 'virtual:react-router/server-build';
 import {createRequestHandler, storefrontRedirect} from '@shopify/hydrogen';
 import {createHydrogenRouterContext} from '~/lib/context';
+import {legacyRedirect} from '~/lib/.server/legacy-redirects';
 
 /**
  * Export a fetch handler in module format.
@@ -38,6 +39,10 @@ export default {
       }
 
       if (response.status === 404) {
+        // Old WordPress/WooCommerce URLs → closest live page (301).
+        const legacy = legacyRedirect(request);
+        if (legacy) return legacy;
+
         /**
          * Check for redirects only when there's a 404 from the app.
          * If the redirect doesn't exist, then `storefrontRedirect`

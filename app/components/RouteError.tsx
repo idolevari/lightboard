@@ -1,20 +1,25 @@
-import {useRouteError, isRouteErrorResponse, Link} from 'react-router';
+import {
+  useRouteError,
+  isRouteErrorResponse,
+  Link,
+  useRouteLoaderData,
+} from 'react-router';
 
 type RouteErrorProps = {context?: string};
 
 const HE = {
   oops: 'אופס',
-  notFoundTitle: 'הדף לא נמצא',
-  notFoundKicker: 'נראה שהקישור שבחרת כבר לא קיים',
-  generic: 'אירעה תקלה בלתי צפויה',
-  retry: 'חזרה לדף הבית',
+  notFoundTitle: 'הגל הזה כבר עבר.',
+  notFoundKicker: 'הקישור שבור או שהדף זז. בואו נחזור הביתה.',
+  generic: 'משהו השתבש אצלנו. נסו לרענן את הדף.',
+  retry: 'לדף הבית',
 };
 
 const EN = {
   oops: 'Oops',
-  notFoundTitle: 'Page not found',
-  notFoundKicker: 'The page you were looking for could not be found.',
-  generic: 'An unexpected error occurred.',
+  notFoundTitle: "This wave's gone.",
+  notFoundKicker: 'The link is broken or the page moved. Let\'s head home.',
+  generic: 'Something broke on our end. Try refreshing the page.',
   retry: 'Back home',
 };
 
@@ -24,6 +29,7 @@ const EN = {
  */
 export function RouteError({context: _context}: RouteErrorProps) {
   const error = useRouteError();
+  const isDev = process.env.NODE_ENV === 'development';
   let status: number | undefined;
   let message: string | undefined;
   if (isRouteErrorResponse(error)) {
@@ -32,14 +38,17 @@ export function RouteError({context: _context}: RouteErrorProps) {
       typeof error.data === 'string'
         ? error.data
         : (error.data?.message as string | undefined);
-  } else if (error instanceof Error) {
+  } else if (error instanceof Error && isDev) {
+    // Raw exception text is for developers only; shoppers get dict.generic.
     message = error.message;
   }
   const isNotFound = status === 404;
-  // Detect locale from <html lang>, default to HE.
-  const lang =
-    typeof document !== 'undefined' ? document.documentElement.lang : 'he';
-  const dict = lang.startsWith('en') ? EN : HE;
+  // Locale from the root loader (same value on server and client, so no
+  // hydration mismatch); default to HE when root data is unavailable.
+  const rootData = useRouteLoaderData('root') as
+    | {locale?: string}
+    | undefined;
+  const dict = rootData?.locale === 'en' ? EN : HE;
 
   return (
     <div
@@ -92,7 +101,7 @@ export function RouteError({context: _context}: RouteErrorProps) {
           →
         </span>
       </Link>
-      {!isNotFound && message && (
+      {isDev && !isNotFound && message && (
         <fieldset style={{marginTop: 40, textAlign: 'start'}}>
           <pre>{message}</pre>
         </fieldset>

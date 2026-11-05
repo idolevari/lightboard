@@ -201,15 +201,18 @@ export async function uploadImageToShopifyFiles(
 
 /**
  * Poll a Shopify File node until fileStatus === READY and image.url is set.
- * Times out after ~15s, then throws.
+ * Exponential backoff (300 ms -> 2 s) keeps Admin API calls and worker
+ * subrequests low: ~12 polls max over ~15 s instead of 30 fixed 500 ms polls.
  */
 async function pollFileUntilReady(
   env: AdminEnv,
   fileId: string,
 ): Promise<UploadResult> {
-  const maxAttempts = 30;
-  const intervalMs = 500;
-  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+  const budgetMs = 15_000;
+  const maxIntervalMs = 2_000;
+  let intervalMs = 300;
+  const startedAt = Date.now();
+  for (;;) {
     const data = await adminGraphql(env, FILE_NODE_QUERY, {id: fileId});
     const node = data?.node;
     if (node?.fileStatus === 'READY' && node?.image?.url) {
@@ -218,7 +221,9 @@ async function pollFileUntilReady(
     if (node?.fileStatus === 'FAILED') {
       throw new Error(`file-processing-failed-${fileId}`);
     }
+    if (Date.now() - startedAt + intervalMs > budgetMs) break;
     await sleep(intervalMs);
+    intervalMs = Math.min(Math.round(intervalMs * 1.6), maxIntervalMs);
   }
   throw new Error(`file-poll-timeout-${fileId}`);
 }
