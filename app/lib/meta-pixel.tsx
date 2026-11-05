@@ -112,25 +112,19 @@ function productPayload(product: AnalyticsProduct | null | undefined) {
   };
 }
 
-function cartPayload(
-  products: Array<AnalyticsProduct> | null | undefined,
-) {
+function cartPayload(products: Array<AnalyticsProduct> | null | undefined) {
   if (!Array.isArray(products) || products.length === 0) return null;
   const currency =
     products[0]?.currency ??
     products[0]?.priceV2?.currencyCode ??
     DEFAULT_CURRENCY;
   const value = products.reduce<number>((sum, p) => {
-    const price = parseFloat(
-      String(p?.price ?? p?.priceV2?.amount ?? 0),
-    );
+    const price = parseFloat(String(p?.price ?? p?.priceV2?.amount ?? 0));
     const qty = p?.quantity ?? 1;
     return sum + (Number.isFinite(price) ? price * qty : 0);
   }, 0);
   return {
-    content_ids: products.map(
-      (p) => p?.productGid ?? p?.variantId ?? p?.id,
-    ),
+    content_ids: products.map((p) => p?.productGid ?? p?.variantId ?? p?.id),
     content_type: 'product',
     contents: products.map((p) => ({
       id: p?.productGid ?? p?.variantId ?? p?.id,
@@ -292,16 +286,17 @@ export function MetaPixel({pixelId}: MetaPixelProps) {
 
     subscribe('product_added_to_cart', ({currentLine}) => {
       if (!consentRef.current) return;
-      const product: AnalyticsProduct | null | undefined = currentLine?.merchandise
-        ? {
-            productGid: currentLine.merchandise.product?.id,
-            variantId: currentLine.merchandise.id,
-            title: currentLine.merchandise.product?.title,
-            price: currentLine.cost?.totalAmount?.amount,
-            currency: currentLine.cost?.totalAmount?.currencyCode,
-            quantity: currentLine.quantity,
-          }
-        : (currentLine as AnalyticsProduct | null | undefined);
+      const product: AnalyticsProduct | null | undefined =
+        currentLine?.merchandise
+          ? {
+              productGid: currentLine.merchandise.product?.id,
+              variantId: currentLine.merchandise.id,
+              title: currentLine.merchandise.product?.title,
+              price: currentLine.cost?.totalAmount?.amount,
+              currency: currentLine.cost?.totalAmount?.currencyCode,
+              quantity: currentLine.quantity,
+            }
+          : (currentLine as AnalyticsProduct | null | undefined);
       track('AddToCart', productPayload(product));
     });
 
@@ -319,12 +314,18 @@ export function MetaPixel({pixelId}: MetaPixelProps) {
         quantity?: number;
       }> = Array.isArray(linesRaw)
         ? (linesRaw as Array<{
-            merchandise?: {id?: string; product?: {id?: string; title?: string}};
+            merchandise?: {
+              id?: string;
+              product?: {id?: string; title?: string};
+            };
             cost?: {totalAmount?: {amount?: string; currencyCode?: string}};
             quantity?: number;
           }>)
         : ((linesRaw?.nodes ?? []) as Array<{
-            merchandise?: {id?: string; product?: {id?: string; title?: string}};
+            merchandise?: {
+              id?: string;
+              product?: {id?: string; title?: string};
+            };
             cost?: {totalAmount?: {amount?: string; currencyCode?: string}};
             quantity?: number;
           }>);

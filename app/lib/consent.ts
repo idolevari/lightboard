@@ -53,9 +53,8 @@ export function useCookiePreferencesAvailable(): boolean {
   useEffect(() => {
     const check = () => {
       const ok =
-        typeof (
-          window.privacyBanner as {showPreferences?: unknown} | undefined
-        )?.showPreferences === 'function';
+        typeof (window.privacyBanner as {showPreferences?: unknown} | undefined)
+          ?.showPreferences === 'function';
       if (ok) setAvailable(true);
       return ok;
     };
