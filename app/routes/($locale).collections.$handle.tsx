@@ -6,13 +6,18 @@ import {checkForTrailingEncodedSpaces} from '~/lib/.server/url.server';
 import {ProductItem} from '~/components/ProductItem';
 import {detectLocaleFromRequest, getDictionary} from '~/lib/i18n';
 import {absoluteUrl, collectionSeo} from '~/lib/.server/seo.server';
-import {routeMeta} from '~/lib/seo-urls';
+import {NO_INDEX, routeMeta} from '~/lib/seo-urls';
 import {JsonLd} from '~/components/JsonLd';
 import {RouteError} from '~/components/RouteError';
 import type {Route} from './+types/($locale).collections.$handle';
 
 export const meta: Route.MetaFunction = ({data, matches}) =>
-  routeMeta({matches, data});
+  routeMeta({
+    matches,
+    data,
+    // Shopify's default "frontpage" collection duplicates the homepage.
+    overrides: data?.collection?.handle === 'frontpage' ? NO_INDEX : undefined,
+  });
 
 export async function loader(args: Route.LoaderArgs) {
   const redirectResponse = checkForTrailingEncodedSpaces(args.request);

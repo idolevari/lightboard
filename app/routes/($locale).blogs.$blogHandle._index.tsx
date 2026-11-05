@@ -5,13 +5,18 @@ import {redirectIfHandleIsLocalized} from '~/lib/.server/redirect.server';
 import {useI18n} from '~/lib/useI18n';
 import {detectLocaleFromRequest} from '~/lib/i18n';
 import {absoluteUrl, simpleSeo} from '~/lib/.server/seo.server';
-import {routeMeta} from '~/lib/seo-urls';
+import {NO_INDEX, routeMeta} from '~/lib/seo-urls';
 import {RouteError} from '~/components/RouteError';
 import type {ArticleItemFragment} from 'storefrontapi.generated';
 import type {Route} from './+types/($locale).blogs.$blogHandle._index';
 
 export const meta: Route.MetaFunction = ({data, matches}) =>
-  routeMeta({matches, data});
+  routeMeta({
+    matches,
+    data,
+    // An empty blog is a thin page: keep it out of the index until it has posts.
+    overrides: data?.blog?.articles?.nodes?.length ? undefined : NO_INDEX,
+  });
 
 export async function loader(args: Route.LoaderArgs) {
   // Start fetching non-critical data without blocking time to first byte

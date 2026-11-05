@@ -12,7 +12,7 @@ import {RouteError} from '~/components/RouteError';
 import type {Route} from './+types/($locale).blogs.$blogHandle.$articleHandle';
 
 export const meta: Route.MetaFunction = ({data, matches}) =>
-  routeMeta({matches, data});
+  routeMeta({matches, data, ogType: 'article'});
 
 export async function loader(args: Route.LoaderArgs) {
   const redirectResponse = checkForTrailingEncodedSpaces(args.request);

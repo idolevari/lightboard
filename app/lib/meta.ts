@@ -6,6 +6,9 @@
  * any nested route can read it from there.
  */
 
+import {MADE_IN, PHOTOS_PER_BOARD, SHIPPING_FACTS} from '~/lib/brand-facts';
+import type {Locale} from '~/lib/i18n';
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- react-router's MetaArgs `matches` shape is awkward to thread through; we narrow via optional chaining at use sites
 type MetaMatch = {id: string; data?: any};
 
@@ -55,4 +58,91 @@ export function canonicalUrl(
 ): string {
   const origin = siteOrigin(matches);
   return origin ? `${origin}${pathname}` : pathname;
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Search titles and descriptions                                             */
+/* -------------------------------------------------------------------------- */
+
+type SeoCopy = {title: string; description: string};
+
+const FREE_SHIPPING = SHIPPING_FACTS.freeShippingOverILS === 0;
+
+/**
+ * Search-result copy for the homepage. Voice from the copy audit (plural
+ * "you", concrete nouns), plus the gift intent people search for
+ * ("מתנה לגולשים", "gift for surfers"). Facts come from `~/lib/brand-facts`.
+ */
+export function homeSeoCopy(locale: Locale): SeoCopy {
+  if (locale === 'en') {
+    return {
+      title: 'Lightboard · A surfboard light with your photos | Gift for surfers',
+      description: `A solid-pine surfboard for your wall, with warm LED light and ${PHOTOS_PER_BOARD} photos you choose. Handmade to order in ${MADE_IN.en}${FREE_SHIPPING ? ', free shipping in Israel' : ''}. A gift for surfers and ocean lovers.`,
+    };
+  }
+  return {
+    title: 'ליטבורד · גלשן קיר עם התמונות שלכם | מתנה לגולשים',
+    description: `גלשן קיר מאורן מלא, עם אור לד חם ושלוש תמונות שאתם בוחרים. עבודת יד ב${MADE_IN.he}, בהזמנה אישית${FREE_SHIPPING ? ', משלוח חינם לכל הארץ' : ''}. מתנה לגולשים ולחובבי ים.`,
+  };
+}
+
+type PriceLike = {amount: string; currencyCode: string} | null | undefined;
+
+export function formatPrice(price: PriceLike): string | null {
+  if (!price?.amount) return null;
+  const n = Number(price.amount);
+  if (!Number.isFinite(n)) return null;
+  const value = Number.isInteger(n) ? String(n) : n.toFixed(2);
+  return price.currencyCode === 'ILS'
+    ? `₪${value}`
+    : `${value} ${price.currencyCode}`;
+}
+
+/**
+ * Search-result copy for a product page. A merchant-set SEO title or
+ * description (Shopify Admin → product → Search engine listing) wins on the
+ * Hebrew site. Otherwise, and always on /en (the Shopify SEO fields hold
+ * Hebrew), a gift-intent fallback built from live product data is used.
+ */
+export function productSeoCopy(
+  product: {
+    title: string;
+    seo?: {title?: string | null; description?: string | null} | null;
+  },
+  price: PriceLike,
+  locale: Locale,
+): SeoCopy {
+  const p = formatPrice(price);
+  if (locale === 'en') {
+    const offer = [p, FREE_SHIPPING ? 'free shipping in Israel' : null]
+      .filter(Boolean)
+      .join(', ');
+    return {
+      title: `${product.title} · LED surfboard photo display | Gift for surfers`,
+      description: [
+        `A solid-pine surfboard wall light with warm LEDs and ${PHOTOS_PER_BOARD} of your photos. Handmade to order in ${MADE_IN.en}.`,
+        offer ? `${offer}.` : '',
+        'A personal gift for surfers and ocean lovers.',
+      ]
+        .filter(Boolean)
+        .join(' '),
+    };
+  }
+  const offer = [p, FREE_SHIPPING ? 'משלוח חינם לכל הארץ' : null]
+    .filter(Boolean)
+    .join(', ');
+  return {
+    title:
+      product.seo?.title?.trim() ||
+      `${product.title} · מתלה תמונות מואר בצורת גלשן | מתנה לגולשים`,
+    description:
+      product.seo?.description?.trim() ||
+      [
+        `גלשן קיר מאורן מלא עם אור לד חם ושלוש תמונות שאתם בוחרים. עבודת יד בהזמנה אישית ב${MADE_IN.he}.`,
+        offer ? `${offer}.` : '',
+        'מתנה אישית לגולשים ולחובבי ים.',
+      ]
+        .filter(Boolean)
+        .join(' '),
+  };
 }
