@@ -1,10 +1,11 @@
-import {useCallback, useEffect, useRef, useState} from 'react';
+import {useCallback, useEffect, useId, useRef, useState} from 'react';
 import {useI18n} from '~/lib/useI18n';
 import {
   CROPPED_OUTPUT_SIZE,
   fetchRemoteImageAsBlob,
   getDefaultSquareCrop,
   loadImageFromFile,
+  MIN_PHOTO_DIMENSION,
   renderCropToJpegBlob,
   validatePhotoDimensions,
   validatePhotoFile,
@@ -29,6 +30,10 @@ type PhotoSlotState = {
   uploadedOriginalUrl: string | null;
   dirty: boolean;
   error: string | null;
+  /** Accepted but below the recommended print size. */
+  lowRes: boolean;
+  /** Filled by the "pick for me" gallery, not by the shopper. */
+  fromGallery: boolean;
 };
 
 type StoredPhotoState = {
@@ -50,10 +55,14 @@ export type PhotoCustomizerProps = {
   isEditing?: boolean;
   /** Board image URL from the selected variant. */
   imageUrl?: string | null;
+  /** Descriptive alt text for the board image. */
+  imageAlt?: string;
   /** Lightboard "Color" option value (selects the slot-rect set). */
   color?: string | null;
   onApprove: (attrs: PhotoAttribute[]) => void;
   onUnapprove?: () => void;
+  /** Reports how many of the 3 slots are filled (drives the ATC label). */
+  onProgressChange?: (filled: number) => void;
 };
 
 type UploadResult = {
@@ -121,6 +130,8 @@ function emptySlot(): PhotoSlotState {
     uploadedOriginalUrl: null,
     dirty: false,
     error: null,
+    lowRes: false,
+    fromGallery: false,
   };
 }
 
@@ -143,9 +154,11 @@ export function PhotoCustomizer({
   initialState,
   isEditing = false,
   imageUrl,
+  imageAlt,
   color,
   onApprove,
   onUnapprove,
+  onProgressChange,
 }: PhotoCustomizerProps) {
   const {dict} = useI18n();
   const t = dict.photoCustomizer;
@@ -157,6 +170,7 @@ export function PhotoCustomizer({
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [approved, setApproved] = useState(() => !!initialState && !isEditing);
+  const headingId = useId();
 
   const mountedRef = useRef(true);
   useEffect(() => {
@@ -196,8 +210,15 @@ export function PhotoCustomizer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const allFilled = slots.every((s) => previewUrlFor(s));
+  const filledCount = slots.filter((s) => previewUrlFor(s)).length;
+  const allFilled = filledCount === SLOT_COUNT;
   const anyDirty = slots.some((s) => s.dirty);
+
+  const onProgressRef = useRef(onProgressChange);
+  onProgressRef.current = onProgressChange;
+  useEffect(() => {
+    onProgressRef.current?.(filledCount);
+  }, [filledCount]);
 
   function patchSlot(index: number, patch: Partial<PhotoSlotState>) {
     setSlots((current) => {
@@ -221,6 +242,24 @@ export function PhotoCustomizer({
    * onApprove sends the gallery URLs straight through.
    */
   const handleSurprise = useCallback(() => {
+    const emptyIdx = slots
+      .map((slot, i) => (previewUrlFor(slot) ? -1 : i))
+      .filter((i) => i >= 0);
+    const ownPhotos = slots.some(
+      (slot) => previewUrlFor(slot) && !slot.fromGallery,
+    );
+    // Some slots empty → fill only those, never touch the shopper's photos.
+    // All full of gallery picks → re-roll all. All full with the shopper's
+    // own photos → ask first (this used to overwrite silently).
+    const targets =
+      emptyIdx.length > 0 ? emptyIdx : [0, 1, 2].slice(0, SLOT_COUNT);
+    if (
+      emptyIdx.length === 0 &&
+      ownPhotos &&
+      !window.confirm(t.replaceConfirm)
+    ) {
+      return;
+    }
     markUnapproved();
     setUploadError(null);
     const currentlyShown = slots
@@ -229,18 +268,21 @@ export function PhotoCustomizer({
     const picks = pickThreeFromGallery(currentlyShown);
     setSlots((current) =>
       current.map((slot, i) => {
+        const k = targets.indexOf(i);
+        if (k === -1) return slot;
         if (slot.imageObjectUrl) URL.revokeObjectURL(slot.imageObjectUrl);
         if (slot.thumbnailObjectUrl) URL.revokeObjectURL(slot.thumbnailObjectUrl);
         return {
           ...emptySlot(),
-          uploadedCroppedUrl: picks[i],
-          uploadedOriginalUrl: picks[i],
+          uploadedCroppedUrl: picks[k],
+          uploadedOriginalUrl: picks[k],
           dirty: false,
+          fromGallery: true,
         };
       }),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slots]);
+  }, [slots, t]);
 
   const handleFilePicked = useCallback(
     async (index: number, file: File) => {
@@ -270,7 +312,12 @@ export function PhotoCustomizer({
       const dimsCheck = validatePhotoDimensions(loaded);
       if (!dimsCheck.ok) {
         URL.revokeObjectURL(loaded.objectUrl);
-        patchSlot(index, {error: t.errors[dimsCheck.reason as string]});
+        patchSlot(index, {
+          error: t.errors[dimsCheck.reason as string].replaceAll(
+            '{min}',
+            String(MIN_PHOTO_DIMENSION),
+          ),
+        });
         return;
       }
 
@@ -288,6 +335,7 @@ export function PhotoCustomizer({
           imageDimensions: {width: loaded.width, height: loaded.height},
           crop: getDefaultSquareCrop(loaded),
           dirty: true,
+          lowRes: Boolean(dimsCheck.lowRes),
         };
         return next;
       });
@@ -349,6 +397,7 @@ export function PhotoCustomizer({
       const index = cropDialogIndex;
       if (index == null) return;
       setCropDialogIndex(null);
+      focusSlotTile(index);
 
       const slot = slots[index];
       if (!slot.imageEl) return;
@@ -390,8 +439,9 @@ export function PhotoCustomizer({
   );
 
   const handleCropCancelled = useCallback(() => {
+    focusSlotTile(cropDialogIndex);
     setCropDialogIndex(null);
-  }, []);
+  }, [cropDialogIndex]);
 
   const handleRemove = useCallback((index: number) => {
     markUnapproved();
@@ -525,13 +575,19 @@ export function PhotoCustomizer({
       ? t.saveChanges
       : t.approve;
 
-  const approveDisabled =
-    uploading || !allFilled || (approved && !anyDirty);
+  const isApproved = approved && !anyDirty;
+  const approveDisabled = uploading || !allFilled || isApproved;
+  const slotLabelFor = (n: number) => t.slotLabel.replace('{n}', String(n));
+  const slotMessages = slots
+    .map((slot, i) => ({i, slot}))
+    .filter(({slot}) => slot.error || (slot.lowRes && previewUrlFor(slot)));
 
   return (
-    <section className="photo-customizer" aria-label={t.heading}>
+    <section className="photo-customizer" aria-labelledby={headingId}>
       <header className="photo-customizer__header">
-        <h3 className="photo-customizer__title">{t.heading}</h3>
+        <h2 className="photo-customizer__title" id={headingId}>
+          {t.heading}
+        </h2>
         <p className="photo-customizer__subtitle">{t.subheading}</p>
       </header>
 
@@ -540,16 +596,18 @@ export function PhotoCustomizer({
           thumbnailUrl: previewUrlFor(slot),
           error: slot.error,
         }))}
-        slotLabel={(n) => t.slotLabel.replace('{n}', String(n))}
+        slotLabel={slotLabelFor}
+        slotsLabel={t.slotsLabel}
         pickLabel={t.pick}
         editLabel={t.editCrop}
         removeLabel={t.remove}
         disabled={uploading}
         imageUrl={imageUrl}
+        imageAlt={imageAlt}
         color={color}
         surprise={{
-          label: t.surprise?.button ?? 'Surprise me from the gallery',
-          swapLabel: t.surprise?.swap ?? 'Surprise me again',
+          label: t.surprise?.button ?? 'Pick for me',
+          swapLabel: t.surprise?.swap ?? 'Another round',
           onPick: handleSurprise,
           disabled: uploading,
         }}
@@ -558,6 +616,21 @@ export function PhotoCustomizer({
         onRemove={handleRemove}
       />
 
+      {slotMessages.length > 0 ? (
+        <ul className="photo-customizer__messages">
+          {slotMessages.map(({i, slot}) => (
+            <li
+              key={i}
+              className={slot.error ? 'is-error' : 'is-warning'}
+              role={slot.error ? 'alert' : 'status'}
+            >
+              <strong>{slotLabelFor(i + 1)}:</strong>{' '}
+              {slot.error ?? t.lowRes}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
       {uploadError ? (
         <p className="photo-customizer__upload-error" role="alert">
           {t.errors.uploadFailed}
@@ -565,38 +638,56 @@ export function PhotoCustomizer({
       ) : null}
 
       <div className="photo-customizer__actions">
-        <button
-          type="button"
-          className="photo-customizer__approve"
-          onClick={handleApprove}
-          disabled={approveDisabled}
-        >
-          {approveLabel}
-        </button>
-        {approved && !anyDirty ? (
-          <p className="photo-customizer__approved-note">
-            {isEditing ? t.savedNote : t.approvedNote}
-          </p>
-        ) : null}
+        {/* Progress text lives on the add-to-cart hint; here we only
+            confirm success, and only offer "approve" once it can work. */}
+        <p className="photo-customizer__progress" aria-live="polite">
+          {isApproved ? (
+            <span className="photo-customizer__ready">
+              <span aria-hidden="true">✓</span>{' '}
+              {isEditing ? t.savedNote : t.ready}
+            </span>
+          ) : null}
+        </p>
+        {isApproved || !allFilled ? null : (
+          <button
+            type="button"
+            className="photo-customizer__approve"
+            onClick={handleApprove}
+            disabled={approveDisabled}
+          >
+            {approveLabel}
+          </button>
+        )}
       </div>
 
       {cropDialogSlot && cropDialogSlot.imageObjectUrl ? (
         <CropDialog
           imageUrl={cropDialogSlot.imageObjectUrl}
           initialCrop={cropDialogSlot.crop}
-          slotLabel={t.slotLabel.replace(
-            '{n}',
-            String((cropDialogIndex ?? 0) + 1),
-          )}
+          slotLabel={slotLabelFor((cropDialogIndex ?? 0) + 1)}
           saveLabel={t.cropSave}
           cancelLabel={t.cropCancel}
           zoomLabel={t.zoom}
+          hint={t.cropHint}
           onSave={handleCropSaved}
           onCancel={handleCropCancelled}
         />
       ) : null}
     </section>
   );
+}
+
+/**
+ * After the crop dialog closes, the control that opened it may have been
+ * replaced (empty "pick" tile → filled thumbnail), so return focus to the
+ * slot's tile explicitly instead of letting it fall to <body>.
+ */
+function focusSlotTile(index: number | null) {
+  if (index == null || typeof window === 'undefined') return;
+  window.setTimeout(() => {
+    const tile = document.querySelectorAll('.board-slots__tile')[index];
+    tile?.querySelector<HTMLElement>('button:not([disabled])')?.focus();
+  }, 60);
 }
 
 function seedSlots(

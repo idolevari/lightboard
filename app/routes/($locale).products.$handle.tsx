@@ -9,6 +9,9 @@ import {
   useSelectedOptionInUrlParam,
 } from '@shopify/hydrogen';
 import {ProductPrice} from '~/components/ProductPrice';
+import {AutoLang} from '~/components/AutoLang';
+import {useI18n} from '~/lib/useI18n';
+import {translateOptionValue} from '~/lib/productOptionLabels';
 import {ProductOptions, ProductCartAction} from '~/components/ProductForm';
 import {PhotoCustomizer} from '~/components/PhotoCustomizer/PhotoCustomizer';
 import type {PhotoCustomizerInitialState} from '~/components/PhotoCustomizer/PhotoCustomizer';
@@ -23,6 +26,7 @@ import {routeMeta} from '~/lib/seo-urls';
 import type {Route} from './+types/($locale).products.$handle';
 
 const REQUIRES_PHOTOS_TAG = 'requires-photos';
+const CUSTOMIZER_ID = 'customizer';
 
 type CartLineAttribute = {key: string; value?: string | null};
 
@@ -196,44 +200,90 @@ export default function Product() {
       : null,
   );
 
+  const {dict} = useI18n();
+  const [photosFilled, setPhotosFilled] = useState(
+    initialPhotoState ? 3 : 0,
+  );
+
+  // ATC tapped while photos are missing: bring the customizer into view and
+  // put focus on the first empty slot so the next action is obvious.
+  function goToCustomizer() {
+    const root = document.getElementById(CUSTOMIZER_ID);
+    if (!root) return;
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    root.scrollIntoView({block: 'start', behavior: reduce ? 'auto' : 'smooth'});
+    const target =
+      root.querySelector<HTMLElement>('.board-slots__pick:not([disabled])') ??
+      root.querySelector<HTMLElement>('.photo-customizer__approve:not([disabled])');
+    target?.focus({preventScroll: true});
+    root.classList.remove('is-pulsing');
+    // Restart the attention pulse on the slot strip.
+    void root.offsetWidth;
+    root.classList.add('is-pulsing');
+  }
+
+  // Mobile reading order (and DOM / heading order): name + price → color →
+  // live preview + photo slots → add to cart → details. On desktop the
+  // customizer moves into the left column via grid areas (app.css).
   return (
     <div className="product">
       <JsonLd data={jsonLd} />
-      {requiresPhotos ? (
-        <PhotoCustomizer
-          cartId={cartId}
-          initialState={initialPhotoState}
-          isEditing={isEditing}
-          imageUrl={selectedVariant?.image?.url ?? null}
-          color={
-            selectedVariant?.selectedOptions.find((o) => o.name === 'Color')
-              ?.value ?? null
-          }
-          onApprove={setPhotoAttributes}
-          onUnapprove={() => setPhotoAttributes(null)}
-        />
-      ) : null}
-      <div className="product-main">
-        <h1>{title}</h1>
+      <header className="product-head">
+        <h1>
+          <AutoLang text={title} />
+        </h1>
         <ProductPrice
           price={selectedVariant?.price}
           compareAtPrice={selectedVariant?.compareAtPrice}
         />
-        {descriptionHtml ? (
-          <div
-            className="product-description"
-            dangerouslySetInnerHTML={{__html: sanitizeShopifyHtml(descriptionHtml)}}
-          />
-        ) : null}
+      </header>
+      <div className="product-variant">
         <ProductOptions productOptions={productOptions} />
+      </div>
+      {requiresPhotos ? (
+        <div className="product-media" id={CUSTOMIZER_ID}>
+          <PhotoCustomizer
+            cartId={cartId}
+            initialState={initialPhotoState}
+            isEditing={isEditing}
+            imageUrl={selectedVariant?.image?.url ?? null}
+            imageAlt={[
+              title,
+              translateOptionValue(
+                dict,
+                selectedVariant?.selectedOptions.find((o) => o.name === 'Color')
+                  ?.value ?? '',
+              ),
+            ]
+              .filter(Boolean)
+              .join(' – ')}
+            color={
+              selectedVariant?.selectedOptions.find((o) => o.name === 'Color')
+                ?.value ?? null
+            }
+            onApprove={setPhotoAttributes}
+            onUnapprove={() => setPhotoAttributes(null)}
+            onProgressChange={setPhotosFilled}
+          />
+        </div>
+      ) : null}
+      <div className="product-buy">
         <ProductCartAction
           selectedVariant={selectedVariant}
           requiresPhotos={requiresPhotos}
           isEditing={isEditing}
           editLineId={editLineId}
           photoAttributes={photoAttributes}
+          photosFilled={photosFilled}
+          onNeedPhotos={goToCustomizer}
         />
       </div>
+      {descriptionHtml ? (
+        <div
+          className="product-description"
+          dangerouslySetInnerHTML={{__html: sanitizeShopifyHtml(descriptionHtml)}}
+        />
+      ) : null}
       <Analytics.ProductView
         data={{
           products: [

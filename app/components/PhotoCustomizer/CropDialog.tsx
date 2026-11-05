@@ -1,4 +1,4 @@
-import {useState, useCallback} from 'react';
+import {useState, useCallback, useEffect, useId, useRef} from 'react';
 import Cropper from 'react-easy-crop';
 import type {Area, Point} from 'react-easy-crop';
 import type {CropPixels} from '~/lib/photo-canvas';
@@ -10,13 +10,24 @@ type CropDialogProps = {
   saveLabel: string;
   cancelLabel: string;
   zoomLabel: string;
+  hint?: string;
   onSave: (cropPixels: CropPixels) => void;
   onCancel: () => void;
 };
 
+const FOCUSABLE =
+  'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
 /**
- * Square-aspect crop modal. Renders a backdrop + centered card with
- * react-easy-crop inside and Save/Cancel actions.
+ * Square-aspect crop modal.
+ *
+ * - `objectFit="cover"`: the photo always fills the square (no letterbox
+ *   bars), so what you see is what prints.
+ * - Real modal behaviour: initial focus, Tab trap, Escape closes, focus
+ *   returns to the control that opened it.
+ * - Panning has a keyboard alternative (react-easy-crop moves the crop with
+ *   arrow keys when the stage is focused) plus the zoom slider, so dragging
+ *   is never the only way (WCAG 2.5.7).
  */
 export function CropDialog({
   imageUrl,
@@ -25,6 +36,7 @@ export function CropDialog({
   saveLabel,
   cancelLabel,
   zoomLabel,
+  hint,
   onSave,
   onCancel,
 }: CropDialogProps) {
@@ -33,6 +45,49 @@ export function CropDialog({
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<CropPixels | null>(
     initialCrop ?? null,
   );
+  const titleId = useId();
+  const zoomId = useId();
+  const hintId = useId();
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const onCancelRef = useRef(onCancel);
+  onCancelRef.current = onCancel;
+
+  useEffect(() => {
+    const opener = document.activeElement as HTMLElement | null;
+    const panel = panelRef.current;
+    // Start on the primary action so Enter saves the default crop.
+    const first =
+      panel?.querySelector<HTMLElement>('.crop-dialog__btn--primary') ??
+      panel?.querySelector<HTMLElement>(FOCUSABLE);
+    first?.focus();
+
+    function onKey(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onCancelRef.current();
+        return;
+      }
+      if (event.key !== 'Tab' || !panelRef.current) return;
+      const items = Array.from(
+        panelRef.current.querySelectorAll<HTMLElement>(FOCUSABLE),
+      );
+      if (items.length === 0) return;
+      const firstEl = items[0];
+      const lastEl = items[items.length - 1];
+      if (event.shiftKey && document.activeElement === firstEl) {
+        event.preventDefault();
+        lastEl.focus();
+      } else if (!event.shiftKey && document.activeElement === lastEl) {
+        event.preventDefault();
+        firstEl.focus();
+      }
+    }
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      if (opener && document.contains(opener)) opener.focus();
+    };
+  }, []);
 
   const handleCropComplete = useCallback(
     (_area: Area, areaPixels: Area) => {
@@ -46,15 +101,24 @@ export function CropDialog({
   }
 
   return (
-    <div className="crop-dialog" role="dialog" aria-modal="true" aria-label={slotLabel}>
+    <div
+      className="crop-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={titleId}
+      aria-describedby={hint ? hintId : undefined}
+    >
       <button
         type="button"
         aria-label={cancelLabel}
         className="crop-dialog__backdrop"
         onClick={onCancel}
+        tabIndex={-1}
       />
-      <div className="crop-dialog__panel">
-        <h3 className="crop-dialog__title">{slotLabel}</h3>
+      <div className="crop-dialog__panel" ref={panelRef}>
+        <h2 className="crop-dialog__title" id={titleId}>
+          {slotLabel}
+        </h2>
         <div className="crop-dialog__stage">
           <Cropper
             image={imageUrl}
@@ -66,17 +130,20 @@ export function CropDialog({
             onCropChange={setCrop}
             onZoomChange={setZoom}
             onCropComplete={handleCropComplete}
-            // "auto-cover" is not in the react-easy-crop type union but the
-            // package falls back to its default behavior at runtime; keep the
-            // historical value rather than changing observable behavior here.
-            objectFit={'auto-cover' as 'cover'}
+            objectFit="cover"
+            initialCroppedAreaPixels={initialCrop ?? undefined}
             restrictPosition={true}
           />
         </div>
+        {hint ? (
+          <p className="crop-dialog__hint" id={hintId}>
+            {hint}
+          </p>
+        ) : null}
         <div className="crop-dialog__zoom">
-          <label htmlFor="crop-zoom">{zoomLabel}</label>
+          <label htmlFor={zoomId}>{zoomLabel}</label>
           <input
-            id="crop-zoom"
+            id={zoomId}
             type="range"
             min={1}
             max={4}

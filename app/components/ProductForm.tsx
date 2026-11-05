@@ -1,3 +1,4 @@
+import {useEffect, useId, useRef} from 'react';
 import {Link, useNavigate} from 'react-router';
 import {CartForm} from '@shopify/hydrogen';
 import type {MappedProductOptions} from '@shopify/hydrogen';
@@ -5,6 +6,7 @@ import type {ProductFragment} from 'storefrontapi.generated';
 import {AddToCartButton} from './AddToCartButton';
 import {useAside} from './Aside';
 import {useI18n} from '~/lib/useI18n';
+import {formatMoney} from './ProductPrice';
 import {
   translateOptionName,
   translateOptionValue,
@@ -34,15 +36,20 @@ export function ProductOptions({
           ? translateOptionValue(dict, selectedValue.name)
           : '';
 
+        const headId = `option-${option.name.replace(/\W+/g, '-')}`;
         return (
           <div className="product-options" key={option.name}>
-            <div className="feat3-picker-head">
+            <div className="feat3-picker-head" id={headId}>
               <span>{translateOptionName(dict, option.name)}</span>
               {selectedDisplay && (
                 <span className="current">{selectedDisplay}</span>
               )}
             </div>
-            <div className="feat3-swatches">
+            <div
+              className="feat3-swatches"
+              role="radiogroup"
+              aria-labelledby={headId}
+            >
               {option.optionValues.map((value) => {
                 const {
                   name,
@@ -58,16 +65,21 @@ export function ProductOptions({
                 const hasDot = Boolean(hex || swatch?.image?.previewImage?.url);
                 const swatchImage = swatch?.image?.previewImage?.url;
 
-                const inner = hasDot ? (
-                  <span
-                    className="dot"
-                    aria-hidden="true"
-                    style={{background: hex ?? 'transparent'}}
-                  >
-                    {swatchImage && <img src={swatchImage} alt="" />}
-                  </span>
-                ) : (
-                  <span aria-hidden="true">{displayName}</span>
+                // Same labelled pill as the homepage picker: dot + name, so
+                // the pale cream swatch is never just a near-invisible dot.
+                const inner = (
+                  <>
+                    {hasDot ? (
+                      <span
+                        className="dot"
+                        aria-hidden="true"
+                        style={{background: hex ?? 'transparent'}}
+                      >
+                        {swatchImage && <img src={swatchImage} alt="" />}
+                      </span>
+                    ) : null}
+                    <span>{displayName}</span>
+                  </>
                 );
 
                 if (isDifferentProduct) {
@@ -79,9 +91,8 @@ export function ProductOptions({
                       preventScrollReset
                       replace
                       to={`${to(`/products/${handle}`)}?${variantUriQuery}`}
-                      aria-pressed={selected}
-                      aria-label={displayName}
-                      title={displayName}
+                      role="radio"
+                      aria-checked={selected}
                     >
                       {inner}
                     </Link>
@@ -94,9 +105,8 @@ export function ProductOptions({
                     className={`feat3-swatch${selected ? ' on' : ''}`}
                     key={option.name + name}
                     disabled={!exists}
-                    aria-pressed={selected}
-                    aria-label={displayName}
-                    title={displayName}
+                    role="radio"
+                    aria-checked={selected}
                     onClick={() => {
                       if (!selected) {
                         void navigate(`?${variantUriQuery}`, {
@@ -126,13 +136,22 @@ type ProductCartActionProps = {
   isEditing?: boolean;
   editLineId?: string | null;
   photoAttributes?: PhotoAttribute[] | null;
+  /** How many of the 3 photo slots are filled (customizer progress). */
+  photosFilled?: number;
+  /** Scroll/focus the customizer — used while photos are still missing. */
+  onNeedPhotos?: () => void;
 };
 
+const PHOTO_SLOTS = 3;
+
 /**
- * Cart submission panel. Renders the AddToCart button (or the line-update form
- * when editing an existing cart line). Reads photoAttributes from the parent
- * route because the photo customizer that produces them lives in a separate
- * subtree on the PDP.
+ * Cart submission panel.
+ *
+ * Never shows a dead primary CTA: while the photos aren't ready the button
+ * says what's missing ("בחרו עוד 2 תמונות כדי להמשיך"), stays tappable and
+ * takes the shopper to the customizer. Once the photos are approved it
+ * becomes "הוספה לסל · 279 ₪" and receives focus so the next step is
+ * on-screen without hunting for it.
  */
 export function ProductCartAction({
   selectedVariant,
@@ -140,46 +159,112 @@ export function ProductCartAction({
   isEditing = false,
   editLineId = null,
   photoAttributes = null,
+  photosFilled = 0,
+  onNeedPhotos,
 }: ProductCartActionProps) {
   const {open} = useAside();
-  const {dict, to} = useI18n();
+  const {dict, to, locale} = useI18n();
+  const t = dict.photoCustomizer;
+  const hintId = useId();
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const ready = !requiresPhotos || Boolean(photoAttributes);
+
+  // Photos just got approved → bring the CTA into view and focus it.
+  const prevReady = useRef(ready);
+  useEffect(() => {
+    if (ready && !prevReady.current && buttonRef.current) {
+      const reduce = window.matchMedia(
+        '(prefers-reduced-motion: reduce)',
+      ).matches;
+      buttonRef.current.scrollIntoView({
+        block: 'center',
+        behavior: reduce ? 'auto' : 'smooth',
+      });
+      buttonRef.current.focus({preventScroll: true});
+    }
+    prevReady.current = ready;
+  }, [ready]);
 
   if (isEditing && editLineId) {
     return (
       <UpdateCartLineForm
         lineId={editLineId}
         attributes={photoAttributes}
-        label={dict.photoCustomizer?.saveAndReturn ?? dict.common.save}
+        label={t?.saveAndReturn ?? dict.common.save}
         to={to}
       />
     );
   }
 
+  const available = Boolean(selectedVariant?.availableForSale);
+  const priceText = formatMoney(selectedVariant?.price, locale);
+
+  if (available && !ready) {
+    const missing = Math.max(0, PHOTO_SLOTS - photosFilled);
+    const label =
+      missing === 0
+        ? t.needApprove
+        : missing === 1
+          ? t.needOnePhoto
+          : t.needPhotos.replace('{n}', String(missing));
+    return (
+      <div className="atc">
+        <button
+          ref={buttonRef}
+          type="button"
+          className="atc-btn atc-btn--pending"
+          aria-describedby={hintId}
+          onClick={onNeedPhotos}
+        >
+          <span>{label}</span>
+        </button>
+        <p id={hintId} className="atc-hint">
+          <span className="atc-progress" aria-hidden="true">
+            {Array.from({length: PHOTO_SLOTS}, (_, i) => (
+              <span key={i} className={i < photosFilled ? 'on' : ''} />
+            ))}
+          </span>
+          {t.progress.replace('{n}', String(photosFilled))}
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <AddToCartButton
-      disabled={
-        !selectedVariant ||
-        !selectedVariant.availableForSale ||
-        (requiresPhotos && !photoAttributes)
-      }
-      onClick={() => open('cart')}
-      lines={
-        selectedVariant
-          ? [
-              {
-                merchandiseId: selectedVariant.id,
-                quantity: 1,
-                selectedVariant,
-                ...(photoAttributes ? {attributes: photoAttributes} : {}),
-              },
-            ]
-          : []
-      }
-    >
-      {selectedVariant?.availableForSale
-        ? dict.product.addToCart
-        : dict.product.soldOut}
-    </AddToCartButton>
+    <div className="atc">
+      <AddToCartButton
+        buttonRef={buttonRef}
+        className="atc-btn"
+        disabled={!selectedVariant || !available}
+        onClick={() => open('cart')}
+        lines={
+          selectedVariant
+            ? [
+                {
+                  merchandiseId: selectedVariant.id,
+                  quantity: 1,
+                  selectedVariant,
+                  ...(photoAttributes ? {attributes: photoAttributes} : {}),
+                },
+              ]
+            : []
+        }
+      >
+        {available ? (
+          <>
+            <span>{dict.product.addToCart}</span>
+            {priceText ? (
+              <>
+                <span aria-hidden="true">·</span>
+                <bdi>{priceText}</bdi>
+              </>
+            ) : null}
+          </>
+        ) : (
+          dict.product.soldOut
+        )}
+      </AddToCartButton>
+    </div>
   );
 }
 
@@ -210,6 +295,7 @@ function UpdateCartLineForm({
           <input type="hidden" name="redirectTo" value={to('/cart')} />
           <button
             type="submit"
+            className="atc-btn"
             disabled={!attributes || fetcher.state !== 'idle'}
           >
             {label}

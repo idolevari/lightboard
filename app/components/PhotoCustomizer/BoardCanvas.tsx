@@ -39,6 +39,8 @@ const DEFAULT_COLOR = 'Cream';
 
 const ACCEPTED_TYPES = 'image/jpeg,image/png,image/webp';
 
+const BG_WIDTHS = [600, 800, 1000, 1200, 1600];
+
 type BoardSlotData = {
   thumbnailUrl: string | null;
   error: string | null;
@@ -47,12 +49,15 @@ type BoardSlotData = {
 type BoardCanvasProps = {
   slots: BoardSlotData[];
   slotLabel: (n: number) => string;
+  slotsLabel: string;
   pickLabel: string;
   editLabel: string;
   removeLabel: string;
   disabled?: boolean;
   /** Board image URL from the selected variant. Falls back to nothing rendered. */
   imageUrl?: string | null;
+  /** Descriptive alt for the board photo (product + color). */
+  imageAlt?: string;
   /** Lightboard "Color" option value (e.g. "Cream" / "Light Blue" / "Pink") — selects the slot-rect set. */
   color?: string | null;
   /** Surprise-me overlay: omit to hide the pill entirely. */
@@ -68,21 +73,25 @@ type BoardCanvasProps = {
 };
 
 /**
- * Interactive surfboard preview. Renders the empty Lightboard photo and
- * overlays three clickable slots at the exact pixel positions of the white
- * photo placeholders on the board.
+ * Interactive surfboard preview + photo slot strip.
  *
- * Each slot behaves like the old PhotoSlot: empty -> opens the file picker;
- * filled -> shows the user's cropped photo with small edit/remove controls.
+ * - The board shows the selected color with the shopper's photos composited
+ *   at the exact slot positions. Tapping a slot on the board is a pointer
+ *   shortcut (pick / re-crop).
+ * - Under it, a strip of three large tiles is the real, labelled control:
+ *   pick, crop and remove each have ≥40px targets and are always visible
+ *   (no hover-only overlays — those were invisible on touch).
  */
 export function BoardCanvas({
   slots,
   slotLabel,
+  slotsLabel,
   pickLabel,
   editLabel,
   removeLabel,
   disabled = false,
   imageUrl,
+  imageAlt = '',
   color,
   surprise,
   onFilePicked,
@@ -91,6 +100,7 @@ export function BoardCanvas({
 }: BoardCanvasProps) {
   const rects =
     SLOT_RECTS_BY_COLOR[color ?? ''] ?? SLOT_RECTS_BY_COLOR[DEFAULT_COLOR];
+  const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
   // Shopify CDN URLs include a `?v=...` cache-buster, so append width via `&`.
   const srcSep = imageUrl?.includes('?') ? '&' : '?';
   const filledCount = slots.filter((s) => !!s?.thumbnailUrl).length;
@@ -98,187 +108,173 @@ export function BoardCanvas({
     filledCount === 0 ? 'empty' : filledCount === slots.length ? 'filled' : 'partial';
   const surpriseLabel =
     surprise && surpriseState === 'filled' ? surprise.swapLabel : surprise?.label ?? '';
-  return (
-    <div className="board-canvas" role="group" aria-label={slotLabel(0)}>
-      {imageUrl ? (
-        <img
-          src={`${imageUrl}${srcSep}width=1200`}
-          srcSet={[600, 900, 1200, 1600]
-            .map((w) => `${imageUrl}${srcSep}width=${w} ${w}w`)
-            .join(', ')}
-          sizes="(min-width: 45em) 50vw, 100vw"
-          alt=""
-          className="board-canvas__bg"
-          draggable={false}
-        />
-      ) : null}
-      {surprise ? (
-        <button
-          type="button"
-          className="board-canvas__surprise"
-          data-state={surpriseState}
-          onClick={surprise.onPick}
-          disabled={surprise.disabled}
-          aria-label={surpriseLabel}
-          title={surpriseLabel}
-        >
-          <span className="board-canvas__surprise-icon" aria-hidden="true">✨</span>
-          <span className="board-canvas__surprise-label">{surpriseLabel}</span>
-        </button>
-      ) : null}
-      {rects.map((rect, i) => (
-        <BoardSlot
-          key={i}
-          index={i}
-          rect={rect}
-          slot={slots[i]}
-          label={slotLabel(i + 1)}
-          pickLabel={pickLabel}
-          editLabel={editLabel}
-          removeLabel={removeLabel}
-          disabled={disabled}
-          onFilePicked={(file) => onFilePicked(i, file)}
-          onEditCrop={() => onEditCrop(i)}
-          onRemove={() => onRemove(i)}
-        />
-      ))}
-    </div>
-  );
-}
 
-type BoardSlotProps = {
-  index: number;
-  rect: SlotRect;
-  slot: BoardSlotData;
-  label: string;
-  pickLabel: string;
-  editLabel: string;
-  removeLabel: string;
-  disabled: boolean;
-  onFilePicked: (file: File) => void;
-  onEditCrop: () => void;
-  onRemove: () => void;
-};
+  const openPicker = (i: number) => {
+    if (!disabled) inputRefs.current[i]?.click();
+  };
 
-function BoardSlot({
-  index,
-  rect,
-  slot,
-  label,
-  pickLabel,
-  editLabel,
-  removeLabel,
-  disabled,
-  onFilePicked,
-  onEditCrop,
-  onRemove,
-}: BoardSlotProps) {
-  const inputRef = useRef<HTMLInputElement | null>(null);
-  const filled = !!slot?.thumbnailUrl;
-
-  function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (file) onFilePicked(file);
-    if (inputRef.current) inputRef.current.value = '';
-  }
-
-  function handleDrop(event: DragEvent<HTMLDivElement>) {
+  function handleDrop(i: number, event: DragEvent<HTMLElement>) {
     event.preventDefault();
     if (disabled) return;
     const file = event.dataTransfer.files?.[0];
-    if (file) onFilePicked(file);
+    if (file) onFilePicked(i, file);
   }
-
-  function handleDragOver(event: DragEvent<HTMLDivElement>) {
-    event.preventDefault();
-  }
-
-  const style = {
-    left: `${rect.left}%`,
-    top: `${rect.top}%`,
-    width: `${rect.width}%`,
-    height: `${rect.height}%`,
-  };
 
   return (
-    <div
-      className={`board-canvas__slot ${filled ? 'is-filled' : 'is-empty'}`}
-      style={style}
-      onDrop={handleDrop}
-      onDragOver={handleDragOver}
-    >
-      {filled && slot.thumbnailUrl ? (
-        <>
+    <div className="board">
+      <div className="board-canvas">
+        {imageUrl ? (
           <img
-            src={slot.thumbnailUrl}
-            alt={label}
-            className="board-canvas__photo"
+            src={`${imageUrl}${srcSep}width=1000`}
+            srcSet={BG_WIDTHS.map(
+              (w) => `${imageUrl}${srcSep}width=${w} ${w}w`,
+            ).join(', ')}
+            sizes="(min-width: 45em) 50vw, calc(100vw - 40px)"
+            alt={imageAlt}
+            className="board-canvas__bg"
             draggable={false}
+            // LCP element on the PDP. Lowercase attribute via spread: React
+            // 18 warns on the camelCase prop.
+            {...({fetchpriority: 'high'} as Record<string, string>)}
+            loading="eager"
+            decoding="async"
           />
-          <div className="board-canvas__overlay">
-            <button
-              type="button"
-              className="board-canvas__icon-btn"
-              onClick={onEditCrop}
-              disabled={disabled}
-              aria-label={editLabel}
-              title={editLabel}
+        ) : null}
+        {surprise ? (
+          <button
+            type="button"
+            className="board-canvas__surprise"
+            data-state={surpriseState}
+            onClick={surprise.onPick}
+            disabled={surprise.disabled}
+          >
+            <span className="board-canvas__surprise-icon" aria-hidden="true">✨</span>
+            <span className="board-canvas__surprise-label">{surpriseLabel}</span>
+          </button>
+        ) : null}
+        {rects.map((rect, i) => {
+          const slot = slots[i];
+          const filled = !!slot?.thumbnailUrl;
+          return (
+            // Pointer shortcut only — the labelled, keyboard-reachable
+            // controls for the same actions live in the strip below.
+            // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+            <div
+              key={i}
+              className={`board-canvas__slot ${filled ? 'is-filled' : 'is-empty'}`}
+              style={{
+                left: `${rect.left}%`,
+                top: `${rect.top}%`,
+                width: `${rect.width}%`,
+                height: `${rect.height}%`,
+              }}
+              aria-hidden="true"
+              onClick={() => (filled ? onEditCrop(i) : openPicker(i))}
+              onDrop={(e) => handleDrop(i, e)}
+              onDragOver={(e) => e.preventDefault()}
             >
-              <EditIcon />
-            </button>
-            <button
-              type="button"
-              className="board-canvas__icon-btn board-canvas__icon-btn--danger"
-              onClick={onRemove}
-              disabled={disabled}
-              aria-label={removeLabel}
-              title={removeLabel}
+              {filled && slot.thumbnailUrl ? (
+                <img
+                  src={slot.thumbnailUrl}
+                  alt=""
+                  className="board-canvas__photo"
+                  draggable={false}
+                />
+              ) : (
+                <span className="board-canvas__pick">
+                  <span className="board-canvas__num">{i + 1}</span>
+                  <span className="board-canvas__plus">+</span>
+                </span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <ul className="board-slots" aria-label={slotsLabel}>
+        {rects.map((_, i) => {
+          const slot = slots[i];
+          const label = slotLabel(i + 1);
+          const filled = !!slot?.thumbnailUrl;
+          return (
+            <li
+              key={i}
+              className={`board-slots__tile${filled ? ' is-filled' : ''}${slot?.error ? ' has-error' : ''}`}
+              onDrop={(e) => handleDrop(i, e)}
+              onDragOver={(e) => e.preventDefault()}
             >
-              <CloseIcon />
-            </button>
-          </div>
-        </>
-      ) : (
-        <button
-          type="button"
-          className="board-canvas__pick"
-          onClick={() => inputRef.current?.click()}
-          disabled={disabled}
-          aria-label={`${label} — ${pickLabel}`}
-        >
-          <span className="board-canvas__num">{index + 1}</span>
-          <span className="board-canvas__plus" aria-hidden="true">
-            +
-          </span>
-        </button>
-      )}
-      <input
-        ref={inputRef}
-        type="file"
-        accept={ACCEPTED_TYPES}
-        className="board-canvas__file-input"
-        onChange={handleFileChange}
-        disabled={disabled}
-        tabIndex={-1}
-      />
-      {slot?.error ? (
-        <p className="board-canvas__error" role="alert">
-          {slot.error}
-        </p>
-      ) : null}
+              {filled && slot.thumbnailUrl ? (
+                <>
+                  <button
+                    type="button"
+                    className="board-slots__thumb"
+                    onClick={() => onEditCrop(i)}
+                    disabled={disabled}
+                    aria-label={`${label}: ${editLabel}`}
+                  >
+                    <img src={slot.thumbnailUrl} alt="" draggable={false} />
+                  </button>
+                  <div className="board-slots__actions">
+                    <button
+                      type="button"
+                      className="board-slots__icon"
+                      onClick={() => onEditCrop(i)}
+                      disabled={disabled}
+                      aria-label={`${label}: ${editLabel}`}
+                    >
+                      <EditIcon />
+                    </button>
+                    <button
+                      type="button"
+                      className="board-slots__icon board-slots__icon--danger"
+                      onClick={() => onRemove(i)}
+                      disabled={disabled}
+                      aria-label={`${label}: ${removeLabel}`}
+                    >
+                      <CloseIcon />
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  className="board-slots__pick"
+                  onClick={() => openPicker(i)}
+                  disabled={disabled}
+                  aria-label={`${label}: ${pickLabel}`}
+                >
+                  <span className="board-slots__plus" aria-hidden="true">+</span>
+                  <span aria-hidden="true">{label}</span>
+                </button>
+              )}
+              <input
+                ref={(el) => {
+                  inputRefs.current[i] = el;
+                }}
+                type="file"
+                accept={ACCEPTED_TYPES}
+                className="board-canvas__file-input"
+                onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                  const file = event.target.files?.[0];
+                  if (file) onFilePicked(i, file);
+                  event.target.value = '';
+                }}
+                disabled={disabled}
+                tabIndex={-1}
+                aria-hidden="true"
+                aria-label={`${label}: ${pickLabel}`}
+              />
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }
 
 function EditIcon() {
   return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 16 16"
-      fill="none"
-      aria-hidden="true"
-    >
+    <svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true">
       <path
         d="M11.2 2.3l2.5 2.5L5.4 13.1l-3 .5.5-3L11.2 2.3z"
         stroke="currentColor"
@@ -292,13 +288,7 @@ function EditIcon() {
 
 function CloseIcon() {
   return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 16 16"
-      fill="none"
-      aria-hidden="true"
-    >
+    <svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true">
       <path
         d="M3 3l10 10M13 3L3 13"
         stroke="currentColor"
