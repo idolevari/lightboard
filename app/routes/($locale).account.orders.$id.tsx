@@ -1,5 +1,6 @@
 import {redirect, useLoaderData} from 'react-router';
-import {Money, Image} from '@shopify/hydrogen';
+import {Image} from '@shopify/hydrogen';
+import {Price} from '~/components/ProductPrice';
 import {CUSTOMER_ORDER_QUERY} from '~/graphql/customer-account/CustomerOrderQuery';
 import {useI18n} from '~/lib/useI18n';
 import {detectLocaleFromRequest} from '~/lib/i18n';
@@ -122,7 +123,7 @@ export default function OrderRoute() {
                   {discountPercentage ? (
                     <span>-{discountPercentage}%</span>
                   ) : (
-                    discountValue && <Money data={discountValue} />
+                    discountValue && <Price data={discountValue} />
                   )}
                 </td>
               </tr>
@@ -135,7 +136,7 @@ export default function OrderRoute() {
                 <p>{t.subtotal}</p>
               </th>
               <td>
-                {order.subtotal ? <Money data={order.subtotal} /> : null}
+                {order.subtotal ? <Price data={order.subtotal} /> : null}
               </td>
             </tr>
             <tr>
@@ -146,7 +147,7 @@ export default function OrderRoute() {
                 <p>{t.tax}</p>
               </th>
               <td>
-                {order.totalTax ? <Money data={order.totalTax} /> : null}
+                {order.totalTax ? <Price data={order.totalTax} /> : null}
               </td>
             </tr>
             <tr>
@@ -157,7 +158,7 @@ export default function OrderRoute() {
                 <p>{t.totalRow}</p>
               </th>
               <td>
-                <Money data={order.totalPrice} />
+                <Price data={order.totalPrice} />
               </td>
             </tr>
           </tfoot>
@@ -190,7 +191,8 @@ export default function OrderRoute() {
       <br />
       <p>
         <a target="_blank" href={order.statusPageUrl} rel="noreferrer">
-          {dict.account.status} →
+          {dict.account.status}{' '}
+          <span className="arrow" aria-hidden="true">→</span>
         </a>
       </p>
     </div>
@@ -214,12 +216,12 @@ function OrderLineRow({lineItem}: {lineItem: OrderLineItemFullFragment}) {
         </div>
       </td>
       <td>
-        {lineItem.price ? <Money data={lineItem.price} /> : null}
+        {lineItem.price ? <Price data={lineItem.price} /> : null}
       </td>
       <td>{lineItem.quantity}</td>
       <td>
         {lineItem.totalDiscount ? (
-          <Money data={lineItem.totalDiscount} />
+          <Price data={lineItem.totalDiscount} />
         ) : null}
       </td>
     </tr>

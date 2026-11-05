@@ -6,7 +6,7 @@ import {Aside} from '~/components/Aside';
 import {AccessibilityMenu} from '~/components/AccessibilityMenu';
 import {WhatsAppButton} from '~/components/WhatsAppButton';
 import {Footer} from '~/components/Footer';
-import {Header, HeaderMenu} from '~/components/Header';
+import {Header, MobileMenu} from '~/components/Header';
 import {CartMain} from '~/components/CartMain';
 import {
   SEARCH_ENDPOINT,
@@ -41,7 +41,7 @@ export function PageLayout({
       <SkipLink />
       <CartAside cart={cart} />
       <SearchAside />
-      <MobileMenuAside header={header} publicStoreDomain={publicStoreDomain} />
+      <MobileMenuAside />
       {header && (
         <Header
           header={header}
@@ -52,9 +52,27 @@ export function PageLayout({
       )}
       <main id="main" tabIndex={-1}>{children}</main>
       <Footer />
+      <FloatingActions />
+    </Aside.Provider>
+  );
+}
+
+/**
+ * WhatsApp + accessibility FABs, grouped in a labelled landmark so they are
+ * reachable by landmark navigation (axe `region`). CSS hides the group while
+ * any drawer or the crop dialog is open so it never covers modal content.
+ */
+function FloatingActions() {
+  const {dict} = useI18n();
+  return (
+    <div
+      className="floating-actions"
+      role="complementary"
+      aria-label={dict.a11y?.quickActions}
+    >
       <AccessibilityMenu />
       <WhatsAppButton />
-    </Aside.Provider>
+    </div>
   );
 }
 
@@ -91,7 +109,6 @@ function SearchAside() {
   return (
     <Aside type="search" heading={dict.aside.search}>
       <div className="predictive-search">
-        <br />
         <SearchFormPredictive>
           {({fetchResults, goToSearch, inputRef}) => (
             <>
@@ -102,10 +119,11 @@ function SearchAside() {
                 placeholder={dict.search.placeholder}
                 ref={inputRef}
                 type="search"
+                dir="auto"
+                enterKeyHint="search"
                 list={queriesDatalistId}
                 aria-label={dict.search.pageTitle}
               />
-              &nbsp;
               <button onClick={goToSearch}>{dict.search.submit}</button>
             </>
           )}
@@ -155,7 +173,10 @@ function SearchAside() {
                     to={`${to(SEARCH_ENDPOINT)}?q=${term.current}`}
                   >
                     <p>
-                      {dict.search.viewAll} <q>{term.current}</q>&nbsp;→
+                      {dict.search.viewAll} <q>{term.current}</q>{' '}
+                      <span className="arrow" aria-hidden="true">
+                        →
+                      </span>
                     </p>
                   </Link>
                 ) : null}
@@ -168,25 +189,11 @@ function SearchAside() {
   );
 }
 
-function MobileMenuAside({
-  header,
-  publicStoreDomain,
-}: {
-  header: HeaderQuery;
-  publicStoreDomain: string;
-}) {
+function MobileMenuAside() {
   const {dict} = useI18n();
   return (
-    header.menu &&
-    header.shop.primaryDomain?.url && (
-      <Aside type="mobile" heading={dict.aside.menu}>
-        <HeaderMenu
-          menu={header.menu}
-          viewport="mobile"
-          primaryDomainUrl={header.shop.primaryDomain.url}
-          publicStoreDomain={publicStoreDomain}
-        />
-      </Aside>
-    )
+    <Aside type="mobile" heading={dict.aside.menu}>
+      <MobileMenu />
+    </Aside>
   );
 }

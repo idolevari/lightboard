@@ -1,7 +1,7 @@
 html {
   scroll-behavior: smooth;
   /* Account for the sticky header when anchor-linking to a section. */
-  scroll-padding-top: 88px;
+  scroll-padding-top: 100px;
 }
 
 @media (prefers-reduced-motion: reduce) {

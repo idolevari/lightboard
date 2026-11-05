@@ -1,6 +1,6 @@
-import {NavLink} from 'react-router';
+import {NavLink, useNavigate} from 'react-router';
 import {useI18n} from '~/lib/useI18n';
-import {useBusiness, whatsappHref} from '~/lib/brand';
+import {telHref, useBusiness, whatsappHref} from '~/lib/brand';
 
 export function Footer() {
   const {dict, to} = useI18n();
@@ -56,12 +56,18 @@ export function Footer() {
             )}
             {b.phoneDisplay && (
               <span>
-                {f.metaPhoneLabel}: <a href={`tel:${b.phone || b.phoneDisplay}`}>{b.phoneDisplay}</a>
+                {f.metaPhoneLabel}:{' '}
+                <a href={telHref(b) ?? `tel:${b.phoneDisplay}`} dir="ltr">
+                  {b.phoneDisplay}
+                </a>
               </span>
             )}
             {b.email && (
               <span>
-                {f.metaEmailLabel}: <a href={`mailto:${b.email}`}>{b.email}</a>
+                {f.metaEmailLabel}:{' '}
+                <a href={`mailto:${b.email}`} dir="ltr">
+                  {b.email}
+                </a>
               </span>
             )}
           </address>
@@ -69,15 +75,60 @@ export function Footer() {
 
         <div className="footer-bottom">
           <span>© {new Date().getFullYear()} {f.rights}</span>
-          <span style={{display: 'flex', gap: 20, flexWrap: 'wrap'}}>
-            {f.legal.map((l) => (
-              <NavLink key={l.label} to={to(l.to)} prefetch="intent">
-                {l.label}
-              </NavLink>
-            ))}
-          </span>
+          <nav aria-label={f.legalNavLabel}>
+            <ul className="footer-legal">
+              {f.legal.map((l) => (
+                <li key={l.to}>
+                  <NavLink to={to(l.to)} prefetch="intent">
+                    {l.label}
+                  </NavLink>
+                </li>
+              ))}
+              <li>
+                <CookieSettingsButton label={f.cookieSettings} />
+              </li>
+            </ul>
+          </nav>
         </div>
       </div>
     </footer>
+  );
+}
+
+type PrivacyBannerWindow = Window & {
+  privacyBanner?: {showPreferences?: () => void};
+};
+
+/**
+ * Cookie-settings link in the footer: lets a visitor reopen consent choices.
+ *
+ * TODO(consent): when fix/platform-security merges, replace this component's
+ * body with the helper from `~/lib/consent`:
+ *   const canOpen = useCookiePreferencesAvailable();
+ *   <button type="button" className="footer-cookie-btn"
+ *     onClick={openCookiePreferences} hidden={!canOpen}>{label}</button>
+ * and drop the fallbacks below. Until then we use Shopify's privacy-banner
+ * API if it is loaded, otherwise we send the visitor to the privacy policy.
+ */
+function CookieSettingsButton({label}: {label: string}) {
+  const {to} = useI18n();
+  const navigate = useNavigate();
+  function openCookieSettings() {
+    const w = window as PrivacyBannerWindow;
+    if (typeof w.privacyBanner?.showPreferences === 'function') {
+      w.privacyBanner.showPreferences();
+      return;
+    }
+    void navigate(to('/policies/privacy-policy'));
+  }
+  return (
+    <button
+      type="button"
+      className="footer-cookie-btn"
+      data-consent-hook="cookie-settings"
+      onClick={openCookieSettings}
+    >
+      {label}
+    </button>
   );
 }

@@ -4,6 +4,7 @@ import {useAside} from '~/components/Aside';
 import {CartLineItem} from '~/components/CartLineItem';
 import type {CartLine} from '~/components/CartLineItem';
 import {CartSummary} from './CartSummary';
+import {SHOP_PATH} from '~/components/Header';
 import {useI18n} from '~/lib/useI18n';
 import type {CartApiQueryFragment} from 'storefrontapi.generated';
 
@@ -92,11 +93,14 @@ function CartEmpty({hidden = false}: {hidden?: boolean}) {
   const {close} = useAside();
   const {dict, to} = useI18n();
   return (
-    <div hidden={hidden}>
-      <br />
+    <div hidden={hidden} className="cart-empty">
       <p>{dict.cart.empty}</p>
-      <br />
-      <Link to={to('/collections')} onClick={close} prefetch="viewport">
+      <Link
+        to={to(SHOP_PATH)}
+        onClick={close}
+        prefetch="viewport"
+        className="cart-empty-cta"
+      >
         {dict.cart.continueShopping}
       </Link>
     </div>

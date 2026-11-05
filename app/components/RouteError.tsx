@@ -9,17 +9,17 @@ type RouteErrorProps = {context?: string};
 
 const HE = {
   oops: 'אופס',
-  notFoundTitle: 'הדף לא נמצא',
-  notFoundKicker: 'נראה שהקישור שבחרת כבר לא קיים',
-  generic: 'אירעה תקלה בלתי צפויה',
-  retry: 'חזרה לדף הבית',
+  notFoundTitle: 'הגל הזה כבר עבר.',
+  notFoundKicker: 'הקישור שבור או שהדף זז. בואו נחזור הביתה.',
+  generic: 'משהו השתבש אצלנו. נסו לרענן את הדף.',
+  retry: 'לדף הבית',
 };
 
 const EN = {
   oops: 'Oops',
-  notFoundTitle: 'Page not found',
-  notFoundKicker: 'The page you were looking for could not be found.',
-  generic: 'An unexpected error occurred.',
+  notFoundTitle: "This wave's gone.",
+  notFoundKicker: 'The link is broken or the page moved. Let\'s head home.',
+  generic: 'Something broke on our end. Try refreshing the page.',
   retry: 'Back home',
 };
 
