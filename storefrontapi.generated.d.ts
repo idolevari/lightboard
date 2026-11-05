@@ -1470,6 +1470,72 @@ export type PredictiveSearchQuery = {
   }>;
 };
 
+export type SitemapIndexCountsQueryVariables = StorefrontAPI.Exact<{
+  [key: string]: never;
+}>;
+
+export type SitemapIndexCountsQuery = {
+  products: {
+    pagesCount?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Count, 'count'>>;
+  };
+  collections: {
+    pagesCount?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Count, 'count'>>;
+  };
+  pages: {pagesCount?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Count, 'count'>>};
+  articles: {nodes: Array<Pick<StorefrontAPI.Article, 'id'>>};
+};
+
+export type SitemapResourcesQueryVariables = StorefrontAPI.Exact<{
+  type: StorefrontAPI.SitemapType;
+  page: StorefrontAPI.Scalars['Int']['input'];
+}>;
+
+export type SitemapResourcesQuery = {
+  sitemap: {
+    resources?: StorefrontAPI.Maybe<{
+      items: Array<
+        | Pick<StorefrontAPI.SitemapResource, 'handle' | 'updatedAt'>
+        | Pick<StorefrontAPI.SitemapResourceMetaobject, 'handle' | 'updatedAt'>
+      >;
+    }>;
+  };
+};
+
+export type SitemapArticlesQueryVariables = StorefrontAPI.Exact<{
+  [key: string]: never;
+}>;
+
+export type SitemapArticlesQuery = {
+  articles: {
+    nodes: Array<
+      Pick<StorefrontAPI.Article, 'handle' | 'publishedAt'> & {
+        blog: Pick<StorefrontAPI.Blog, 'handle'>;
+      }
+    >;
+  };
+};
+
+export type SitemapPoliciesQueryVariables = StorefrontAPI.Exact<{
+  [key: string]: never;
+}>;
+
+export type SitemapPoliciesQuery = {
+  shop: {
+    privacyPolicy?: StorefrontAPI.Maybe<
+      Pick<StorefrontAPI.ShopPolicy, 'handle'>
+    >;
+    refundPolicy?: StorefrontAPI.Maybe<
+      Pick<StorefrontAPI.ShopPolicy, 'handle'>
+    >;
+    shippingPolicy?: StorefrontAPI.Maybe<
+      Pick<StorefrontAPI.ShopPolicy, 'handle'>
+    >;
+    termsOfService?: StorefrontAPI.Maybe<
+      Pick<StorefrontAPI.ShopPolicy, 'handle'>
+    >;
+  };
+};
+
 interface GeneratedQueryTypes {
   '#graphql\n  fragment Shop on Shop {\n    id\n    name\n    description\n    primaryDomain {\n      url\n    }\n    brand {\n      logo {\n        image {\n          url\n        }\n      }\n    }\n    phone: metafield(namespace: "business", key: "phone") { value }\n    email: metafield(namespace: "business", key: "email") { value }\n    instagram: metafield(namespace: "business", key: "instagram") { value }\n    legalName: metafield(namespace: "business", key: "legal_name") { value }\n    businessAddress: metafield(namespace: "business", key: "address") { value }\n  }\n  query Header(\n    $country: CountryCode\n    $headerMenuHandle: String!\n    $language: LanguageCode\n  ) @inContext(language: $language, country: $country) {\n    shop {\n      ...Shop\n    }\n    menu(handle: $headerMenuHandle) {\n      ...Menu\n    }\n  }\n  #graphql\n  fragment MenuItem on MenuItem {\n    id\n    resourceId\n    tags\n    title\n    type\n    url\n  }\n  fragment ChildMenuItem on MenuItem {\n    ...MenuItem\n  }\n  fragment ParentMenuItem on MenuItem {\n    ...MenuItem\n    items {\n      ...ChildMenuItem\n    }\n  }\n  fragment Menu on Menu {\n    id\n    items {\n      ...ParentMenuItem\n    }\n  }\n\n': {
     return: HeaderQuery;
@@ -1546,6 +1612,22 @@ interface GeneratedQueryTypes {
   '#graphql\n  query PredictiveSearch(\n    $country: CountryCode\n    $language: LanguageCode\n    $limit: Int!\n    $limitScope: PredictiveSearchLimitScope!\n    $term: String!\n    $types: [PredictiveSearchType!]\n  ) @inContext(country: $country, language: $language) {\n    predictiveSearch(\n      limit: $limit,\n      limitScope: $limitScope,\n      query: $term,\n      types: $types,\n    ) {\n      articles {\n        ...PredictiveArticle\n      }\n      collections {\n        ...PredictiveCollection\n      }\n      pages {\n        ...PredictivePage\n      }\n      products {\n        ...PredictiveProduct\n      }\n      queries {\n        ...PredictiveQuery\n      }\n    }\n  }\n  #graphql\n  fragment PredictiveArticle on Article {\n    __typename\n    id\n    title\n    handle\n    blog {\n      handle\n    }\n    image {\n      url\n      altText\n      width\n      height\n    }\n    trackingParameters\n  }\n\n  #graphql\n  fragment PredictiveCollection on Collection {\n    __typename\n    id\n    title\n    handle\n    image {\n      url\n      altText\n      width\n      height\n    }\n    trackingParameters\n  }\n\n  #graphql\n  fragment PredictivePage on Page {\n    __typename\n    id\n    title\n    handle\n    trackingParameters\n  }\n\n  #graphql\n  fragment PredictiveProduct on Product {\n    __typename\n    id\n    title\n    handle\n    trackingParameters\n    selectedOrFirstAvailableVariant(\n      selectedOptions: []\n      ignoreUnknownOptions: true\n      caseInsensitiveMatch: true\n    ) {\n      id\n      image {\n        url\n        altText\n        width\n        height\n      }\n      price {\n        amount\n        currencyCode\n      }\n    }\n  }\n\n  #graphql\n  fragment PredictiveQuery on SearchQuerySuggestion {\n    __typename\n    text\n    styledText\n    trackingParameters\n  }\n\n': {
     return: PredictiveSearchQuery;
     variables: PredictiveSearchQueryVariables;
+  };
+  '#graphql\n  query SitemapIndexCounts {\n    products: sitemap(type: PRODUCT) { pagesCount { count } }\n    collections: sitemap(type: COLLECTION) { pagesCount { count } }\n    pages: sitemap(type: PAGE) { pagesCount { count } }\n    articles(first: 1) { nodes { id } }\n  }\n': {
+    return: SitemapIndexCountsQuery;
+    variables: SitemapIndexCountsQueryVariables;
+  };
+  '#graphql\n  query SitemapResources($type: SitemapType!, $page: Int!) {\n    sitemap(type: $type) {\n      resources(page: $page) {\n        items {\n          handle\n          updatedAt\n        }\n      }\n    }\n  }\n': {
+    return: SitemapResourcesQuery;
+    variables: SitemapResourcesQueryVariables;
+  };
+  '#graphql\n  query SitemapArticles {\n    articles(first: 250, sortKey: PUBLISHED_AT, reverse: true) {\n      nodes {\n        handle\n        publishedAt\n        blog { handle }\n      }\n    }\n  }\n': {
+    return: SitemapArticlesQuery;
+    variables: SitemapArticlesQueryVariables;
+  };
+  '#graphql\n  query SitemapPolicies {\n    shop {\n      privacyPolicy { handle }\n      refundPolicy { handle }\n      shippingPolicy { handle }\n      termsOfService { handle }\n    }\n  }\n': {
+    return: SitemapPoliciesQuery;
+    variables: SitemapPoliciesQueryVariables;
   };
 }
 

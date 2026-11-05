@@ -20,15 +20,31 @@ import {grantPhotoUploads} from '~/lib/.server/photo-upload.server';
 import {JsonLd} from '~/components/JsonLd';
 import {RouteError} from '~/components/RouteError';
 import {absoluteUrl, productSeo} from '~/lib/.server/seo.server';
-import {routeMeta} from '~/lib/seo-urls';
+import {metaLocale, routeMeta} from '~/lib/seo-urls';
+import {productSeoCopy} from '~/lib/meta';
 import type {Route} from './+types/($locale).products.$handle';
 
 const REQUIRES_PHOTOS_TAG = 'requires-photos';
 
 type CartLineAttribute = {key: string; value?: string | null};
 
-export const meta: Route.MetaFunction = ({data, matches}) =>
-  routeMeta({matches, data});
+export const meta: Route.MetaFunction = ({data, matches}) => {
+  const product = data?.product;
+  if (!product) return routeMeta({matches, data});
+  const price = product.selectedOrFirstAvailableVariant?.price;
+  return routeMeta({
+    matches,
+    data,
+    overrides: productSeoCopy(product, price, metaLocale(matches)),
+    ogType: 'product',
+    extra: price
+      ? [
+          {property: 'product:price:amount', content: price.amount},
+          {property: 'product:price:currency', content: price.currencyCode},
+        ]
+      : [],
+  });
+};
 
 export async function loader(args: Route.LoaderArgs) {
   const redirectResponse = checkForTrailingEncodedSpaces(args.request);

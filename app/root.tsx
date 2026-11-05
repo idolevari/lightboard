@@ -29,7 +29,7 @@ import {
   parseLocaleFromPath,
 } from '~/lib/i18n';
 import {isLaunchGateActive} from '~/lib/.server/coming-soon.server';
-import {rootSeo} from '~/lib/.server/seo.server';
+import {rootSeo, siteJsonLd} from '~/lib/.server/seo.server';
 import {routeMeta} from '~/lib/seo-urls';
 import {MetaPixel, MetaPixelScript} from '~/lib/meta-pixel';
 import type {Route} from './+types/root';
@@ -132,6 +132,8 @@ export async function loader(args: Route.LoaderArgs) {
 
   // Start fetching non-critical data without blocking time to first byte
   const deferredData = loadDeferredData(args);
+  // Site-wide JSON-LD @graph from live Shopify data (runs in parallel).
+  const siteGraph = siteJsonLd(args.context.storefront, {locale, pathnameNoLocale});
 
   // Await the critical data required to render initial state of the page
   const criticalData = await loadCriticalData(args);
@@ -145,7 +147,7 @@ export async function loader(args: Route.LoaderArgs) {
     dict,
     pathnameNoLocale,
     seo,
-    jsonLd,
+    jsonLd: await siteGraph,
     publicStoreDomain: env.PUBLIC_STORE_DOMAIN,
     metaPixelId: env.META_PIXEL_ID || null,
     shop: getShopAnalytics({

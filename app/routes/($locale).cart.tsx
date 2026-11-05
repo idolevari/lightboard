@@ -6,11 +6,11 @@ import {useI18n} from '~/lib/useI18n';
 import {detectLocaleFromRequest, getDictionary} from '~/lib/i18n';
 import {isSameOriginPath} from '~/lib/.server/redirect.server';
 import {absoluteUrl, simpleSeo} from '~/lib/.server/seo.server';
-import {routeMeta} from '~/lib/seo-urls';
+import {NO_INDEX, routeMeta} from '~/lib/seo-urls';
 import type {Route} from './+types/($locale).cart';
 
 export const meta: Route.MetaFunction = ({data, matches}) =>
-  routeMeta({matches, data});
+  routeMeta({matches, data, overrides: NO_INDEX});
 
 export const headers: Route.HeadersFunction = ({actionHeaders}) => actionHeaders;
 

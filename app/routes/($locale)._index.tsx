@@ -10,7 +10,8 @@ import {
 } from '~/lib/productOptionLabels';
 import {isLaunchGateActive} from '~/lib/.server/coming-soon.server';
 import {absoluteUrl, simpleSeo} from '~/lib/.server/seo.server';
-import {routeMeta} from '~/lib/seo-urls';
+import {metaLocale, routeMeta} from '~/lib/seo-urls';
+import {homeSeoCopy} from '~/lib/meta';
 import {sanitizeShopifyHtml} from '~/lib/.server/sanitize.server';
 import {RouteError} from '~/components/RouteError';
 import type {Route} from './+types/($locale)._index';
@@ -131,7 +132,7 @@ type MetaobjectFieldRecord = {
 };
 
 export const meta: Route.MetaFunction = ({data, matches}) =>
-  routeMeta({matches, data});
+  routeMeta({matches, data, overrides: homeSeoCopy(metaLocale(matches))});
 
 type SimpleMetaobjectQueryResponse = {
   metaobjects?: {nodes?: Array<SimpleMetaobjectNode>} | null;

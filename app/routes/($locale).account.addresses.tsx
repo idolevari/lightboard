@@ -14,7 +14,7 @@ import {
 import {useI18n} from '~/lib/useI18n';
 import {detectLocaleFromRequest, getDictionary} from '~/lib/i18n';
 import {absoluteUrl, simpleSeo} from '~/lib/.server/seo.server';
-import {routeMeta} from '~/lib/seo-urls';
+import {NO_INDEX, routeMeta} from '~/lib/seo-urls';
 import {RouteError} from '~/components/RouteError';
 import type {
   AddressFragment,
@@ -33,7 +33,7 @@ type ActionResponse = {
 };
 
 export const meta: Route.MetaFunction = ({data, matches}) =>
-  routeMeta({matches, data});
+  routeMeta({matches, data, overrides: NO_INDEX});
 
 export async function loader({context, request}: Route.LoaderArgs) {
   await context.customerAccount.handleAuthStatus();
