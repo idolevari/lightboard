@@ -107,8 +107,8 @@ export const HOW_TO_ORDER = {
   en: [
     'Pick a colour on the product page.',
     `Upload ${PHOTOS_PER_BOARD} photos and crop each one to a square in the photo customizer.`,
-    'Add to cart and check out. The photos are attached to the order line.',
-    `We print the photos and build the board, then ship it within ${LEAD_TIME_BUSINESS_DAYS.min}–${LEAD_TIME_BUSINESS_DAYS.max} business days.`,
+    'Add to cart and check out. The photos are saved with the order.',
+    `We print the photos and build the board, and it reaches you within ${LEAD_TIME_BUSINESS_DAYS.min}–${LEAD_TIME_BUSINESS_DAYS.max} business days of ordering.`,
     'Custom sizes or colours: ask us on WhatsApp before ordering.',
   ],
   he: [

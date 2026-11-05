@@ -295,7 +295,11 @@ function organizationNode(shop: SiteGraphShop | null, locale: Locale) {
     email: email || undefined,
     telephone: phone || undefined,
     address: locality
-      ? {'@type': 'PostalAddress', addressLocality: locality, addressCountry: 'IL'}
+      ? {
+          '@type': 'PostalAddress',
+          addressLocality: locality,
+          addressCountry: 'IL',
+        }
       : undefined,
     areaServed: {'@type': 'Country', name: 'Israel'},
     contactPoint:
@@ -432,7 +436,9 @@ function productNodes(
     const label = color ? optionValueLabel(color.value, locale) : v.title;
     const query = v.selectedOptions
       .filter((o) => o.name !== 'Title')
-      .map((o) => `${encodeURIComponent(o.name)}=${encodeURIComponent(o.value)}`)
+      .map(
+        (o) => `${encodeURIComponent(o.name)}=${encodeURIComponent(o.value)}`,
+      )
       .join('&');
     return {
       '@type': 'Product',
@@ -735,4 +741,9 @@ export function simpleSeo(input: SimpleSeoInput): SeoResult {
   };
 }
 
-export {absoluteUrl, buildAlternates, SITE_NAME, SITE_URL} from '~/lib/seo-urls';
+export {
+  absoluteUrl,
+  buildAlternates,
+  SITE_NAME,
+  SITE_URL,
+} from '~/lib/seo-urls';

@@ -76,7 +76,8 @@ const FREE_SHIPPING = SHIPPING_FACTS.freeShippingOverILS === 0;
 export function homeSeoCopy(locale: Locale): SeoCopy {
   if (locale === 'en') {
     return {
-      title: 'Lightboard · A surfboard light with your photos | Gift for surfers',
+      title:
+        'Lightboard · A surfboard light with your photos | Gift for surfers',
       description: `A solid-pine surfboard for your wall, with warm LED light and ${PHOTOS_PER_BOARD} photos you choose. Handmade to order in ${MADE_IN.en}${FREE_SHIPPING ? ', free shipping in Israel' : ''}. A gift for surfers and ocean lovers.`,
     };
   }

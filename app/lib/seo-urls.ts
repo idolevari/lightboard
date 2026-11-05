@@ -181,16 +181,24 @@ export function routeMeta(args: {
       content: OG_LOCALE[l],
     })),
     {name: 'twitter:card', content: 'summary_large_image'},
+    // Machine-readable brand guide for AI assistants (llmstxt.org).
+    {
+      tagName: 'link',
+      rel: 'alternate',
+      type: 'text/markdown',
+      title: 'llms.txt',
+      href: `${SITE_URL}/llms.txt`,
+    },
   ];
   return [...baseMeta, ...alternates, ...og, ...(args.extra ?? [])];
 }
 
 /** `robots: noindex, follow` for utility pages (cart, search, account…). */
-export const NO_INDEX: SeoOverrides = {robots: {noIndex: true, noFollow: false}};
+export const NO_INDEX: SeoOverrides = {
+  robots: {noIndex: true, noFollow: false},
+};
 
 /** Locale of the current request, from the root match. */
 export function metaLocale(matches: ReadonlyArray<MaybeRootMatch>): Locale {
-  return (
-    (matches[0]?.data as RootMetaData)?.locale ?? DEFAULT_LOCALE
-  );
+  return (matches[0]?.data as RootMetaData)?.locale ?? DEFAULT_LOCALE;
 }
