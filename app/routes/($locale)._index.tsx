@@ -946,7 +946,7 @@ function FeaturedLightboard({
             />
           ) : (
             <img
-              src="/lightboard-lifestyle.png"
+              src="/lightboard-lifestyle.jpg"
               alt={altText}
               className="feat3-photo"
               loading="eager"
