@@ -11,7 +11,7 @@ import {
 import {isLaunchGateActive} from '~/lib/.server/coming-soon.server';
 import {absoluteUrl, simpleSeo} from '~/lib/.server/seo.server';
 import {routeMeta} from '~/lib/seo-urls';
-import {sanitizeShopifyHtml} from '~/lib/sanitize';
+import {sanitizeShopifyHtml} from '~/lib/.server/sanitize.server';
 import {RouteError} from '~/components/RouteError';
 import type {Route} from './+types/($locale)._index';
 
@@ -149,8 +149,6 @@ export async function loader(args: Route.LoaderArgs) {
       url: absoluteUrl('/', locale),
     });
     return {
-      isShopLinked: false,
-      featuredCollection: null,
       featuredProduct: null,
       faqs: Promise.resolve(
         null,
@@ -172,14 +170,32 @@ export async function loader(args: Route.LoaderArgs) {
   return {...deferredData, ...criticalData};
 }
 
+/**
+ * The featured product's `headline_*` metafields are rendered as HTML.
+ * Sanitize them here (server only) so sanitize-html stays out of the client
+ * bundle; the component renders the already-clean string.
+ */
+function sanitizeFeaturedHeadline<
+  T extends {
+    headline_he?: {value: string} | null;
+    headline_en?: {value: string} | null;
+  },
+>(product: T | null): T | null {
+  if (!product) return null;
+  const clean = (field: {value: string} | null | undefined) =>
+    field ? {...field, value: sanitizeShopifyHtml(field.value)} : field;
+  return {
+    ...product,
+    headline_he: clean(product.headline_he),
+    headline_en: clean(product.headline_en),
+  };
+}
+
 async function loadCriticalData({context, request}: Route.LoaderArgs) {
   const locale = detectLocaleFromRequest(request);
   const dict = getDictionary(locale);
   const {storefront} = context;
-  const [{collections}, productData, heroData, homepageData] = await Promise.all([
-    storefront.query(FEATURED_COLLECTION_QUERY, {
-      cache: storefront.CacheLong(),
-    }),
+  const [productData, heroData, homepageData] = await Promise.all([
     storefront
       .query(FEATURED_PRODUCT_QUERY, {cache: storefront.CacheShort()})
       .catch((error) => {
@@ -199,15 +215,15 @@ async function loadCriticalData({context, request}: Route.LoaderArgs) {
         return null;
       }),
   ]);
-  const featuredProduct = productData?.shop?.featured?.reference ?? null;
+  const featuredProduct = sanitizeFeaturedHeadline(
+    productData?.shop?.featured?.reference ?? null,
+  );
   const {seo: baseSeo, jsonLd} = simpleSeo({
     title: dict.meta.title,
     description: dict.meta.description,
     url: absoluteUrl('/', locale),
   });
   return {
-    isShopLinked: Boolean(context.env.PUBLIC_STORE_DOMAIN),
-    featuredCollection: collections?.nodes?.[0] ?? null,
     featuredProduct,
     heroSlides: extractHeroSlides(heroData?.metaobjects?.nodes),
     hero: extractHeroSection(homepageData?.shop?.hero?.reference, locale),
@@ -845,7 +861,7 @@ function FeaturedLightboard({
               <h2
                 className="feat3-title"
                 dangerouslySetInnerHTML={{
-                  __html: sanitizeShopifyHtml(headlineHtml),
+                  __html: headlineHtml,
                 }}
               />
             )}
@@ -1158,21 +1174,6 @@ function Testimonials({items}: {items: Array<MetaobjectFieldRecord>}) {
 }
 
 /* ---------------- QUERIES ---------------- */
-
-const FEATURED_COLLECTION_QUERY = `#graphql
-  fragment FeaturedCollection on Collection {
-    id
-    title
-    image { id url altText width height }
-    handle
-  }
-  query FeaturedCollection($country: CountryCode, $language: LanguageCode)
-    @inContext(country: $country, language: $language) {
-    collections(first: 1, sortKey: UPDATED_AT, reverse: true) {
-      nodes { ...FeaturedCollection }
-    }
-  }
-`;
 
 const FEATURED_PRODUCT_QUERY = `#graphql
   query FeaturedProduct($country: CountryCode, $language: LanguageCode)
