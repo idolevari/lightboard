@@ -2,7 +2,7 @@ import {useId} from 'react';
 import type {ReactNode} from 'react';
 import type {CropPixels} from '~/lib/photo-canvas';
 
-import {BOARD_PATH, BOARD_VIEWBOX} from './board-outline';
+import {BOARD_PATH, BOARD_VIEWBOX} from '~/lib/board-outline';
 
 export {BOARD_PATH, BOARD_VIEWBOX};
 
@@ -85,6 +85,7 @@ export function PrintboardPreview({
     <svg
       className="pb-board"
       viewBox={`-8 -6 ${W + 16} ${H + 12}`}
+      style={{aspectRatio: `${W + 16} / ${H + 12}`}}
       role="img"
       aria-label={label}
     >
@@ -194,6 +195,7 @@ export function BoardThumb({
     <svg
       className={`pb-thumb ${className}`}
       viewBox={`-4 -4 ${W + 8} ${H + 8}`}
+      style={{aspectRatio: `${W + 8} / ${H + 8}`}}
       {...(decorative
         ? {'aria-hidden': true}
         : {role: 'img', 'aria-label': label})}

@@ -26,7 +26,7 @@ const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 /**
- * Crop modal (square by default; the Printboard uses 2:5).
+ * Crop modal (square by default; the Printboard uses the board's aspect).
  *
  * - `objectFit="cover"`: the photo always fills the crop (no letterbox
  *   bars), so what you see is what prints.

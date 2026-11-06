@@ -8,12 +8,18 @@
  * (`crop=region&crop_left=…`), still with no upload.
  *
  * TO ADD OR REPLACE A DESIGN (owner):
- *   1. Upload the print file (2:5, e.g. 20×50 cm) in Shopify Admin →
+ *   1. Upload the print file in Shopify Admin →
  *      Content → Files and copy its CDN URL.
  *   2. Add an entry below: a stable `id` (it goes on the order as
  *      "Design ID"), the Hebrew and English names, the URL and the file's
  *      pixel width / height.
  * The list order is the order the shopper sees.
+ *
+ * PRODUCTION NOTE: the board's print area (the outline's bounding box,
+ * ≈0.3254 wide:high) is narrower than these 2:5 files (0.406). The preview
+ * draws them "cover", so roughly 10% of the width (5% per side) falls
+ * outside the board. Print them the same way: fit the height, center, trim
+ * the sides — or, if re-framed, use the region-crop URL on the order.
  */
 import {withParams} from '~/lib/photos';
 import type {CropPixels} from '~/lib/photo-canvas';

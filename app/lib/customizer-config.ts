@@ -5,11 +5,12 @@
  *   - Lightboard (`requires-photos` tag): three square photos placed on the
  *     lit board, cropped to 1200×1200.
  *   - Printboard (`requires-print-photo` tag): one photo printed full-bleed
- *     on a 20×50 cm wooden board, cropped to 2:5 and rendered as a
- *     2000×5000 print file.
+ *     on the wooden fish board, cropped to the board's bounding box
+ *     (BOARD_ASPECT ≈ 0.3254) and rendered as a 2000 px wide print file.
  */
 import {REQUIRES_PHOTOS_TAG, REQUIRES_PRINT_PHOTO_TAG} from '~/lib/brand-facts';
 import {CROPPED_OUTPUT_SIZE} from '~/lib/photo-canvas';
+import {BOARD_ASPECT} from '~/lib/board-outline';
 import type {OutputSize} from '~/lib/photo-canvas';
 
 export type CustomizerKind = 'lightboard' | 'printboard';
@@ -31,9 +32,17 @@ export type CustomizerConfig = {
   recommendedPrintEdge: number;
 };
 
-/** Print file for the 20×50 cm board: 2:5 at 100 px per cm (~254 dpi). */
-export const PRINTBOARD_OUTPUT = {width: 2000, height: 5000} as const;
-export const PRINTBOARD_ASPECT = 2 / 5;
+/** Board size shown in copy (specs). Owner to confirm the exact size. */
+export const PRINTBOARD_SIZE_CM = {width: 20, height: 50} as const;
+export const PRINTBOARD_SIZE_LABEL = `${PRINTBOARD_SIZE_CM.width}×${PRINTBOARD_SIZE_CM.height}`;
+
+/** Print area = the outline's bounding box (see ~/lib/board-outline). */
+export const PRINTBOARD_ASPECT = BOARD_ASPECT;
+/** Print file: 2000 px wide at the board aspect (2000×6147). */
+export const PRINTBOARD_OUTPUT = {
+  width: 2000,
+  height: Math.round(2000 / BOARD_ASPECT),
+} as const;
 
 export const CUSTOMIZER_CONFIG: Record<CustomizerKind, CustomizerConfig> = {
   lightboard: {

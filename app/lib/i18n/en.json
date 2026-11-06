@@ -432,7 +432,7 @@
     "specs": [
       {
         "label": "Size",
-        "value": "20×50 cm"
+        "value": "{size} cm"
       },
       {
         "label": "Material",

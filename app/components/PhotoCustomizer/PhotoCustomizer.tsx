@@ -173,7 +173,9 @@ function presetSlot(
 ): PhotoSlotState {
   const preset = findPreset(presetId);
   if (!preset) return emptySlot();
-  // Presets are print-ready at 2:5: no crop = the file as-is.
+  // Presets are print files at 2:5; with no crop they are drawn "cover" into
+  // the board's bounding box (≈0.3254), so a sliver of each side falls
+  // outside the board. The print file stays the preset URL as-is.
   return {
     ...emptySlot(),
     crop: crop ?? null,
@@ -212,7 +214,7 @@ function previewUrlFor(slot: PhotoSlotState): string | null {
  * Top-level photo customizer for the photo products' PDP.
  *
  * Lightboard: picking, cropping, previewing and uploading three square
- * photos. Printboard: one 2:5 photo (own upload or a ready-made design)
+ * photos. Printboard: one board-aspect photo (own upload or a ready-made design)
  * previewed live on the board. Calls `onApprove` with a Shopify
  * line-item-attribute array once every slot is cropped, uploaded to Shopify
  * Files (presets and gallery photos skip the upload), and the user clicks
@@ -941,7 +943,7 @@ function boardPhotoFor(slot: PhotoSlotState | undefined): BoardPhoto | null {
   return null;
 }
 
-/** Board outline over the 2:5 crop stage; outside the board is dimmed. */
+/** Board outline over the board-aspect crop stage; outside the board is dimmed. */
 function BoardCropOverlay() {
   const {width: W, height: H} = BOARD_VIEWBOX;
   return (

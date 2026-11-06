@@ -202,7 +202,7 @@ export function PrintboardStage({
   );
 }
 
-/** Board-shaped preset tile: the default 2:5 framing straight off the CDN. */
+/** Board-shaped preset tile: the preset filling the board (cover). */
 function PresetTileImage({preset}: {preset: PrintPreset}) {
   const src = presetPreviewUrl(preset, 200);
   return <BoardThumb src={src} label="" decorative />;

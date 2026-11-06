@@ -4678,7 +4678,7 @@ body.a11y-no-motion .hero-media img { transform: none !important; transition: no
     #efe8dc;
   border-radius: 14px;
   padding: clamp(22px, 6vw, 40px) 0;
-  min-height: clamp(380px, 112vw, 560px);
+  min-height: clamp(410px, 124vw, 600px);
   overflow: hidden;
 }
 .pb-wall::after {
@@ -4697,9 +4697,8 @@ body.a11y-no-motion .hero-media img { transform: none !important; transition: no
   position: relative;
   z-index: 1;
   display: block;
-  height: clamp(330px, 100vw, 500px);
+  height: clamp(360px, 110vw, 540px);
   width: auto;
-  aspect-ratio: 216 / 512;
   overflow: visible;
   /* Light from the top-left: shadow falls down and to the right. */
   filter:
@@ -4852,8 +4851,8 @@ body.a11y-no-motion .hero-media img { transform: none !important; transition: no
 .pb-preset__art {
   position: relative;
   display: block;
-  width: 48px;
-  aspect-ratio: 2 / 5;
+  width: 44px;
+  aspect-ratio: 200 / 614.7;
   transition: transform var(--dur-tap) var(--ease-out-soft);
   filter: drop-shadow(2px 4px 4px rgba(70, 48, 22, 0.25));
 }
@@ -4870,7 +4869,7 @@ body.a11y-no-motion .hero-media img { transform: none !important; transition: no
   .pb-board, .pb-preset__art { transition: none; }
 }
 
-/* Crop dialog, 2:5 stage + live board preview side by side. */
+/* Crop dialog, board-aspect stage + live board preview side by side. */
 .crop-dialog__body { display: flex; justify-content: center; gap: 14px; align-items: center; }
 .crop-dialog__panel.is-tall .crop-dialog__stage {
   /* Explicit box (not aspect-ratio + auto): react-easy-crop measures the
@@ -4924,8 +4923,8 @@ body.a11y-no-motion .hero-media img { transform: none !important; transition: no
 @media (min-width: 45em) {
   .pb-home-grid { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); align-items: start; }
   .pb-home-row { grid-auto-flow: row; grid-template-columns: 1fr 1fr; grid-auto-columns: auto; overflow: visible; }
-  .pb-wall { min-height: 560px; }
-  .pb-board { height: 500px; }
+  .pb-wall { min-height: 620px; }
+  .pb-board { height: 560px; }
 }
 
 /* Cart line: board-shaped print thumbnail. */
@@ -4937,10 +4936,10 @@ body.a11y-no-motion .hero-media img { transform: none !important; transition: no
   border-radius: 8px;
   background: #efe8dc;
 }
-.pb-thumb { height: 92px; width: auto; aspect-ratio: 208 / 508; filter: drop-shadow(2px 3px 3px rgba(70, 48, 22, 0.3)); }
+.pb-thumb { height: 92px; width: auto; filter: drop-shadow(2px 3px 3px rgba(70, 48, 22, 0.3)); }
 .cart-line-design { margin: 4px 0 0; font-size: 13px; color: var(--ink-soft); }
 /* reset.css caps img at 100% width, which squeezes a landscape photo inside
-   the tall 2:5 stage (react-easy-crop sizes it wider than the stage). */
+   the tall board-aspect stage (react-easy-crop sizes it wider than the stage). */
 .crop-dialog__stage .reactEasyCrop_Image { max-width: none; }
 
 /* ============================================

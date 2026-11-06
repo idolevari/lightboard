@@ -36,6 +36,7 @@ import {productSeoCopy} from '~/lib/meta';
 import {
   CUSTOMIZER_CONFIG,
   LINE_ATTR,
+  PRINTBOARD_SIZE_LABEL,
   customizerKindForTags,
 } from '~/lib/customizer-config';
 import type {CustomizerKind} from '~/lib/customizer-config';
@@ -387,7 +388,11 @@ export default function Product() {
             label: string;
             value: string;
           }>
-        ).map((spec, i) => ({id: `pb-spec-${i}`, ...spec}));
+        ).map((spec, i) => ({
+          id: `pb-spec-${i}`,
+          label: spec.label,
+          value: spec.value.replace('{size}', PRINTBOARD_SIZE_LABEL),
+        }));
 
   // ATC tapped while photos are missing: bring the customizer into view and
   // put focus on the first empty slot so the next action is obvious.

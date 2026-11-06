@@ -9,6 +9,7 @@
 import {MADE_IN, PHOTOS_PER_BOARD, SHIPPING_FACTS} from '~/lib/brand-facts';
 import type {Locale} from '~/lib/i18n';
 import type {CustomizerKind} from '~/lib/customizer-config';
+import {PRINTBOARD_SIZE_LABEL} from '~/lib/customizer-config';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- react-router's MetaArgs `matches` shape is awkward to thread through; we narrow via optional chaining at use sites
 type MetaMatch = {id: string; data?: any};
@@ -151,7 +152,7 @@ export function productSeoCopy(
   };
 }
 
-/** Printboard: a 20×50 cm wooden board with one photo printed on the wood. */
+/** Printboard: a wooden fish board with one photo printed on the wood. */
 function printboardSeoCopy(
   product: {
     title: string;
@@ -167,7 +168,7 @@ function printboardSeoCopy(
     return {
       title: `${product.title} · Your photo printed on a wooden surfboard | Gift for surfers`,
       description: [
-        'A 20×50 cm wooden surfboard for your wall, with your photo or one of our designs printed straight on the wood. Handmade to order.',
+        `A ${PRINTBOARD_SIZE_LABEL} cm wooden surfboard for your wall, with your photo or one of our designs printed straight on the wood. Handmade to order.`,
         offer ? `${offer}.` : '',
       ]
         .filter(Boolean)
@@ -184,7 +185,7 @@ function printboardSeoCopy(
     description:
       product.seo?.description?.trim() ||
       [
-        'גלשן עץ לקיר בגודל 20×50 ס״מ, עם התמונה שלכם או אחד העיצובים שלנו מודפסים ישירות על העץ. עבודת יד בהזמנה אישית.',
+        `גלשן עץ לקיר בגודל ${PRINTBOARD_SIZE_LABEL} ס״מ, עם התמונה שלכם או אחד העיצובים שלנו מודפסים ישירות על העץ. עבודת יד בהזמנה אישית.`,
         offer ? `${offer}.` : '',
       ]
         .filter(Boolean)
