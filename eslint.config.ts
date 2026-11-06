@@ -34,6 +34,7 @@ export default [
       'eslint.config.ts',
       '**/playwright-report/',
       '**/test-results/',
+      '**/coverage/',
     ],
   },
   ...fixupConfigRules(
@@ -68,7 +69,11 @@ export default [
       sourceType: 'module',
       parser: tsParser,
       parserOptions: {
-        project: ['./tsconfig.json', './tsconfig.e2e.json'],
+        project: [
+          './tsconfig.json',
+          './tsconfig.e2e.json',
+          './tsconfig.test.json',
+        ],
         tsconfigRootDir: __dirname,
         ecmaFeatures: {jsx: true},
       },

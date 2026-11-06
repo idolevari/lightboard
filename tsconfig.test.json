@@ -1,0 +1,18 @@
+{
+  // Unit tests (Vitest, run in Node). Extends the app config so `~/*` and the
+  // app's globals (Env, Oxygen worker types) resolve exactly as in the app.
+  // Tests import describe/it/expect from "vitest" explicitly, so no global
+  // test types leak into the app's own tsconfig.
+  "extends": "./tsconfig.json",
+  "include": [
+    "env.d.ts",
+    "app/**/*.d.ts",
+    ".react-router/types/**/*",
+    "tests/unit/**/*.ts",
+    "tests/unit/**/*.tsx"
+  ],
+  "exclude": ["node_modules", "dist", "build"],
+  "compilerOptions": {
+    "incremental": false
+  }
+}
