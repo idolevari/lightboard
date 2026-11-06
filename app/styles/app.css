@@ -4623,3 +4623,19 @@ body.a11y-no-motion .hero-media img { transform: none !important; transition: no
 
 /* Story sun stays still (owner preference). */
 .story-sun .sun-rays__rays { animation: none !important; transform: none; }
+
+/* Footer Instagram: brand-coloured line glyph + handle. */
+.footer .footer-ig {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+  min-height: 44px;
+  color: var(--brand-lime);
+  font-family: var(--mono);
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  transition: color var(--dur-ui, .2s) ease;
+}
+.footer .footer-ig:hover { color: var(--sun); }
