@@ -34,6 +34,8 @@ export default [
       'eslint.config.ts',
       '**/playwright-report/',
       '**/test-results/',
+      // Local agent worktrees and settings (gitignored).
+      '.claude/**',
     ],
   },
   ...fixupConfigRules(
