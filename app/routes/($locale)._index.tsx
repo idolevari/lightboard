@@ -162,7 +162,7 @@ type SimpleMetaobjectQueryResponse = {
 } | null;
 
 /**
- * Merchant-edited homepage content (hero, story, FAQ, testimonials, slides).
+ * Merchant-edited homepage content (hero, story, FAQ, slides).
  * Short cache so edits in Shopify Admin show up within about a minute,
  * instead of CacheLong's hour (+ day of stale-while-revalidate).
  */
@@ -190,9 +190,6 @@ export async function loader(args: Route.LoaderArgs) {
     return {
       featuredProduct: null,
       faqs: Promise.resolve(
-        null,
-      ) as Promise<SimpleMetaobjectQueryResponse | null>,
-      testimonials: Promise.resolve(
         null,
       ) as Promise<SimpleMetaobjectQueryResponse | null>,
       heroSlides: [] as Array<HeroSlide>,
@@ -290,9 +287,9 @@ async function loadCriticalData({context, request}: Route.LoaderArgs) {
 }
 
 /**
- * Non-blocking queries returned as unresolved promises so the FAQ and
- * testimonial sections can stream in below the fold instead of holding up
- * first paint. Each query catches its own error and resolves to `null` so a
+ * Non-blocking query returned as an unresolved promise so the FAQ
+ * section can stream in below the fold instead of holding up
+ * first paint. It catches its own error and resolves to `null` so a
  * downstream failure renders nothing rather than 500-ing the homepage.
  */
 function loadDeferredData({context}: Route.LoaderArgs) {
@@ -305,15 +302,7 @@ function loadDeferredData({context}: Route.LoaderArgs) {
       console.error(error);
       return null;
     });
-  const testimonials = storefront
-    .query(TESTIMONIALS_QUERY, {
-      cache: merchantContentCache(storefront),
-    })
-    .catch((error: Error) => {
-      console.error(error);
-      return null;
-    });
-  return {faqs, testimonials};
+  return {faqs};
 }
 
 /**
@@ -491,26 +480,6 @@ export default function Homepage() {
           }}
         </Await>
       </Suspense>
-      <Suspense fallback={<DeferredSectionFallback />}>
-        <Await resolve={data.testimonials}>
-          {(testimonialsResponse) => {
-            if (!testimonialsResponse) return null;
-            const items = extractMetaobjectFields(
-              testimonialsResponse?.metaobjects?.nodes,
-              locale,
-              [
-                {target: 'body', heKey: 'body_he', enKey: 'body_en'},
-                {
-                  target: 'attribution',
-                  heKey: 'attribution_he',
-                  enKey: 'attribution_en',
-                },
-              ],
-            );
-            return <Testimonials items={items} />;
-          }}
-        </Await>
-      </Suspense>
       <FinalCta handle={data.featuredProduct?.handle} />
     </>
   );
@@ -624,7 +593,7 @@ function StoryStat({n, k, delay}: {n: string; k: string; delay: number}) {
 /* ---------------- AUTO-ROTATE ---------------- */
 
 /**
- * Shared carousel timing for the hero and testimonials (WCAG 2.2.2):
+ * Shared carousel timing for the hero (WCAG 2.2.2):
  * - never auto-advances under prefers-reduced-motion;
  * - a visible pause/play button (`userPaused`) wins over everything;
  * - pauses while hovered, while keyboard focus is inside, and while the
@@ -1349,8 +1318,8 @@ function Story({content}: {content: StorySection | null}) {
   // `homepage.story` shop metafield. The merchant edits everything (paragraph
   // text, stats, eyebrow, title) from Shopify Admin → Content → Metaobjects.
   if (!content) return null;
-  const main = PHOTOS.vanBed;
-  const small = PHOTOS.camperCliff;
+  const main = PHOTOS.camperCliff;
+  const small = PHOTOS.vanBed;
   return (
     <section className="story" id="story">
       <LiveLoop className="story-sun">
@@ -1365,8 +1334,8 @@ function Story({content}: {content: StorySection | null}) {
                 src={withParams(main.url, 'width=900')}
                 srcSet={cropSrcSet(main.url, {
                   ratio: 4 / 5,
-                  focalX: '55%',
-                  focalY: '60%',
+                  focalX: '45%',
+                  focalY: '55%',
                   srcW: main.w,
                   srcH: main.h,
                   widths: [480, 720, 960, 1280],
@@ -1384,8 +1353,8 @@ function Story({content}: {content: StorySection | null}) {
                 src={withParams(small.url, 'width=480')}
                 srcSet={cropSrcSet(small.url, {
                   ratio: 4 / 5,
-                  focalX: '45%',
-                  focalY: '55%',
+                  focalX: '55%',
+                  focalY: '60%',
                   srcW: small.w,
                   srcH: small.h,
                   widths: [240, 360, 480],
@@ -1494,7 +1463,7 @@ function Faq({items}: {items: Array<MetaobjectFieldRecord>}) {
   );
 }
 
-/* ---------------- TESTIMONIALS ---------------- */
+/* ---------------- PHOTO BAND ---------------- */
 
 function PhotoBandImage({
   photo,
@@ -1527,92 +1496,6 @@ function PhotoBandImage({
         decoding="async"
       />
     </picture>
-  );
-}
-
-function Testimonials({items}: {items: Array<MetaobjectFieldRecord>}) {
-  const {dict} = useI18n();
-  const t = dict.testify;
-  const quotes = Array.isArray(items) ? items : [];
-  const rotate = useAutoRotate(quotes.length, 6200);
-  const i = Math.min(rotate.index, Math.max(quotes.length - 1, 0));
-  const setI = rotate.setIndex;
-  if (quotes.length === 0) return null;
-  const q = quotes[i];
-  return (
-    <section
-      className="testify testify--band"
-      aria-roledescription="carousel"
-      aria-label={t.regionLabel}
-      {...rotate.handlers}
-    >
-      <PhotoBandImage
-        photo={PHOTOS.surferWalk}
-        focalX="60%"
-        className="band-photo"
-      />
-      <WaveDivider flip className="band-wave-top" />
-      <div className="container">
-        <Reveal>
-          <div className="section-eyebrow testify-eyebrow">
-            <span>{t.eyebrow}</span>
-          </div>
-        </Reveal>
-        <Reveal delay={120}>
-          <div
-            className="testify-stage"
-            aria-live={rotate.paused ? 'polite' : 'off'}
-          >
-            <blockquote key={i} className="testify-quote">
-              «{q.body}»
-            </blockquote>
-            <div className="attribution">{q.attribution}</div>
-          </div>
-        </Reveal>
-        <div className="testify-nav">
-          <button
-            type="button"
-            onClick={() =>
-              setI((x: number) => (x - 1 + quotes.length) % quotes.length)
-            }
-            aria-label={t.prev}
-            className="testify-nav-btn"
-          >
-            ←
-          </button>
-          <div className="testify-dots">
-            {quotes.map((q, j) => (
-              <button
-                key={q.id}
-                onClick={() => setI(j)}
-                aria-label={t.dotLabel
-                  .replace('{n}', String(j + 1))
-                  .replace('{total}', String(quotes.length))}
-                aria-current={j === i ? 'true' : undefined}
-                className={j === i ? 'on' : ''}
-                type="button"
-              />
-            ))}
-          </div>
-          <button
-            type="button"
-            onClick={() => setI((x: number) => (x + 1) % quotes.length)}
-            aria-label={t.next}
-            className="testify-nav-btn"
-          >
-            →
-          </button>
-          {quotes.length > 1 && (
-            <MotionToggle
-              stopped={rotate.stopped}
-              onToggle={rotate.toggle}
-              pauseLabel={t.pause}
-              playLabel={t.play}
-            />
-          )}
-        </div>
-      </div>
-    </section>
   );
 }
 
@@ -1713,18 +1596,6 @@ const FEATURED_PRODUCT_QUERY = `#graphql
 const FAQS_QUERY = `#graphql
   query FAQs {
     metaobjects(type: "faq", first: 20, sortKey: "position") {
-      nodes {
-        id
-        handle
-        fields { key value }
-      }
-    }
-  }
-`;
-
-const TESTIMONIALS_QUERY = `#graphql
-  query Testimonials {
-    metaobjects(type: "testimonial", first: 20, sortKey: "position") {
       nodes {
         id
         handle

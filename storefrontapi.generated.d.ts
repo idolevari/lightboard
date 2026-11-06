@@ -496,20 +496,6 @@ export type FaQsQuery = {
   };
 };
 
-export type TestimonialsQueryVariables = StorefrontAPI.Exact<{
-  [key: string]: never;
-}>;
-
-export type TestimonialsQuery = {
-  metaobjects: {
-    nodes: Array<
-      Pick<StorefrontAPI.Metaobject, 'id' | 'handle'> & {
-        fields: Array<Pick<StorefrontAPI.MetaobjectField, 'key' | 'value'>>;
-      }
-    >;
-  };
-};
-
 export type HeroSlidesQueryVariables = StorefrontAPI.Exact<{
   [key: string]: never;
 }>;
@@ -1627,10 +1613,6 @@ interface GeneratedQueryTypes {
   '#graphql\n  query FAQs {\n    metaobjects(type: "faq", first: 20, sortKey: "position") {\n      nodes {\n        id\n        handle\n        fields { key value }\n      }\n    }\n  }\n': {
     return: FAQsQuery;
     variables: FAQsQueryVariables;
-  };
-  '#graphql\n  query Testimonials {\n    metaobjects(type: "testimonial", first: 20, sortKey: "position") {\n      nodes {\n        id\n        handle\n        fields { key value }\n      }\n    }\n  }\n': {
-    return: TestimonialsQuery;
-    variables: TestimonialsQueryVariables;
   };
   '#graphql\n  query HeroSlides {\n    metaobjects(type: "hero_slide", first: 10, sortKey: "position") {\n      nodes {\n        id\n        handle\n        fields {\n          key\n          value\n          reference {\n            ... on MediaImage {\n              image { url altText width height }\n            }\n          }\n        }\n      }\n    }\n  }\n': {
     return: HeroSlidesQuery;
