@@ -24,19 +24,6 @@ export function siteName(
   return rootData(matches)?.header?.shop?.name ?? 'Lightboard';
 }
 
-export function siteOrigin(
-  matches: ReadonlyArray<MetaMatch> | undefined,
-): string {
-  const url = rootData(matches)?.header?.shop?.primaryDomain?.url;
-  if (!url) return '';
-  // primaryDomain.url is the full origin (e.g. https://lightboard.co.il).
-  try {
-    return new URL(url).origin;
-  } catch {
-    return '';
-  }
-}
-
 /**
  * Build a "<Site> | <Page>" title with a single source of truth for the
  * site name. Returns just the site name when no page title is provided.
@@ -48,18 +35,6 @@ export function pageTitle(
   const site = siteName(matches);
   if (!pageTitle) return site;
   return `${site} | ${pageTitle}`;
-}
-
-/**
- * Absolute canonical URL for the current page. Returns a relative path when
- * the shop's primary domain is unavailable (e.g., during ErrorBoundary).
- */
-export function canonicalUrl(
-  matches: ReadonlyArray<MetaMatch> | undefined,
-  pathname: string,
-): string {
-  const origin = siteOrigin(matches);
-  return origin ? `${origin}${pathname}` : pathname;
 }
 
 /* -------------------------------------------------------------------------- */

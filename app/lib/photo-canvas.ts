@@ -127,16 +127,6 @@ export function loadImageFromFile(
 }
 
 /**
- * Default centered square crop in pixel coordinates.
- */
-export function getDefaultSquareCrop(dims: {
-  width: number;
-  height: number;
-}): CropPixels {
-  return getDefaultCrop(dims, 1);
-}
-
-/**
  * Largest crop of the given aspect (width / height) that fits the image,
  * centered on a focal point (0–1 fractions, default the middle).
  */
@@ -231,23 +221,6 @@ export async function renderCropUnderCap(
     blob = await renderCropToJpegBlob(image, crop, outputSize, q);
   }
   return blob;
-}
-
-/**
- * Convenience: read a File, default-crop or use supplied crop, return blob.
- * Frees the intermediate object URL.
- */
-export async function cropFileToJpegBlob(
-  file: File,
-  crop: CropPixels,
-  outputSize?: OutputSize,
-): Promise<Blob> {
-  const {image, objectUrl} = await loadImageFromFile(file);
-  try {
-    return await renderCropToJpegBlob(image, crop, outputSize);
-  } finally {
-    URL.revokeObjectURL(objectUrl);
-  }
 }
 
 const TRUSTED_REMOTE_HOST = 'https://cdn.shopify.com/';
