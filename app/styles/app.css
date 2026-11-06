@@ -4649,3 +4649,14 @@ body.a11y-no-motion .hero-media img { transform: none !important; transition: no
 
 /* While photos await approval, the customizer's approve button is the only CTA. */
 .product-buy.is-awaiting-approval { display: none; }
+
+/* PDP option label ("צבע"): a real heading, not a tiny mono caption. */
+.product-form .feat3-picker-head {
+  font-family: var(--sans);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink);
+  margin-bottom: 14px;
+}
