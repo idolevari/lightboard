@@ -1107,12 +1107,6 @@ function FeaturedLightboard({
     'description',
     locale,
   );
-  const tagMadeToOrder = localizedMetafield(
-    featuredProduct,
-    'tagMadeToOrder',
-    locale,
-  );
-  const tagDimensions = featuredProduct?.tagDimensions?.value ?? '';
   const shipNote = localizedMetafield(featuredProduct, 'shipNote', locale);
   const specs = extractProductSpecs(featuredProduct, locale);
   const altText =
@@ -1138,14 +1132,6 @@ function FeaturedLightboard({
                 loading="lazy"
               />
             )}
-            <div className="feat3-tags">
-              {tagMadeToOrder && (
-                <span className="feat3-tag">{tagMadeToOrder}</span>
-              )}
-              {tagDimensions && (
-                <span className="feat3-tag alt">{tagDimensions}</span>
-              )}
-            </div>
           </div>
         </LiveLoop>
 
