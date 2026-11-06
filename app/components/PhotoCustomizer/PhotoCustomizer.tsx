@@ -228,12 +228,19 @@ export function PhotoCustomizer({
     });
   }
 
-  function markUnapproved() {
-    if (approved) {
-      setApproved(false);
-      if (onUnapprove) onUnapprove();
-    }
-  }
+  // Handlers below are memoized, so read approval state through refs —
+  // otherwise they capture the first render's `approved === false` and
+  // removing/replacing a photo after approval never un-approves.
+  const approvedRef = useRef(approved);
+  approvedRef.current = approved;
+  const onUnapproveRef = useRef(onUnapprove);
+  onUnapproveRef.current = onUnapprove;
+  const markUnapproved = useCallback(() => {
+    if (!approvedRef.current) return;
+    approvedRef.current = false;
+    setApproved(false);
+    onUnapproveRef.current?.();
+  }, []);
 
   /**
    * "Surprise me" — populate all three slots with random, brand-curated
@@ -340,9 +347,8 @@ export function PhotoCustomizer({
         return next;
       });
       setCropDialogIndex(index);
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     },
-    [t],
+    [t, markUnapproved],
   );
 
   const handleEditCrop = useCallback(
@@ -387,9 +393,8 @@ export function PhotoCustomizer({
       } catch {
         patchSlot(index, {error: t.errors.loadFailed});
       }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     },
-    [slots, t],
+    [slots, t, markUnapproved],
   );
 
   const handleCropSaved = useCallback(
@@ -433,9 +438,8 @@ export function PhotoCustomizer({
         return next;
       });
       markUnapproved();
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     },
-    [cropDialogIndex, slots, t],
+    [cropDialogIndex, slots, t, markUnapproved],
   );
 
   const handleCropCancelled = useCallback(() => {
