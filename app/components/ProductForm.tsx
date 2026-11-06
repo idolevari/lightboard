@@ -31,19 +31,11 @@ export function ProductOptions({
       {productOptions.map((option) => {
         if (option.optionValues.length === 1) return null;
 
-        const selectedValue = option.optionValues.find((v) => v.selected);
-        const selectedDisplay = selectedValue
-          ? translateOptionValue(dict, selectedValue.name)
-          : '';
-
         const headId = `option-${option.name.replace(/\W+/g, '-')}`;
         return (
           <div className="product-options" key={option.name}>
             <div className="feat3-picker-head" id={headId}>
               <span>{translateOptionName(dict, option.name)}</span>
-              {selectedDisplay && (
-                <span className="current">{selectedDisplay}</span>
-              )}
             </div>
             <div
               className="feat3-swatches"

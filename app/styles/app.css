@@ -4639,3 +4639,7 @@ body.a11y-no-motion .hero-media img { transform: none !important; transition: no
   transition: color var(--dur-ui, .2s) ease;
 }
 .footer .footer-ig:hover { color: var(--sun); }
+
+/* Product headline: one clean word, one weight, one colour. */
+.product h1.pdp-title { font-weight: 600; color: var(--ink); letter-spacing: -0.01em; }
+.product h1.pdp-title em { font-weight: inherit; color: inherit; }
