@@ -291,7 +291,6 @@ function PrivacyGate({checkoutDomain, storefrontAccessToken}: PrivacyGateProps) 
     storefrontAccessToken,
     onVisitorConsentCollected: (consent) => {
       if (process.env.NODE_ENV !== 'production') {
-        // eslint-disable-next-line no-console
         console.warn('[customer-privacy] consent collected', consent);
       }
     },

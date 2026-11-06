@@ -187,7 +187,8 @@ export function CartLineItem({layout, line, childrenMap}: CartLineItemProps) {
               <div className="cart-line-photos__thumbs is-polaroids">
                 {photoUrls.map((url, i) => (
                   <img
-                    key={i}
+                    // One uploaded file (UUID name) per slot, so URLs are unique.
+                    key={url}
                     src={url}
                     alt={
                       dict.photoCustomizer?.slotLabel?.replace(
