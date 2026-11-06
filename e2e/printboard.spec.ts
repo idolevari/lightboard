@@ -51,7 +51,9 @@ test('buy a Printboard with a ready-made design up to the checkout redirect', as
       /cdn\.shopify\.com/,
     );
     // One action at a time: approve, the add-to-cart block steps aside.
-    await expect(page.getByRole('button', {name: pt.approve})).toBeVisible();
+    await expect(
+      page.locator('#customizer').getByRole('button', {name: pt.approve}),
+    ).toBeVisible();
     await expect(buy).toBeHidden();
   });
 
@@ -69,7 +71,10 @@ test('buy a Printboard with a ready-made design up to the checkout redirect', as
   });
 
   await test.step('approve without uploading', async () => {
-    await page.getByRole('button', {name: pt.approve}).click();
+    await page
+      .locator('#customizer')
+      .getByRole('button', {name: pt.approve})
+      .click();
     await expect(page.getByText(pt.ready)).toBeVisible();
     expect(uploadCalls.count).toBe(0);
   });
@@ -121,12 +126,17 @@ test('switching design after approval blocks add to cart again', async ({
   const designs = page.getByRole('radiogroup', {name: pt.presetsTitle});
 
   await designs.getByRole('radio', {name: PRESET_NAME}).click();
-  await page.getByRole('button', {name: pt.approve}).click();
+  await page
+    .locator('#customizer')
+    .getByRole('button', {name: pt.approve})
+    .click();
   await expect(page.getByText(pt.ready)).toBeVisible();
 
   await designs.getByRole('radio', {name: OTHER_PRESET_NAME}).click();
   await expect(page.getByText(pt.ready)).toHaveCount(0);
-  await expect(page.getByRole('button', {name: pt.approve})).toBeVisible();
+  await expect(
+    page.locator('#customizer').getByRole('button', {name: pt.approve}),
+  ).toBeVisible();
 
   await page.getByRole('button', {name: pt.remove, exact: true}).click();
   await expect(buy.getByRole('button', {name: pt.needDesign})).toBeVisible();
