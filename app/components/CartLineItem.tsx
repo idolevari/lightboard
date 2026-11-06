@@ -17,6 +17,7 @@ import type {CartLayout, LineItemChildrenMap} from '~/components/CartMain';
 import {BoardThumb} from '~/components/PhotoCustomizer/PrintboardPreview';
 import {LINE_ATTR} from '~/lib/customizer-config';
 import {withParams} from '~/lib/photos';
+import {findPreset, presetLabel} from '~/lib/printboard-presets';
 
 export type CartLine = OptimisticCartLine<CartApiQueryFragment | CartReturn>;
 
@@ -81,7 +82,7 @@ export function CartLineItem({layout, line, childrenMap}: CartLineItemProps) {
   const {product, title, image, selectedOptions} = merchandise;
   const lineItemUrl = useVariantUrl(product.handle, selectedOptions);
   const {close} = useAside();
-  const {dict, to} = useI18n();
+  const {dict, to, locale} = useI18n();
   const lineItemChildren = childrenMap[id];
   const childrenLabelId = `cart-line-children-${id}`;
   const photoUrls = getLinePhotoUrls(attributes);
@@ -90,11 +91,9 @@ export function CartLineItem({layout, line, childrenMap}: CartLineItemProps) {
   const designId = attrValue(attributes, LINE_ATTR.designId);
   const designName = printUrl
     ? designId
-      ? ((dict.printboard?.presets as Record<string, string> | undefined)?.[
-          designId
-        ] ??
-        attrValue(attributes, LINE_ATTR.design) ??
-        designId)
+      ? presetLabel(findPreset(designId), locale) ||
+        attrValue(attributes, LINE_ATTR.design) ||
+        designId
       : dict.printboard?.ownPhoto
     : null;
   const editPhotosHref = photoUrls

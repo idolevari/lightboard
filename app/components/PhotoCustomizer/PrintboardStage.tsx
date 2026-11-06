@@ -3,8 +3,7 @@ import type {ChangeEvent, DragEvent} from 'react';
 import {BoardThumb, PrintboardPreview} from './PrintboardPreview';
 import type {BoardPhoto} from './PrintboardPreview';
 import type {PrintPreset} from '~/lib/printboard-presets';
-import {withParams} from '~/lib/photos';
-import {presetPrintUrl} from '~/lib/printboard-presets';
+import {presetPreviewUrl} from '~/lib/printboard-presets';
 
 const ACCEPTED_TYPES = 'image/jpeg,image/png,image/webp';
 
@@ -205,7 +204,7 @@ export function PrintboardStage({
 
 /** Board-shaped preset tile: the default 2:5 framing straight off the CDN. */
 function PresetTileImage({preset}: {preset: PrintPreset}) {
-  const src = withParams(presetPrintUrl(preset), 'width=200');
+  const src = presetPreviewUrl(preset, 200);
   return <BoardThumb src={src} label="" decorative />;
 }
 

@@ -429,13 +429,6 @@
     "lowRes": "This photo is small for a 50 cm board, so the print may come out less sharp.",
     "editFromCart": "Edit design",
     "cartDesign": "Design",
-    "presets": {
-      "golden-wave": "Golden-hour wave",
-      "surfer-dusk": "Surfer at sunset",
-      "surfer-walk": "Down to the water",
-      "van-bluff": "Van on the bluff",
-      "camper-cliff": "Camper by the sea"
-    },
     "specs": [
       {
         "label": "Size",

@@ -4708,7 +4708,7 @@ body.a11y-no-motion .hero-media img { transform: none !important; transition: no
   transition: transform var(--dur-ui) var(--ease-out-soft);
 }
 .pb-board image { image-rendering: auto; }
-.pb-board__grain { mix-blend-mode: multiply; opacity: 0.24; }
+.pb-board__grain { mix-blend-mode: multiply; opacity: 0.2; }
 .pb-board__grain.is-bare { opacity: 0.55; }
 .pb-preview__hint {
   position: absolute;

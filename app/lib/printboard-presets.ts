@@ -1,74 +1,104 @@
 /**
  * Ready-made Printboard designs ("העיצובים שלנו").
  *
- * A preset is a photo that already lives on the Shopify Files CDN, so picking
- * one never uploads anything. The print file is the CDN's own region crop
- * of the original (`crop=region&crop_left=…`), so re-framing a preset in the
- * crop dialog is free too.
+ * These are the original print files the studio has been printing, uploaded
+ * to Shopify Files at 2:5 (581×1431). A preset's print file IS its URL, so
+ * picking one never uploads anything. If the shopper re-frames a preset in
+ * the crop dialog, the print file becomes the CDN's region crop of it
+ * (`crop=region&crop_left=…`), still with no upload.
  *
- * TO REPLACE OR ADD A DESIGN (owner):
- *   1. Upload the original print file in Shopify Admin → Content → Files.
- *   2. Copy its CDN URL and its pixel width / height into an entry below
- *      (`id` is a stable slug that goes on the order as "Design ID").
- *   3. Add the display name under `printboard.presets.<id>` in
- *      app/lib/i18n/he.json and en.json.
- *   `focalX` / `focalY` (0–1) pick the default framing of the tall 2:5 crop.
- *
- * Today these are the licensed brand photos from `~/lib/photos`.
+ * TO ADD OR REPLACE A DESIGN (owner):
+ *   1. Upload the print file (2:5, e.g. 20×50 cm) in Shopify Admin →
+ *      Content → Files and copy its CDN URL.
+ *   2. Add an entry below: a stable `id` (it goes on the order as
+ *      "Design ID"), the Hebrew and English names, the URL and the file's
+ *      pixel width / height.
+ * The list order is the order the shopper sees.
  */
-import {PHOTOS, withParams} from '~/lib/photos';
+import {withParams} from '~/lib/photos';
 import type {CropPixels} from '~/lib/photo-canvas';
-import {getDefaultCrop} from '~/lib/photo-canvas';
-import {PRINTBOARD_ASPECT} from '~/lib/customizer-config';
+import type {Locale} from '~/lib/i18n';
 
 export type PrintPreset = {
   id: string;
-  /** Shopify Files CDN URL of the full-resolution original. */
+  label: {he: string; en: string};
+  /** Shopify Files CDN URL of the print-ready file. */
   url: string;
   width: number;
   height: number;
-  focalX?: number;
-  focalY?: number;
 };
 
-export const PRINTBOARD_PRESETS: ReadonlyArray<PrintPreset> = [
-  {id: 'golden-wave', ...photo(PHOTOS.goldenWave), focalX: 0.62},
-  {id: 'surfer-dusk', ...photo(PHOTOS.surferDusk), focalX: 0.5},
-  {id: 'surfer-walk', ...photo(PHOTOS.surferWalk), focalX: 0.48},
-  {id: 'van-bluff', ...photo(PHOTOS.vanBluff), focalX: 0.52},
-  {id: 'camper-cliff', ...photo(PHOTOS.camperCliff), focalX: 0.47},
-];
+const FILES = 'https://cdn.shopify.com/s/files/1/0982/9325/2392/files';
 
-function photo(p: {url: string; w: number; h: number}) {
-  return {url: p.url, width: p.w, height: p.h};
-}
+export const PRINTBOARD_PRESETS: ReadonlyArray<PrintPreset> = [
+  {
+    id: 'beach-surfer',
+    label: {he: 'גולש בחוף הדקלים', en: 'Surfer on the palm beach'},
+    url: `${FILES}/printboard-design-beach-surfer.jpg?v=1793995353`,
+    width: 581,
+    height: 1431,
+  },
+  {
+    id: 'palms',
+    label: {he: 'עצי דקל', en: 'Palm trees'},
+    url: `${FILES}/printboard-design-palms.png?v=1793995352`,
+    width: 581,
+    height: 1431,
+  },
+  {
+    id: 'surf-session',
+    label: {he: 'סשן גלישה', en: 'Surf session'},
+    url: `${FILES}/printboard-design-surf-session.jpg?v=1793995352`,
+    width: 581,
+    height: 1431,
+  },
+  {
+    id: 'sunset-wave',
+    label: {he: 'גל בשקיעה', en: 'Sunset wave'},
+    url: `${FILES}/printboard-design-sunset-wave.jpg?v=1793995352`,
+    width: 581,
+    height: 1431,
+  },
+  {
+    id: 'pink-clouds',
+    label: {he: 'עננים ורודים', en: 'Pink clouds'},
+    url: `${FILES}/printboard-design-pink-clouds.jpg?v=1793995352`,
+    width: 581,
+    height: 1431,
+  },
+];
 
 export function findPreset(id: string | null | undefined): PrintPreset | null {
   if (!id) return null;
   return PRINTBOARD_PRESETS.find((p) => p.id === id) ?? null;
 }
 
-/** Default 2:5 framing of a preset, around its focal point. */
-export function presetDefaultCrop(preset: PrintPreset): CropPixels {
-  return getDefaultCrop(preset, PRINTBOARD_ASPECT, {
-    x: preset.focalX,
-    y: preset.focalY,
-  });
+export function presetLabel(
+  preset: PrintPreset | null | undefined,
+  locale: Locale | string,
+): string {
+  if (!preset) return '';
+  return locale === 'en' ? preset.label.en || preset.label.he : preset.label.he;
 }
 
 /**
- * Print-ready URL for a preset: the CDN's region crop of the original at
- * full source resolution (e.g. 960×2400 from a 1600×2400 photo).
+ * Print-ready URL for a preset: the file itself, or — when the shopper
+ * re-framed it — the CDN's region crop of it at full source resolution.
  */
-export function presetPrintUrl(preset: PrintPreset, crop?: CropPixels | null) {
-  const c = crop ?? presetDefaultCrop(preset);
+export function presetPrintUrl(
+  preset: PrintPreset,
+  crop?: CropPixels | null,
+): string {
+  if (!crop) return preset.url;
   return withParams(
     preset.url,
-    `crop=region&crop_left=${Math.round(c.x)}&crop_top=${Math.round(c.y)}&crop_width=${Math.round(c.width)}&crop_height=${Math.round(c.height)}`,
+    `crop=region&crop_left=${Math.round(crop.x)}&crop_top=${Math.round(crop.y)}&crop_width=${Math.round(crop.width)}&crop_height=${Math.round(crop.height)}`,
   );
 }
 
-/** Small preview of the source (for tiles and the board preview). */
-export function presetPreviewUrl(preset: PrintPreset, width = 900) {
-  return withParams(preset.url, `width=${width}`);
+/** Downsized preview of the source (tiles, board preview). */
+export function presetPreviewUrl(preset: PrintPreset, width = 900): string {
+  return width >= preset.width
+    ? preset.url
+    : withParams(preset.url, `width=${width}`);
 }

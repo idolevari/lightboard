@@ -646,7 +646,14 @@ function PrintboardOnTheWall({images}: {images: Array<LifestyleImage>}) {
           />
         </figure>
         {rest.length > 0 ? (
-          <ul className="pb-home-row" role="list">
+          // Scrolls sideways on phones, so it must be keyboard-focusable.
+          <ul
+            className="pb-home-row"
+            role="list"
+            // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+            tabIndex={0}
+            aria-label={t.title}
+          >
             {rest.map((img) => (
               <li key={img.id ?? img.url}>
                 <Image

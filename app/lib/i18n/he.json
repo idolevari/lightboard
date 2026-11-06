@@ -435,13 +435,6 @@
     "lowRes": "התמונה קטנה יחסית לגלשן באורך 50 ס״מ, ולכן ההדפסה עלולה לצאת פחות חדה.",
     "editFromCart": "עריכת העיצוב",
     "cartDesign": "עיצוב",
-    "presets": {
-      "golden-wave": "גל בשעת זהב",
-      "surfer-dusk": "גולש בשקיעה",
-      "surfer-walk": "בדרך למים",
-      "van-bluff": "ואן על הצוק",
-      "camper-cliff": "קמפר מול הים"
-    },
     "specs": [
       {
         "label": "מידות",

@@ -21,7 +21,7 @@ import type {CustomizerKind} from '~/lib/customizer-config';
 import {
   PRINTBOARD_PRESETS,
   findPreset,
-  presetDefaultCrop,
+  presetLabel,
   presetPreviewUrl,
   presetPrintUrl,
 } from '~/lib/printboard-presets';
@@ -173,11 +173,11 @@ function presetSlot(
 ): PhotoSlotState {
   const preset = findPreset(presetId);
   if (!preset) return emptySlot();
-  const frame = crop ?? presetDefaultCrop(preset);
+  // Presets are print-ready at 2:5: no crop = the file as-is.
   return {
     ...emptySlot(),
-    crop: frame,
-    uploadedCroppedUrl: presetPrintUrl(preset, frame),
+    crop: crop ?? null,
+    uploadedCroppedUrl: presetPrintUrl(preset, crop),
     uploadedOriginalUrl: preset.url,
     imageDimensions: {width: preset.width, height: preset.height},
     fromGallery: true,
@@ -231,7 +231,7 @@ export function PhotoCustomizer({
   onUnapprove,
   onProgressChange,
 }: PhotoCustomizerProps) {
-  const {dict} = useI18n();
+  const {dict, locale} = useI18n();
   const t = dict.photoCustomizer;
   const pt = dict.printboard;
   const config = CUSTOMIZER_CONFIG[kind];
@@ -713,7 +713,7 @@ export function PhotoCustomizer({
     cropDialogSlot?.imageObjectUrl ?? cropDialogPreset?.url ?? null;
 
   function presetNameFor(id: string): string {
-    return (pt.presets as Record<string, string>)[id] ?? id;
+    return presetLabel(findPreset(id), locale) || id;
   }
 
   const approveLabel = uploading
@@ -919,7 +919,7 @@ function boardPhotoFor(slot: PhotoSlotState | undefined): BoardPhoto | null {
       src: presetPreviewUrl(preset, 1200),
       width: preset.width,
       height: preset.height,
-      crop: slot.crop ?? presetDefaultCrop(preset),
+      crop: slot.crop,
     };
   }
   // Only once cropped: a freshly picked photo opens the crop dialog first.
