@@ -36,6 +36,7 @@ export default [
       '**/test-results/',
       // Local agent worktrees and settings (gitignored).
       '.claude/**',
+      '**/coverage/',
     ],
   },
   ...fixupConfigRules(
@@ -70,7 +71,11 @@ export default [
       sourceType: 'module',
       parser: tsParser,
       parserOptions: {
-        project: ['./tsconfig.json', './tsconfig.e2e.json'],
+        project: [
+          './tsconfig.json',
+          './tsconfig.e2e.json',
+          './tsconfig.test.json',
+        ],
         tsconfigRootDir: __dirname,
         ecmaFeatures: {jsx: true},
       },

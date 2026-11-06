@@ -27,3 +27,6 @@ tsconfig.tsbuildinfo
 
 # Local-only agent notes (contain private details)
 CLAUDE.md
+
+# Vitest coverage
+/coverage/
