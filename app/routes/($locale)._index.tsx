@@ -20,8 +20,6 @@ import {AutoLang} from '~/components/AutoLang';
 import {
   Doodle,
   LiveLoop,
-  StampBadge,
-  StringLights,
   SunRays,
   Surfboard,
   Van,
@@ -1034,13 +1032,6 @@ function Hero({
         </div>
       </div>
 
-      <div className="hero-stamp" aria-hidden="true">
-        <StampBadge />
-        {dict.hand?.stamp && (
-          <span className="hand-note">{dict.hand.stamp}</span>
-        )}
-      </div>
-
       <div className="scroll-hint" aria-hidden="true">
         SCROLL
       </div>
@@ -1159,9 +1150,6 @@ function FeaturedLightboard({
     productImage?.altText || featuredProduct?.title || 'Lightboard';
   return (
     <section className="feat3" id="featured">
-      <LiveLoop className="feat3-lights">
-        <StringLights />
-      </LiveLoop>
       <div className="feat3-grid">
         <LiveLoop className="feat3-media">
           <div className="feat3-stage">
@@ -1190,7 +1178,6 @@ function FeaturedLightboard({
               )}
             </div>
           </div>
-          <StampBadge className="feat3-stamp" />
         </LiveLoop>
 
         <div className="feat3-rail">
@@ -1446,9 +1433,6 @@ function Story({content}: {content: StorySection | null}) {
           </div>
         </div>
       </div>
-      <LiveLoop className="story-lights">
-        <StringLights />
-      </LiveLoop>
       <WaveDivider className="section-wave" />
     </section>
   );

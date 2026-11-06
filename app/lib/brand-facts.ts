@@ -24,10 +24,10 @@ export const FOUNDING_YEAR = 2019;
 /** Boards made so far. Confirmed 2026-11-05: "+1,100" (old store ~1,131 orders). */
 export const BOARDS_MADE_LABEL = '1,100+';
 
-/** Where the work is made, in copy. Confirmed 2026-11-05: Tel Aviv in copy.
+/** Where the work is made, in copy. Owner 2026-11-06: no city in copy, "Israel" only.
  *  The legal address comes from the `business.address` shop metafield
  *  (Hod Hasharon) and is the one used in PostalAddress. */
-export const MADE_IN = {he: 'תל אביב', en: 'Tel Aviv'} as const;
+export const MADE_IN = {he: 'ישראל', en: 'Israel'} as const;
 
 /** Shipping. Confirmed 2026-11-05: free on every order inside Israel. */
 export const SHIPPING_FACTS = {
@@ -40,13 +40,13 @@ export const SHIPPING_FACTS = {
 } as const;
 
 /** Lead time from order to door, in business days (Sun–Thu).
- *  Confirmed 2026-11-05: 7–10 business days, production plus delivery. */
-export const LEAD_TIME_BUSINESS_DAYS = {min: 7, max: 10} as const;
+ *  Confirmed 2026-11-06: 5–7 business days, production plus delivery. */
+export const LEAD_TIME_BUSINESS_DAYS = {min: 5, max: 7} as const;
 
 /** How the lead time splits between building the board and the courier,
  *  for schema.org ShippingDeliveryTime. The totals match LEAD_TIME_BUSINESS_DAYS. */
 export const DELIVERY_SPLIT = {
-  handling: {min: 5, max: 8},
+  handling: {min: 3, max: 5},
   transit: {min: 2, max: 2},
 } as const;
 

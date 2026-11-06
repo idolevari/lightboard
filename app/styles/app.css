@@ -4576,3 +4576,17 @@ body.a11y-no-motion *::after {
 }
 body.a11y-no-motion .hero-media { transition: opacity 0s !important; }
 body.a11y-no-motion .hero-media img { transform: none !important; transition: none !important; }
+
+/* ── Footer (2026-11-06 cleanup): brand, real social icons, legal row ── */
+.footer .footer-brand { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding-block: 8px 28px; }
+.footer .footer-wordmark { width: 200px; height: auto; }
+.footer .footer-tagline { margin: 0; }
+.footer .footer-desc { margin: 4px 0 0; max-width: 36ch; line-height: 1.7; color: rgba(251, 248, 242, 0.82); }
+.footer .footer-social { display: flex; gap: 14px; margin-top: 8px; }
+.footer .footer-social a { width: 44px; height: 44px; padding: 0; border: 0; border-radius: 12px; background: none; display: inline-grid; place-items: center; transition: transform var(--dur-tap, .15s) ease; }
+.footer .footer-social a:hover { background: none; transform: translateY(-2px); }
+.footer .footer-social svg, .footer .footer-social img { width: 40px; height: 40px; display: block; }
+.footer .footer-bottom { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; padding-block: 22px 28px; border-top: 1px solid rgba(251, 248, 242, 0.14); }
+.footer .footer-legal { display: flex; flex-wrap: wrap; gap: 10px 20px; margin: 0; padding: 0; }
+.footer .footer-copy { font-size: 12px; color: rgba(251, 248, 242, 0.6); }
+@media (prefers-reduced-motion: reduce) { .footer .footer-social a:hover { transform: none; } }

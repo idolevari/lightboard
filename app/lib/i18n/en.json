@@ -176,12 +176,12 @@
         "label": "Free shipping"
       },
       {
-        "icon": "hand",
+        "icon": "heart",
         "label": "Handmade"
       },
       {
         "icon": "sun",
-        "label": "7–10 business days"
+        "label": "5–7 business days"
       }
     ]
   },
@@ -321,7 +321,7 @@
     "prefill": "Hi Lightboard, I have a question:"
   },
   "footer": {
-    "brandDesc": "Solid-wood surfboards for your wall, with warm light and your photos. Handmade in Tel Aviv since 2019.",
+    "brandDesc": "Solid-wood surfboards for your wall, with warm light and your photos. Handmade since 2019.",
     "metaAddressLabel": "Address",
     "metaPhoneLabel": "Phone",
     "metaEmailLabel": "Email",
@@ -349,8 +349,7 @@
       }
     ],
     "cookieSettings": "Cookie settings",
-    "legalNavLabel": "Legal",
-    "photoCredit": "Photos: Unsplash"
+    "legalNavLabel": "Legal"
   },
   "contact": {
     "title": "Talk to us",
@@ -373,12 +372,12 @@
         "label": "Free delivery to your door"
       },
       {
-        "icon": "hand",
-        "label": "Handmade in Tel Aviv"
+        "icon": "heart",
+        "label": "Handmade"
       },
       {
         "icon": "sun",
-        "label": "7–10 business days"
+        "label": "5–7 business days"
       },
       {
         "icon": "photo",
@@ -392,8 +391,6 @@
     "cta": "Choose photos"
   },
   "hand": {
-    "stamp": "Handmade in Tel Aviv · since 2019",
-    "customizer": "Your photos go here ↓",
-    "footer": "Handmade in Tel Aviv"
+    "customizer": "Your photos go here ↓"
   }
 }
