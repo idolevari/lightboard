@@ -1,7 +1,8 @@
-import {useLoaderData} from 'react-router';
-import {getPaginationVariables} from '@shopify/hydrogen';
+import {Link, useLoaderData} from 'react-router';
+import {getPaginationVariables, Image} from '@shopify/hydrogen';
+import type {CollectionItemFragment} from 'storefrontapi.generated';
 import {PaginatedResourceSection} from '~/components/PaginatedResourceSection';
-import {ProductItem} from '~/components/ProductItem';
+import {Price} from '~/components/ProductPrice';
 import {useI18n} from '~/lib/useI18n';
 import {detectLocaleFromRequest, getDictionary} from '~/lib/i18n';
 import {absoluteUrl, collectionSeo} from '~/lib/.server/seo.server';
@@ -9,6 +10,15 @@ import {routeMeta} from '~/lib/seo-urls';
 import {JsonLd} from '~/components/JsonLd';
 import {RouteError} from '~/components/RouteError';
 import type {Route} from './+types/($locale).collections.all';
+
+/**
+ * Products that must show in the shop even before Storefront lists them.
+ * The Printboard is UNLISTED in Shopify for now, so the catalog query
+ * doesn't return it; we fetch it by handle and append it on the first page.
+ * Once the owner lists it, the catalog includes it and the handle dedupe
+ * below makes this a no-op (then this list can be emptied).
+ */
+const ALWAYS_LISTED_HANDLES = ['printboard'] as const;
 
 export const meta: Route.MetaFunction = ({data, matches}) =>
   routeMeta({matches, data});
@@ -33,21 +43,40 @@ async function loadCriticalData({context, request}: Route.LoaderArgs) {
     pageBy: 8,
   });
 
-  const [{products}] = await Promise.all([
+  const firstPage = !new URL(request.url).searchParams.get('cursor');
+  const [{products}, ...pinned] = await Promise.all([
     storefront.query(CATALOG_QUERY, {
       cache: storefront.CacheShort(),
       variables: {...paginationVariables},
     }),
-    // Add other queries here, so that they are loaded in parallel
+    ...(firstPage
+      ? ALWAYS_LISTED_HANDLES.map((handle) =>
+          storefront
+            .query(PRODUCT_BY_HANDLE_QUERY, {
+              cache: storefront.CacheShort(),
+              variables: {handle},
+            })
+            .catch(() => ({product: null})),
+        )
+      : []),
   ]);
+  const seen = new Set(products.nodes.map((p) => p.handle));
+  const extra = pinned
+    .map((r) => r.product)
+    .filter((p): p is CollectionItemFragment => Boolean(p))
+    .filter((p) => !seen.has(p.handle));
   const locale = detectLocaleFromRequest(request);
   const dict = getDictionary(locale);
   const {seo, jsonLd} = collectionSeo({
-    title: dict.collections.allTitle,
-    description: dict.collections.allMeta,
+    title: dict.collections.shopTitle,
+    description: dict.collections.shopMeta,
     url: absoluteUrl('/collections/all', locale),
   });
-  return {products, seo, jsonLd};
+  return {
+    products: {...products, nodes: [...products.nodes, ...extra]},
+    seo,
+    jsonLd,
+  };
 }
 
 /**
@@ -64,22 +93,73 @@ export default function Collection() {
   const {dict} = useI18n();
 
   return (
-    <div className="collection">
+    <div className="collection shop">
       <JsonLd data={jsonLd} />
-      <h1>{dict.collections.allTitle}</h1>
+      <header className="shop-head">
+        <h1>{dict.collections.shopTitle}</h1>
+        <p className="shop-intro">{dict.collections.shopIntro}</p>
+      </header>
       <PaginatedResourceSection
         connection={products}
-        resourcesClassName="products-grid"
+        resourcesClassName="shop-grid"
       >
         {({node: product, index}) => (
-          <ProductItem
+          <ShopCard
             key={product.id}
             product={product}
-            loading={index < 8 ? 'eager' : undefined}
+            loading={index < 4 ? 'eager' : 'lazy'}
           />
         )}
       </PaginatedResourceSection>
     </div>
+  );
+}
+
+/** On-brand product card: photo, localized name, short line, price. */
+function ShopCard({
+  product,
+  loading,
+}: {
+  product: CollectionItemFragment;
+  loading: 'eager' | 'lazy';
+}) {
+  const {dict, to} = useI18n();
+  const names = dict.product.names as Record<string, string> | undefined;
+  const taglines = dict.product.taglines as Record<string, string> | undefined;
+  const name = names?.[product.handle] ?? product.title;
+  const tagline = taglines?.[product.handle];
+  const image = product.featuredImage;
+  return (
+    <Link
+      className="shop-card"
+      prefetch="intent"
+      to={to(`/products/${product.handle}`)}
+    >
+      <div className="shop-card__media">
+        {image ? (
+          <Image
+            alt={image.altText || name}
+            aspectRatio="4/5"
+            crop="center"
+            data={image}
+            loading={loading}
+            sizes="(min-width: 45em) 40vw, 92vw"
+          />
+        ) : null}
+      </div>
+      <div className="shop-card__body">
+        <h2 className="shop-card__name">{name}</h2>
+        {tagline ? <p className="shop-card__tagline">{tagline}</p> : null}
+        <div className="shop-card__foot">
+          <span className="shop-card__price">
+            <Price data={product.priceRange.minVariantPrice} />
+          </span>
+          <span className="shop-card__cta" aria-hidden="true">
+            {dict.collections.shopCta}
+          </span>
+        </div>
+      </div>
+    </Link>
   );
 }
 
@@ -130,6 +210,19 @@ const CATALOG_QUERY = `#graphql
         startCursor
         endCursor
       }
+    }
+  }
+  ${COLLECTION_ITEM_FRAGMENT}
+`;
+
+const PRODUCT_BY_HANDLE_QUERY = `#graphql
+  query ShopPinnedProduct(
+    $country: CountryCode
+    $language: LanguageCode
+    $handle: String!
+  ) @inContext(country: $country, language: $language) {
+    product(handle: $handle) {
+      ...CollectionItem
     }
   }
   ${COLLECTION_ITEM_FRAGMENT}

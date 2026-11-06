@@ -4942,3 +4942,51 @@ body.a11y-no-motion .hero-media img { transform: none !important; transition: no
 /* reset.css caps img at 100% width, which squeezes a landscape photo inside
    the tall 2:5 stage (react-easy-crop sizes it wider than the stage). */
 .crop-dialog__stage .reactEasyCrop_Image { max-width: none; }
+
+/* ============================================
+   SHOP GRID — /collections/all
+   ============================================ */
+.shop { max-width: 1100px; margin: 0 auto; padding: 104px var(--container-px) 72px; }
+.shop-head { margin-bottom: clamp(20px, 4vw, 36px); }
+.shop-head h1 {
+  margin: 0 0 8px;
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: clamp(40px, 9vw, 64px);
+  line-height: 1;
+  letter-spacing: -0.025em;
+}
+.shop-intro { margin: 0; color: var(--ink-soft); max-width: 46ch; }
+.shop-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+  margin-bottom: 2rem;
+}
+@media (min-width: 560px) {
+  .shop-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+}
+.shop-card {
+  display: flex;
+  flex-direction: column;
+  border-radius: 18px;
+  overflow: hidden;
+  background: var(--white);
+  color: var(--ink);
+  text-decoration: none;
+  box-shadow: 0 1px 0 var(--rule), 0 18px 40px -28px rgba(11, 58, 74, 0.45);
+  transition: transform var(--dur-ui) var(--ease-out-soft), box-shadow var(--dur-ui) var(--ease-out-soft);
+}
+.shop-card:hover { transform: translateY(-3px); box-shadow: 0 1px 0 var(--rule), 0 26px 50px -28px rgba(11, 58, 74, 0.55); }
+.shop-card:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+.shop-card__media { background: var(--cream-2); }
+.shop-card__media img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 5; object-fit: cover; }
+.shop-card__body { display: flex; flex-direction: column; gap: 6px; padding: 16px 18px 18px; }
+.shop-card__name { margin: 0; font-family: var(--serif); font-weight: 400; font-size: 26px; line-height: 1.1; }
+.shop-card__tagline { margin: 0; color: var(--ink-soft); font-size: 15px; }
+.shop-card__foot { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; }
+.shop-card__price { font-family: var(--serif); font-size: 22px; }
+.shop-card__cta { font-weight: 700; font-size: 14px; color: var(--teal-ink); }
+@media (prefers-reduced-motion: reduce) {
+  .shop-card, .shop-card:hover { transition: none; transform: none; }
+}
