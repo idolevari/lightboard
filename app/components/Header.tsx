@@ -10,7 +10,7 @@ import {
   parseLocaleFromPath,
   swapLocaleInPath,
 } from '~/lib/i18n';
-import {useBusiness, telHref, whatsappHref} from '~/lib/brand';
+import {useBusiness, whatsappHref} from '~/lib/brand';
 import type {
   CartApiQueryFragment,
   HeaderQuery,
@@ -199,7 +199,6 @@ export function MobileMenu() {
   const activeKey = useActiveNavKey(items);
   const business = useBusiness();
   const whatsapp = whatsappHref(business, dict.whatsapp?.prefill);
-  const tel = telHref(business);
 
   return (
     <div className="mobile-menu">
@@ -247,7 +246,7 @@ export function MobileMenu() {
         <LangToggle className="lb-lang-toggle--menu" />
       </div>
 
-      {(whatsapp || tel) && (
+      {whatsapp && (
         <div className="mobile-menu__contact">
           {whatsapp && (
             <a
@@ -258,12 +257,6 @@ export function MobileMenu() {
             >
               <img src="/whatsapp.svg" alt="" width="24" height="24" />
               <span>{dict.whatsapp?.label}</span>
-            </a>
-          )}
-          {tel && business.phoneDisplay && (
-            <a href={tel} className="mobile-menu__tel">
-              <span>{dict.footer.metaPhoneLabel}: </span>
-              <bdi dir="ltr">{business.phoneDisplay}</bdi>
             </a>
           )}
         </div>
