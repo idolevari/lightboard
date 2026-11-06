@@ -1,4 +1,6 @@
 version: 2
+# PRs target main (the default branch): main runs the full verify pipeline and
+# skips preview/e2e/security review for Dependabot PRs, which get no secrets.
 updates:
   - package-ecosystem: npm
     directory: /
@@ -7,12 +9,15 @@ updates:
       day: monday
       time: '06:00'
       timezone: Asia/Jerusalem
-    target-branch: dev
     open-pull-requests-limit: 5
     groups:
       npm-minor-patch:
         update-types: [minor, patch]
     ignore:
+      # Major versions are migrations, not bumps — do them by hand in a PR.
+      # (Security updates still open PRs for any version.)
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
       # These need a coordinated manual migration (`npx shopify hydrogen upgrade`),
       # not piecemeal Dependabot bumps.
       - dependency-name: '@shopify/hydrogen'
@@ -38,7 +43,6 @@ updates:
       day: monday
       time: '06:00'
       timezone: Asia/Jerusalem
-    target-branch: dev
     groups:
       github-actions:
         patterns: ['*']

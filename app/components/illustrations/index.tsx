@@ -393,6 +393,7 @@ export type DoodleName =
   | 'photo'
   | 'bulb'
   | 'hand'
+  | 'heart'
   | 'shell'
   | 'sparkle';
 

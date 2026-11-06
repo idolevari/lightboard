@@ -1,104 +1,59 @@
 import {NavLink, useNavigate} from 'react-router';
 import {useI18n} from '~/lib/useI18n';
-import {telHref, useBusiness, whatsappHref} from '~/lib/brand';
+import {useBusiness, whatsappHref} from '~/lib/brand';
 import {openCookiePreferences} from '~/lib/consent';
-import {
-  LiveLoop,
-  Palms,
-  StampBadge,
-  WaveDivider,
-} from '~/components/illustrations';
+import {WaveDivider} from '~/components/illustrations';
 
 export function Footer() {
   const {dict, to} = useI18n();
   const f = dict.footer;
   const b = useBusiness();
-  const businessName = b?.legalName;
-  const hasMeta = b?.address || b?.phoneDisplay || b?.email || businessName;
   const whatsapp = whatsappHref(b);
 
   return (
     <footer className="footer">
-      {/* Waves "break" onto the footer; palms + cypress skyline behind. */}
       <WaveDivider className="footer-wave" />
-      <Palms className="footer-skyline" />
       <div className="container">
-        <div className="footer-grid footer-grid--single">
-          <div className="footer-brand">
-            <LiveLoop className="footer-brand-row">
-              <img
-                src="/lightboard-text.svg"
-                alt="Lightboard"
-                className="footer-wordmark"
-                width="240"
-                height="33"
-                decoding="async"
-              />
-              <StampBadge className="footer-stamp" />
-            </LiveLoop>
-            <span className="footer-tagline" lang="en">
-              living · design · surfing
-            </span>
-            {dict.hand?.footer && (
-              <span className="hand-note" aria-hidden="true">
-                {dict.hand.footer}
-              </span>
-            )}
-            <p>{f.brandDesc}</p>
+        <div className="footer-brand">
+          <img
+            src="/lightboard-text.svg"
+            alt="Lightboard"
+            className="footer-wordmark"
+            width="240"
+            height="33"
+            decoding="async"
+          />
+          <span className="footer-tagline" lang="en">
+            living · design · surfing
+          </span>
+          <p className="footer-desc">{f.brandDesc}</p>
+          {(b?.instagram || whatsapp) && (
             <div className="footer-social">
               {b?.instagram && (
-                <a href={b.instagram} aria-label="Instagram" target="_blank" rel="noreferrer">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <rect x="3" y="3" width="18" height="18" rx="5" />
-                    <circle cx="12" cy="12" r="4" />
-                    <circle cx="17.5" cy="6.5" r="1" fill="currentColor" />
-                  </svg>
+                <a
+                  href={b.instagram}
+                  aria-label="Instagram"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <InstagramIcon />
                 </a>
               )}
               {whatsapp && (
-                <a href={whatsapp} aria-label="WhatsApp" target="_blank" rel="noreferrer">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round">
-                    <path d="M4 20l1.5-5A8 8 0 1 1 9 19.5L4 20Z" />
-                    <path d="M9 10c0 3 2 5 5 5" strokeLinecap="round" />
-                  </svg>
+                <a
+                  href={whatsapp}
+                  aria-label="WhatsApp"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <img src="/whatsapp.svg" alt="" width="40" height="40" />
                 </a>
               )}
             </div>
-          </div>
+          )}
         </div>
 
-        {hasMeta && (
-          <address className="footer-meta">
-            {businessName && <span className="footer-meta-name">{businessName}</span>}
-            {b.address && (
-              <span>
-                {f.metaAddressLabel}: {b.address}
-              </span>
-            )}
-            {b.phoneDisplay && (
-              <span>
-                {f.metaPhoneLabel}:{' '}
-                <a href={telHref(b) ?? `tel:${b.phoneDisplay}`} dir="ltr">
-                  {b.phoneDisplay}
-                </a>
-              </span>
-            )}
-            {b.email && (
-              <span>
-                {f.metaEmailLabel}:{' '}
-                <a href={`mailto:${b.email}`} dir="ltr">
-                  {b.email}
-                </a>
-              </span>
-            )}
-          </address>
-        )}
-
         <div className="footer-bottom">
-          <span>© {new Date().getFullYear()} {f.rights}</span>
-          {f.photoCredit && (
-            <span className="footer-credit">{f.photoCredit}</span>
-          )}
           <nav aria-label={f.legalNavLabel}>
             <ul className="footer-legal">
               {f.legal.map((l) => (
@@ -113,9 +68,49 @@ export function Footer() {
               </li>
             </ul>
           </nav>
+          <span className="footer-copy">
+            © {new Date().getFullYear()} {f.rights}
+          </span>
         </div>
       </div>
     </footer>
+  );
+}
+
+/** Instagram app icon (official gradient), drawn inline so it stays crisp. */
+function InstagramIcon() {
+  return (
+    <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true">
+      <defs>
+        <radialGradient id="ig-grad" cx="0.3" cy="1.07" r="1.2">
+          <stop offset="0" stopColor="#fdf497" />
+          <stop offset="0.05" stopColor="#fdf497" />
+          <stop offset="0.45" stopColor="#fd5949" />
+          <stop offset="0.6" stopColor="#d6249f" />
+          <stop offset="0.9" stopColor="#285AEB" />
+        </radialGradient>
+      </defs>
+      <rect width="40" height="40" rx="11" fill="url(#ig-grad)" />
+      <rect
+        x="9.5"
+        y="9.5"
+        width="21"
+        height="21"
+        rx="6"
+        fill="none"
+        stroke="#fff"
+        strokeWidth="2.4"
+      />
+      <circle
+        cx="20"
+        cy="20"
+        r="5"
+        fill="none"
+        stroke="#fff"
+        strokeWidth="2.4"
+      />
+      <circle cx="26.2" cy="13.8" r="1.5" fill="#fff" />
+    </svg>
   );
 }
 

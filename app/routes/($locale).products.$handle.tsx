@@ -16,7 +16,7 @@ import {getOptionValueHex, translateOptionValue} from '~/lib/productOptionLabels
 import {ProductOptions, ProductCartAction} from '~/components/ProductForm';
 import {PhotoCustomizer} from '~/components/PhotoCustomizer/PhotoCustomizer';
 import {StickyBuyBar} from '~/components/StickyBuyBar';
-import {Doodle, LiveLoop, StringLights} from '~/components/illustrations';
+import {Doodle} from '~/components/illustrations';
 import type {DoodleName} from '~/components/illustrations';
 import {PHOTOS, cropSrcSet, withParams} from '~/lib/photos';
 import type {PhotoCustomizerInitialState} from '~/components/PhotoCustomizer/PhotoCustomizer';
@@ -361,9 +361,6 @@ export default function Product() {
     <div className="product">
       <JsonLd data={jsonLd} />
       <header className="product-head">
-        <LiveLoop className="pdp-lights">
-          <StringLights />
-        </LiveLoop>
         {marketing.eyebrow ? (
           <p className="pdp-eyebrow">{marketing.eyebrow}</p>
         ) : null}
