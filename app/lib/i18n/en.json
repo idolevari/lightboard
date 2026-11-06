@@ -7,7 +7,6 @@
     "home": "Home",
     "shop": "Shop",
     "about": "About",
-    "journal": "Journal",
     "contact": "Talk to us",
     "cart": "Cart",
     "search": "Search",
@@ -71,17 +70,7 @@
     "titleLine1": "Before you",
     "titleLine2": "ask."
   },
-  "testify": {
-    "eyebrow": "— FROM YOUR WALLS",
-    "prev": "Previous",
-    "next": "Next",
-    "dotLabel": "Review {n} of {total}",
-    "regionLabel": "Reviews",
-    "pause": "Pause reviews",
-    "play": "Play reviews"
-  },
   "product": {
-    "metaSuffix": "Product",
     "description": "Description",
     "addToCart": "Add to cart",
     "soldOut": "Sold out for now",
@@ -115,7 +104,6 @@
     "approve": "Approve photos",
     "saveChanges": "Save changes",
     "saveAndReturn": "Save & return to cart",
-    "approvedNote": "Photos saved. Add to cart when you're ready.",
     "savedNote": "Changes saved.",
     "uploading": "Uploading…",
     "cropSave": "Save",
@@ -163,11 +151,8 @@
     "discounts": "Discounts",
     "discountsLabel": "Discounts",
     "discountCode": "Discount code",
-    "discountApply": "Apply",
     "discountRemove": "Remove discount",
-    "discountRemoveBtn": "Remove",
     "discountApplyAria": "Apply discount code",
-    "giftCards": "Gift cards",
     "giftCardsLabel": "Gift cards",
     "giftCardCode": "Gift card code",
     "giftCardCodeAria": "Apply gift card code",
@@ -224,8 +209,6 @@
   "collections": {
     "indexTitle": "Collections",
     "indexMeta": "Lightboard | Collections",
-    "allTitle": "All products",
-    "allMeta": "Lightboard | All products",
     "collectionMetaSuffix": "Collection",
     "shopTitle": "Shop",
     "shopIntro": "Handmade surfboards for your wall, with your photos. Free shipping across Israel.",
@@ -235,14 +218,9 @@
   "blogs": {
     "indexTitle": "Journal",
     "indexMeta": "Lightboard | Journal",
-    "allArticles": "All posts",
-    "readMore": "Read more →",
-    "publishedOn": "Published on",
     "by": "by"
   },
-  "pages": {
-    "metaSuffix": ""
-  },
+  "pages": {},
   "policies": {
     "indexTitle": "Policies",
     "indexMeta": "Lightboard | Policies",
@@ -256,12 +234,9 @@
     }
   },
   "account": {
-    "metaSuffix": "Account",
     "myAccount": "My account",
     "welcome": "Hey",
     "signOut": "Sign out",
-    "signIn": "Sign in",
-    "ordersTitle": "My orders",
     "orders": "Orders",
     "profile": "Profile",
     "addresses": "Addresses",
@@ -317,10 +292,6 @@
     "kicker": "The link is broken or the page moved. Let's head home.",
     "cta": "Back home"
   },
-  "discount": {
-    "applied": "Code applied.",
-    "applyError": "That code didn't work. Check it and try again."
-  },
   "a11y": {
     "open": "Open accessibility menu",
     "close": "Close accessibility menu",
@@ -344,9 +315,6 @@
   },
   "footer": {
     "brandDesc": "Solid-wood surfboards for your wall, with warm light and your photos. Handmade since 2019.",
-    "metaAddressLabel": "Address",
-    "metaPhoneLabel": "Phone",
-    "metaEmailLabel": "Email",
     "rights": "LIGHTBOARD · ALL RIGHTS RESERVED",
     "legal": [
       {
