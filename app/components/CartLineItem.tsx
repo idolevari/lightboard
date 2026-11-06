@@ -1,9 +1,6 @@
 import type {ReactNode} from 'react';
 import {CartForm, Image} from '@shopify/hydrogen';
-import type {
-  OptimisticCartLine,
-  CartReturn,
-} from '@shopify/hydrogen';
+import type {OptimisticCartLine, CartReturn} from '@shopify/hydrogen';
 import type {CartLineUpdateInput} from '@shopify/hydrogen/storefront-api-types';
 import {useVariantUrl} from '~/lib/variants';
 import {Link} from 'react-router';
@@ -17,16 +14,21 @@ import {
 } from '~/lib/productOptionLabels';
 import type {CartApiQueryFragment} from 'storefrontapi.generated';
 import type {CartLayout, LineItemChildrenMap} from '~/components/CartMain';
+import {BoardThumb} from '~/components/PhotoCustomizer/PrintboardPreview';
+import {LINE_ATTR} from '~/lib/customizer-config';
+import {withParams} from '~/lib/photos';
+import {findPreset, presetLabel} from '~/lib/printboard-presets';
 
 export type CartLine = OptimisticCartLine<CartApiQueryFragment | CartReturn>;
 
-const PHOTO_ATTR_KEYS = ['Photo 1', 'Photo 2', 'Photo 3'];
+const MAX_PHOTO_ATTRS = 3;
 const TRUSTED_PHOTO_HOST = 'https://cdn.shopify.com/';
 
 type LineAttribute = {key: string; value?: string | null};
 
 /**
- * Pull the three photo URLs out of a cart line's attributes, if present.
+ * Pull the photo URLs (`Photo 1`…: three for a Lightboard, one print for a
+ * Printboard) out of a cart line's attributes, if present.
  * Returns null when the line is not a photo-customized line.
  *
  * Cart line attributes are buyer-supplied and can be set by any client-side
@@ -39,8 +41,13 @@ function getLinePhotoUrls(
 ): string[] | null {
   if (!Array.isArray(attributes) || attributes.length === 0) return null;
   const map = new Map(attributes.map((a) => [a.key, a.value ?? '']));
-  const urls = PHOTO_ATTR_KEYS.map((k) => map.get(k));
-  if (urls.some((u) => !u)) return null;
+  const urls: string[] = [];
+  for (let n = 1; n <= MAX_PHOTO_ATTRS; n += 1) {
+    const url = map.get(LINE_ATTR.photo(n));
+    if (!url) break;
+    urls.push(url);
+  }
+  if (urls.length === 0) return null;
   if (
     !urls.every(
       (u) => typeof u === 'string' && u.startsWith(TRUSTED_PHOTO_HOST),
@@ -48,7 +55,14 @@ function getLinePhotoUrls(
   ) {
     return null;
   }
-  return urls as string[];
+  return urls;
+}
+
+function attrValue(
+  attributes: ReadonlyArray<LineAttribute> | null | undefined,
+  key: string,
+): string | null {
+  return attributes?.find((a) => a.key === key)?.value || null;
 }
 
 type CartLineItemProps = {
@@ -68,10 +82,20 @@ export function CartLineItem({layout, line, childrenMap}: CartLineItemProps) {
   const {product, title, image, selectedOptions} = merchandise;
   const lineItemUrl = useVariantUrl(product.handle, selectedOptions);
   const {close} = useAside();
-  const {dict, to} = useI18n();
+  const {dict, to, locale} = useI18n();
   const lineItemChildren = childrenMap[id];
   const childrenLabelId = `cart-line-children-${id}`;
   const photoUrls = getLinePhotoUrls(attributes);
+  // One print photo = a Printboard line: board-shaped thumb + design name.
+  const printUrl = photoUrls?.length === 1 ? photoUrls[0] : null;
+  const designId = attrValue(attributes, LINE_ATTR.designId);
+  const designName = printUrl
+    ? designId
+      ? presetLabel(findPreset(designId), locale) ||
+        attrValue(attributes, LINE_ATTR.design) ||
+        designId
+      : dict.printboard?.ownPhoto
+    : null;
   const editPhotosHref = photoUrls
     ? `${to(`/products/${product.handle}`)}?editLineId=${encodeURIComponent(id)}`
     : null;
@@ -79,16 +103,27 @@ export function CartLineItem({layout, line, childrenMap}: CartLineItemProps) {
   return (
     <li key={id} className="cart-line">
       <div className="cart-line-inner">
-        {image && (
-          <Image
-            className="cart-line-image"
-            alt={title}
-            aspectRatio="1/1"
-            data={image}
-            height={100}
-            loading="lazy"
-            width={100}
-          />
+        {printUrl ? (
+          <div className="cart-line-image cart-line-image--board">
+            <BoardThumb
+              src={withParams(printUrl, 'width=200')}
+              label={[dict.printboard?.title, designName]
+                .filter(Boolean)
+                .join(' – ')}
+            />
+          </div>
+        ) : (
+          image && (
+            <Image
+              className="cart-line-image"
+              alt={title}
+              aspectRatio="1/1"
+              data={image}
+              height={100}
+              loading="lazy"
+              width={100}
+            />
+          )
         )}
 
         <div>
@@ -103,7 +138,11 @@ export function CartLineItem({layout, line, childrenMap}: CartLineItemProps) {
           >
             <p className="cart-line-title">
               <strong>
-                <AutoLang text={product.title} />
+                {printUrl && dict.printboard?.title ? (
+                  dict.printboard.title
+                ) : (
+                  <AutoLang text={product.title} />
+                )}
               </strong>
             </p>
           </Link>
@@ -112,7 +151,9 @@ export function CartLineItem({layout, line, childrenMap}: CartLineItemProps) {
             {selectedOptions
               .filter(
                 (option) =>
-                  !(option.name === 'Title' && option.value === 'Default Title'),
+                  !(
+                    option.name === 'Title' && option.value === 'Default Title'
+                  ),
               )
               .map((option) => (
                 <li key={option.name}>
@@ -123,7 +164,25 @@ export function CartLineItem({layout, line, childrenMap}: CartLineItemProps) {
                 </li>
               ))}
           </ul>
-          {photoUrls ? (
+          {printUrl ? (
+            <div className="cart-line-photos">
+              <p className="cart-line-design">
+                {dict.printboard?.cartDesign}: {designName}
+              </p>
+              {editPhotosHref ? (
+                <Link
+                  to={editPhotosHref}
+                  prefetch="intent"
+                  className="cart-line-photos__edit"
+                  onClick={() => {
+                    if (layout === 'aside') close();
+                  }}
+                >
+                  {dict.printboard?.editFromCart}
+                </Link>
+              ) : null}
+            </div>
+          ) : photoUrls ? (
             <div className="cart-line-photos">
               <div className="cart-line-photos__thumbs is-polaroids">
                 {photoUrls.map((url, i) => (
@@ -131,8 +190,10 @@ export function CartLineItem({layout, line, childrenMap}: CartLineItemProps) {
                     key={i}
                     src={url}
                     alt={
-                      dict.photoCustomizer?.slotLabel
-                        ?.replace('{n}', String(i + 1)) ?? `Photo ${i + 1}`
+                      dict.photoCustomizer?.slotLabel?.replace(
+                        '{n}',
+                        String(i + 1),
+                      ) ?? `Photo ${i + 1}`
                     }
                     className="cart-line-photos__thumb"
                     loading="lazy"

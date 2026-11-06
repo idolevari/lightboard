@@ -1,7 +1,7 @@
 import {Await, Link, useLoaderData} from 'react-router';
 import {Suspense, useCallback, useEffect, useState} from 'react';
 import type {FocusEvent} from 'react';
-import {Image} from '@shopify/hydrogen';
+import type {HomeProductCardFragment} from 'storefrontapi.generated';
 import {useI18n} from '~/lib/useI18n';
 import {useInView} from '~/lib/useInView';
 import {MOTION_EVENT, prefersNoMotion} from '~/lib/motion';
@@ -16,6 +16,9 @@ import {metaLocale, routeMeta} from '~/lib/seo-urls';
 import {homeSeoCopy} from '~/lib/meta';
 import {sanitizeShopifyHtml} from '~/lib/.server/sanitize.server';
 import {RouteError} from '~/components/RouteError';
+import {ProductCarousel} from '~/components/ProductCarousel';
+import type {CarouselImage} from '~/components/ProductCarousel';
+import {PRINTBOARD_SIZE_LABEL} from '~/lib/customizer-config';
 import {AutoLang} from '~/components/AutoLang';
 import {
   Doodle,
@@ -162,7 +165,7 @@ type SimpleMetaobjectQueryResponse = {
 } | null;
 
 /**
- * Merchant-edited homepage content (hero, story, FAQ, testimonials, slides).
+ * Merchant-edited homepage content (hero, story, FAQ, slides).
  * Short cache so edits in Shopify Admin show up within about a minute,
  * instead of CacheLong's hour (+ day of stale-while-revalidate).
  */
@@ -188,11 +191,9 @@ export async function loader(args: Route.LoaderArgs) {
       url: absoluteUrl('/', locale),
     });
     return {
-      featuredProduct: null,
+      featuredProduct: null as HomeProductCard | null,
+      printboard: null as HomeProductCard | null,
       faqs: Promise.resolve(
-        null,
-      ) as Promise<SimpleMetaobjectQueryResponse | null>,
-      testimonials: Promise.resolve(
         null,
       ) as Promise<SimpleMetaobjectQueryResponse | null>,
       heroSlides: [] as Array<HeroSlide>,
@@ -207,6 +208,73 @@ export async function loader(args: Route.LoaderArgs) {
   const deferredData = loadDeferredData(args);
   const criticalData = await loadCriticalData(args);
   return {...deferredData, ...criticalData};
+}
+
+/** Second product block on the homepage, fetched by handle (it's unlisted). */
+const HOME_PRINTBOARD_HANDLE = 'printboard';
+/** Max photos in a homepage product carousel. */
+const CAROUSEL_MAX = 6;
+
+/** Card data shipped to the client: the product minus the raw image lists. */
+export type HomeProductCard = Omit<
+  HomeProductCardFragment,
+  'images' | 'variants'
+> & {carousel: Array<CarouselImage>};
+
+const withoutQuery = (url: string) => url.split('?')[0];
+
+/**
+ * Pick the homepage carousel photos from the product's images, in Admin
+ * order: drop the per-variant renders (any image a variant points at, or the
+ * old 920×920 "Lightboard surfboard — <color>" PNGs), but always keep the
+ * product's featured image. With `lifestyleFirst`, the portrait lifestyle
+ * shots come right after the first photo, ahead of the square ones.
+ */
+function pickCarouselImages(
+  product: HomeProductCardFragment,
+  {lifestyleFirst = false}: {lifestyleFirst?: boolean} = {},
+): Array<CarouselImage> {
+  const featured = product.featuredImage?.url
+    ? withoutQuery(product.featuredImage.url)
+    : null;
+  const variantUrls = new Set(
+    product.variants.nodes
+      .map((v) => v.image?.url)
+      .filter((url): url is string => Boolean(url))
+      .map(withoutQuery),
+  );
+  const kept = product.images.nodes.filter((image) => {
+    const url = withoutQuery(image.url);
+    if (url === featured) return true;
+    if (variantUrls.has(url)) return false;
+    return !/^Lightboard surfboard/i.test(image.altText ?? '');
+  });
+  if (!lifestyleFirst || kept.length < 3) return kept.slice(0, CAROUSEL_MAX);
+  const [first, ...rest] = kept;
+  const portrait = (i: (typeof kept)[number]) =>
+    (i.height ?? 0) > (i.width ?? 0);
+  return [
+    first,
+    ...rest.filter(portrait),
+    ...rest.filter((i) => !portrait(i)),
+  ].slice(0, CAROUSEL_MAX);
+}
+
+function toHomeProductCard(
+  product: HomeProductCardFragment | null | undefined,
+  options?: {lifestyleFirst?: boolean},
+): HomeProductCard | null {
+  if (!product) return null;
+  const carousel = pickCarouselImages(product, options);
+  const clean = sanitizeFeaturedHeadline(product) ?? product;
+  // Ship only the picked photos; the raw image / variant lists stay server-side.
+  const card: Partial<HomeProductCardFragment> = {...clean};
+  delete card.images;
+  delete card.variants;
+  return {
+    ...(card as Omit<HomeProductCardFragment, 'images' | 'variants'>),
+    carousel,
+  };
 }
 
 /**
@@ -234,33 +302,55 @@ async function loadCriticalData({context, request}: Route.LoaderArgs) {
   const locale = detectLocaleFromRequest(request);
   const dict = getDictionary(locale);
   const {storefront} = context;
-  const [productData, heroData, homepageData] = await Promise.all([
-    storefront
-      .query(FEATURED_PRODUCT_QUERY, {cache: storefront.CacheShort()})
-      .catch((error) => {
-        console.error(error);
-        return null;
-      }),
-    storefront
-      .query(HERO_SLIDES_QUERY, {
-        cache: merchantContentCache(storefront),
-      })
-      .catch((error) => {
-        console.error(error);
-        return null;
-      }),
-    storefront
-      .query(HOMEPAGE_SECTIONS_QUERY, {
-        cache: merchantContentCache(storefront),
-      })
-      .catch((error) => {
-        console.error(error);
-        return null;
-      }),
-  ]);
-  const featuredProduct = sanitizeFeaturedHeadline(
-    productData?.shop?.featured?.reference ?? null,
+  const [productData, printboardData, heroData, homepageData] =
+    await Promise.all([
+      storefront
+        .query(FEATURED_PRODUCT_QUERY, {cache: storefront.CacheShort()})
+        .catch((error) => {
+          console.error(error);
+          return null;
+        }),
+      // Runs in parallel with the rest; a failure only hides the block.
+      storefront
+        .query(HOME_PRODUCT_BY_HANDLE_QUERY, {
+          cache: merchantContentCache(storefront),
+          variables: {handle: HOME_PRINTBOARD_HANDLE},
+        })
+        .catch((error) => {
+          console.error(error);
+          return null;
+        }),
+      storefront
+        .query(HERO_SLIDES_QUERY, {
+          cache: merchantContentCache(storefront),
+        })
+        .catch((error) => {
+          console.error(error);
+          return null;
+        }),
+      storefront
+        .query(HOMEPAGE_SECTIONS_QUERY, {
+          cache: merchantContentCache(storefront),
+        })
+        .catch((error) => {
+          console.error(error);
+          return null;
+        }),
+    ]);
+  const featuredReference = productData?.shop?.featured?.reference;
+  const featuredProduct = toHomeProductCard(
+    featuredReference && 'handle' in featuredReference
+      ? featuredReference
+      : null,
   );
+  const printboardCard = toHomeProductCard(printboardData?.product, {
+    lifestyleFirst: true,
+  });
+  // Never show the same product twice if the merchant features the Printboard.
+  const printboard =
+    printboardCard && printboardCard.handle !== featuredProduct?.handle
+      ? printboardCard
+      : null;
   const {seo: baseSeo, jsonLd} = simpleSeo({
     title: dict.meta.title,
     description: dict.meta.description,
@@ -268,6 +358,7 @@ async function loadCriticalData({context, request}: Route.LoaderArgs) {
   });
   return {
     featuredProduct,
+    printboard,
     heroSlides: extractHeroSlides(heroData?.metaobjects?.nodes),
     hero: extractHeroSection(homepageData?.shop?.hero?.reference, locale),
     story: extractStorySection(homepageData?.shop?.story?.reference, locale),
@@ -290,9 +381,9 @@ async function loadCriticalData({context, request}: Route.LoaderArgs) {
 }
 
 /**
- * Non-blocking queries returned as unresolved promises so the FAQ and
- * testimonial sections can stream in below the fold instead of holding up
- * first paint. Each query catches its own error and resolves to `null` so a
+ * Non-blocking query returned as an unresolved promise so the FAQ
+ * section can stream in below the fold instead of holding up
+ * first paint. It catches its own error and resolves to `null` so a
  * downstream failure renders nothing rather than 500-ing the homepage.
  */
 function loadDeferredData({context}: Route.LoaderArgs) {
@@ -305,15 +396,7 @@ function loadDeferredData({context}: Route.LoaderArgs) {
       console.error(error);
       return null;
     });
-  const testimonials = storefront
-    .query(TESTIMONIALS_QUERY, {
-      cache: merchantContentCache(storefront),
-    })
-    .catch((error: Error) => {
-      console.error(error);
-      return null;
-    });
-  return {faqs, testimonials};
+  return {faqs};
 }
 
 /**
@@ -468,7 +551,12 @@ export default function Homepage() {
   return (
     <>
       <Hero slides={data.heroSlides} content={data.hero} />
-      <FeaturedLightboard featuredProduct={data.featuredProduct} />
+      <FeaturedProduct
+        product={data.featuredProduct}
+        sectionId="featured"
+        ctaLabel={data.dict.featured.ctaPrimary}
+      />
+      <FeaturedPrintboard product={data.printboard} />
       <UspStrip />
       <Story content={data.story} />
       <Suspense fallback={<DeferredSectionFallback />}>
@@ -488,26 +576,6 @@ export default function Homepage() {
               ],
             );
             return <Faq items={items} />;
-          }}
-        </Await>
-      </Suspense>
-      <Suspense fallback={<DeferredSectionFallback />}>
-        <Await resolve={data.testimonials}>
-          {(testimonialsResponse) => {
-            if (!testimonialsResponse) return null;
-            const items = extractMetaobjectFields(
-              testimonialsResponse?.metaobjects?.nodes,
-              locale,
-              [
-                {target: 'body', heKey: 'body_he', enKey: 'body_en'},
-                {
-                  target: 'attribution',
-                  heKey: 'attribution_he',
-                  enKey: 'attribution_en',
-                },
-              ],
-            );
-            return <Testimonials items={items} />;
           }}
         </Await>
       </Suspense>
@@ -624,7 +692,7 @@ function StoryStat({n, k, delay}: {n: string; k: string; delay: number}) {
 /* ---------------- AUTO-ROTATE ---------------- */
 
 /**
- * Shared carousel timing for the hero and testimonials (WCAG 2.2.2):
+ * Shared carousel timing for the hero (WCAG 2.2.2):
  * - never auto-advances under prefers-reduced-motion;
  * - a visible pause/play button (`userPaused`) wins over everything;
  * - pauses while hovered, while keyboard focus is inside, and while the
@@ -1107,19 +1175,37 @@ function extractProductSpecs(
     .sort((a, b) => a.position - b.position);
 }
 
-function FeaturedLightboard({
-  featuredProduct,
+type FeaturedCopy = {
+  eyebrow?: string;
+  title?: string;
+  description?: string;
+  specs?: Array<ProductSpecRendered>;
+};
+
+/**
+ * One homepage product block (photo carousel + copy + price + CTA). Copy
+ * comes from the product's `marketing.*` metafields; `fallback` fills any
+ * field the merchant hasn't set yet (e.g. the Printboard).
+ */
+function FeaturedProduct({
+  product,
+  sectionId,
+  ctaLabel,
+  fallback,
+  mirrored = false,
 }: {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- featured product reference comes via shop.metafield.reference; no single generated fragment captures all aliased metafields
-  featuredProduct: any;
+  product: HomeProductCard | null;
+  sectionId: string;
+  ctaLabel: string;
+  fallback?: FeaturedCopy;
+  mirrored?: boolean;
 }) {
   const {dict, locale} = useI18n();
   const f = dict.featured;
   // Drive the swatch picker from the live Shopify variant data so the merchant
   // can add/rename/recolor variants in admin without a code deploy.
   const colorOption =
-    featuredProduct?.options?.find((o: {name: string}) => o.name === 'Color') ??
-    null;
+    product?.options?.find((o: {name: string}) => o.name === 'Color') ?? null;
   const colorValues: Array<{
     id: string;
     name: string;
@@ -1128,68 +1214,73 @@ function FeaturedLightboard({
   const [selectedColor, setSelectedColor] = useState<string | null>(
     colorValues[0]?.name ?? null,
   );
-  const productImage = featuredProduct?.featuredImage;
-  // All marketing copy comes from product metafields (namespace "marketing")
-  // — the merchant edits these in Shopify Admin → Products → Lightboard.
-  const eyebrow = localizedMetafield(featuredProduct, 'eyebrow', locale);
-  const headlineHtml = localizedMetafield(featuredProduct, 'headline', locale);
-  const description = localizedMetafield(
-    featuredProduct,
-    'description',
-    locale,
-  );
-  const tagMadeToOrder = localizedMetafield(
-    featuredProduct,
-    'tagMadeToOrder',
-    locale,
-  );
-  const tagDimensions = featuredProduct?.tagDimensions?.value ?? '';
-  const shipNote = localizedMetafield(featuredProduct, 'shipNote', locale);
-  const specs = extractProductSpecs(featuredProduct, locale);
-  const altText =
-    productImage?.altText || featuredProduct?.title || 'Lightboard';
+  // Marketing copy comes from product metafields (namespace "marketing")
+  // — the merchant edits these in Shopify Admin → Products.
+  const eyebrow =
+    localizedMetafield(product, 'eyebrow', locale) || fallback?.eyebrow || '';
+  const headlineHtml = localizedMetafield(product, 'headline', locale);
+  const description =
+    localizedMetafield(product, 'description', locale) ||
+    fallback?.description ||
+    '';
+  const shipNote = localizedMetafield(product, 'shipNote', locale);
+  const metaSpecs = extractProductSpecs(product, locale);
+  const specs = metaSpecs.length > 0 ? metaSpecs : (fallback?.specs ?? []);
+  const names = dict.product.names as Record<string, string> | undefined;
+  const name =
+    (product && names?.[product.handle]) ||
+    product?.title ||
+    fallback?.title ||
+    'Lightboard';
+  const titleId = `${sectionId}-title`;
   return (
-    <section className="feat3" id="featured">
+    <section
+      className={`feat3${mirrored ? ' feat3--mirror' : ''}`}
+      id={sectionId}
+      aria-labelledby={titleId}
+    >
       <div className="feat3-grid">
         <LiveLoop className="feat3-media">
           <div className="feat3-stage">
-            {productImage ? (
-              <Image
-                data={productImage}
-                alt={altText}
-                className="feat3-photo"
+            {product && product.carousel.length > 0 ? (
+              <ProductCarousel
+                images={product.carousel}
+                fallbackAlt={name}
                 sizes="(min-width: 980px) 55vw, 100vw"
-                loading="lazy"
+                labels={{
+                  carousel: f.photosLabel.replace('{name}', name),
+                  slide: f.slideLabel,
+                  goTo: f.goToSlide,
+                  prev: f.prevSlide,
+                  next: f.nextSlide,
+                }}
               />
             ) : (
               <img
                 src="/lightboard-lifestyle.jpg"
-                alt={altText}
+                alt={name}
                 className="feat3-photo"
                 loading="lazy"
               />
             )}
-            <div className="feat3-tags">
-              {tagMadeToOrder && (
-                <span className="feat3-tag">{tagMadeToOrder}</span>
-              )}
-              {tagDimensions && (
-                <span className="feat3-tag alt">{tagDimensions}</span>
-              )}
-            </div>
           </div>
         </LiveLoop>
 
         <div className="feat3-rail">
           <Reveal>
             {eyebrow && <div className="feat3-eye">{eyebrow}</div>}
-            {headlineHtml && (
+            {headlineHtml ? (
               <h2
+                id={titleId}
                 className="feat3-title"
                 dangerouslySetInnerHTML={{
                   __html: headlineHtml,
                 }}
               />
+            ) : (
+              <h2 id={titleId} className="feat3-title">
+                {name}
+              </h2>
             )}
             {description && <p className="feat3-desc">{description}</p>}
           </Reveal>
@@ -1238,21 +1329,47 @@ function FeaturedLightboard({
             </div>
           )}
 
-          {featuredProduct ? (
+          {product ? (
             <BuyBar
-              price={featuredProduct.priceRange?.minVariantPrice?.amount}
-              currencyCode={
-                featuredProduct.priceRange?.minVariantPrice?.currencyCode
-              }
+              price={product.priceRange?.minVariantPrice?.amount}
+              currencyCode={product.priceRange?.minVariantPrice?.currencyCode}
               note={shipNote}
-              ctaPrimary={f.ctaPrimary}
-              handle={featuredProduct.handle}
-              variantColor={selectedColor}
+              ctaPrimary={ctaLabel}
+              handle={product.handle}
+              variantColor={colorValues.length > 1 ? selectedColor : null}
             />
           ) : null}
         </div>
       </div>
     </section>
+  );
+}
+
+/** Printboard block: no marketing metafields yet, so copy comes from i18n. */
+function FeaturedPrintboard({product}: {product: HomeProductCard | null}) {
+  const {dict} = useI18n();
+  if (!product) return null;
+  const copy = dict.featured.printboard;
+  const specs = (
+    (dict.printboard?.specs ?? []) as Array<{label: string; value: string}>
+  ).map((spec, i) => ({
+    id: `pb-spec-${i}`,
+    k: spec.label,
+    v: spec.value.replace('{size}', PRINTBOARD_SIZE_LABEL),
+    position: i,
+  }));
+  return (
+    <FeaturedProduct
+      product={product}
+      sectionId="featured-printboard"
+      ctaLabel={copy.cta}
+      mirrored
+      fallback={{
+        eyebrow: copy.eyebrow,
+        description: copy.description,
+        specs,
+      }}
+    />
   );
 }
 
@@ -1326,7 +1443,6 @@ function UspStrip() {
   if (items.length === 0) return null;
   return (
     <section className="usp" aria-label={dict.usp.label}>
-      <WaveDivider flip className="band-wave-top" />
       <ul className="usp-list container" role="list">
         {items.map((item, idx) => (
           <li key={item.label} className="usp-item">
@@ -1337,7 +1453,6 @@ function UspStrip() {
           </li>
         ))}
       </ul>
-      <WaveDivider className="section-wave" />
     </section>
   );
 }
@@ -1349,8 +1464,8 @@ function Story({content}: {content: StorySection | null}) {
   // `homepage.story` shop metafield. The merchant edits everything (paragraph
   // text, stats, eyebrow, title) from Shopify Admin → Content → Metaobjects.
   if (!content) return null;
-  const main = PHOTOS.vanBed;
-  const small = PHOTOS.camperCliff;
+  const main = PHOTOS.camperCliff;
+  const small = PHOTOS.vanBed;
   return (
     <section className="story" id="story">
       <LiveLoop className="story-sun">
@@ -1365,8 +1480,8 @@ function Story({content}: {content: StorySection | null}) {
                 src={withParams(main.url, 'width=900')}
                 srcSet={cropSrcSet(main.url, {
                   ratio: 4 / 5,
-                  focalX: '55%',
-                  focalY: '60%',
+                  focalX: '45%',
+                  focalY: '55%',
                   srcW: main.w,
                   srcH: main.h,
                   widths: [480, 720, 960, 1280],
@@ -1384,8 +1499,8 @@ function Story({content}: {content: StorySection | null}) {
                 src={withParams(small.url, 'width=480')}
                 srcSet={cropSrcSet(small.url, {
                   ratio: 4 / 5,
-                  focalX: '45%',
-                  focalY: '55%',
+                  focalX: '55%',
+                  focalY: '60%',
                   srcW: small.w,
                   srcH: small.h,
                   widths: [240, 360, 480],
@@ -1494,7 +1609,7 @@ function Faq({items}: {items: Array<MetaobjectFieldRecord>}) {
   );
 }
 
-/* ---------------- TESTIMONIALS ---------------- */
+/* ---------------- PHOTO BAND ---------------- */
 
 function PhotoBandImage({
   photo,
@@ -1527,92 +1642,6 @@ function PhotoBandImage({
         decoding="async"
       />
     </picture>
-  );
-}
-
-function Testimonials({items}: {items: Array<MetaobjectFieldRecord>}) {
-  const {dict} = useI18n();
-  const t = dict.testify;
-  const quotes = Array.isArray(items) ? items : [];
-  const rotate = useAutoRotate(quotes.length, 6200);
-  const i = Math.min(rotate.index, Math.max(quotes.length - 1, 0));
-  const setI = rotate.setIndex;
-  if (quotes.length === 0) return null;
-  const q = quotes[i];
-  return (
-    <section
-      className="testify testify--band"
-      aria-roledescription="carousel"
-      aria-label={t.regionLabel}
-      {...rotate.handlers}
-    >
-      <PhotoBandImage
-        photo={PHOTOS.surferWalk}
-        focalX="60%"
-        className="band-photo"
-      />
-      <WaveDivider flip className="band-wave-top" />
-      <div className="container">
-        <Reveal>
-          <div className="section-eyebrow testify-eyebrow">
-            <span>{t.eyebrow}</span>
-          </div>
-        </Reveal>
-        <Reveal delay={120}>
-          <div
-            className="testify-stage"
-            aria-live={rotate.paused ? 'polite' : 'off'}
-          >
-            <blockquote key={i} className="testify-quote">
-              «{q.body}»
-            </blockquote>
-            <div className="attribution">{q.attribution}</div>
-          </div>
-        </Reveal>
-        <div className="testify-nav">
-          <button
-            type="button"
-            onClick={() =>
-              setI((x: number) => (x - 1 + quotes.length) % quotes.length)
-            }
-            aria-label={t.prev}
-            className="testify-nav-btn"
-          >
-            ←
-          </button>
-          <div className="testify-dots">
-            {quotes.map((q, j) => (
-              <button
-                key={q.id}
-                onClick={() => setI(j)}
-                aria-label={t.dotLabel
-                  .replace('{n}', String(j + 1))
-                  .replace('{total}', String(quotes.length))}
-                aria-current={j === i ? 'true' : undefined}
-                className={j === i ? 'on' : ''}
-                type="button"
-              />
-            ))}
-          </div>
-          <button
-            type="button"
-            onClick={() => setI((x: number) => (x + 1) % quotes.length)}
-            aria-label={t.next}
-            className="testify-nav-btn"
-          >
-            →
-          </button>
-          {quotes.length > 1 && (
-            <MotionToggle
-              stopped={rotate.stopped}
-              onToggle={rotate.toggle}
-              pauseLabel={t.pause}
-              playLabel={t.play}
-            />
-          )}
-        </div>
-      </div>
-    </section>
   );
 }
 
@@ -1655,54 +1684,53 @@ function FinalCta({handle}: {handle?: string | null}) {
 
 /* ---------------- QUERIES ---------------- */
 
-const FEATURED_PRODUCT_QUERY = `#graphql
-  query FeaturedProduct($country: CountryCode, $language: LanguageCode)
-    @inContext(country: $country, language: $language) {
-    shop {
-      featured: metafield(namespace: "custom", key: "featured_product") {
-        reference {
-          ... on Product {
+/**
+ * Everything a homepage product block needs. The carousel photos are picked
+ * from `images` on the server (see pickCarouselImages) and `variants` is
+ * only read to skip per-variant renders.
+ */
+const HOME_PRODUCT_CARD_FRAGMENT = `#graphql
+  fragment HomeProductCard on Product {
+    id
+    title
+    handle
+    priceRange {
+      minVariantPrice { amount currencyCode }
+    }
+    featuredImage { id url altText width height }
+    images(first: 12) {
+      nodes { id url altText width height }
+    }
+    variants(first: 50) {
+      nodes { id image { url } }
+    }
+    options {
+      id
+      name
+      optionValues {
+        id
+        name
+        swatch { color }
+      }
+    }
+    eyebrow_he: metafield(namespace: "marketing", key: "eyebrow_he") { value }
+    eyebrow_en: metafield(namespace: "marketing", key: "eyebrow_en") { value }
+    headline_he: metafield(namespace: "marketing", key: "headline_he") { value }
+    headline_en: metafield(namespace: "marketing", key: "headline_en") { value }
+    description_he: metafield(namespace: "marketing", key: "description_he") { value }
+    description_en: metafield(namespace: "marketing", key: "description_en") { value }
+    shipNote_he: metafield(namespace: "marketing", key: "ship_note_he") { value }
+    shipNote_en: metafield(namespace: "marketing", key: "ship_note_en") { value }
+    specs: metafield(namespace: "marketing", key: "specs") {
+      references(first: 20) {
+        nodes {
+          ... on Metaobject {
             id
-            title
-            handle
-            priceRange {
-              minVariantPrice { amount currencyCode }
-            }
-            featuredImage { id url altText width height }
-            options {
-              id
-              name
-              optionValues {
-                id
-                name
-                swatch { color }
-              }
-            }
-            eyebrow_he: metafield(namespace: "marketing", key: "eyebrow_he") { value }
-            eyebrow_en: metafield(namespace: "marketing", key: "eyebrow_en") { value }
-            headline_he: metafield(namespace: "marketing", key: "headline_he") { value }
-            headline_en: metafield(namespace: "marketing", key: "headline_en") { value }
-            description_he: metafield(namespace: "marketing", key: "description_he") { value }
-            description_en: metafield(namespace: "marketing", key: "description_en") { value }
-            tagMadeToOrder_he: metafield(namespace: "marketing", key: "tag_made_to_order_he") { value }
-            tagMadeToOrder_en: metafield(namespace: "marketing", key: "tag_made_to_order_en") { value }
-            tagDimensions: metafield(namespace: "marketing", key: "tag_dimensions") { value }
-            shipNote_he: metafield(namespace: "marketing", key: "ship_note_he") { value }
-            shipNote_en: metafield(namespace: "marketing", key: "ship_note_en") { value }
-            specs: metafield(namespace: "marketing", key: "specs") {
-              references(first: 20) {
-                nodes {
-                  ... on Metaobject {
-                    id
-                    label_he: field(key: "label_he") { value }
-                    label_en: field(key: "label_en") { value }
-                    value_he: field(key: "value_he") { value }
-                    value_en: field(key: "value_en") { value }
-                    position: field(key: "position") { value }
-                  }
-                }
-              }
-            }
+            label_he: field(key: "label_he") { value }
+            label_en: field(key: "label_en") { value }
+            value_he: field(key: "value_he") { value }
+            value_en: field(key: "value_en") { value }
+            position: field(key: "position") { value }
           }
         }
       }
@@ -1710,21 +1738,36 @@ const FEATURED_PRODUCT_QUERY = `#graphql
   }
 `;
 
-const FAQS_QUERY = `#graphql
-  query FAQs {
-    metaobjects(type: "faq", first: 20, sortKey: "position") {
-      nodes {
-        id
-        handle
-        fields { key value }
+const FEATURED_PRODUCT_QUERY = `#graphql
+  query FeaturedProduct($country: CountryCode, $language: LanguageCode)
+    @inContext(country: $country, language: $language) {
+    shop {
+      featured: metafield(namespace: "custom", key: "featured_product") {
+        reference {
+          ...HomeProductCard
+        }
       }
     }
   }
+  ${HOME_PRODUCT_CARD_FRAGMENT}
 `;
 
-const TESTIMONIALS_QUERY = `#graphql
-  query Testimonials {
-    metaobjects(type: "testimonial", first: 20, sortKey: "position") {
+const HOME_PRODUCT_BY_HANDLE_QUERY = `#graphql
+  query HomeProductByHandle(
+    $country: CountryCode
+    $language: LanguageCode
+    $handle: String!
+  ) @inContext(country: $country, language: $language) {
+    product(handle: $handle) {
+      ...HomeProductCard
+    }
+  }
+  ${HOME_PRODUCT_CARD_FRAGMENT}
+`;
+
+const FAQS_QUERY = `#graphql
+  query FAQs {
+    metaobjects(type: "faq", first: 20, sortKey: "position") {
       nodes {
         id
         handle

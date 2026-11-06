@@ -50,11 +50,21 @@
     "pause": "עצירת המצגת",
     "play": "הפעלת המצגת",
     "regionLabel": "תמונות פתיחה",
-    "srTitle": "לייטבורד · גלשן קיר עם התמונות שלכם"
+    "srTitle": "Lightboard · גלשן קיר עם התמונות שלכם"
   },
   "featured": {
     "finishLabel": "צבע",
-    "ctaPrimary": "בחירת תמונות"
+    "ctaPrimary": "בחירת תמונות",
+    "photosLabel": "התמונות של {name}",
+    "slideLabel": "{n} מתוך {total}",
+    "goToSlide": "תמונה {n} מתוך {total}",
+    "prevSlide": "התמונה הקודמת",
+    "nextSlide": "התמונה הבאה",
+    "printboard": {
+      "eyebrow": "— חדש מהסטודיו",
+      "description": "גלשן עץ עם תמונה מודפסת ישירות על העץ, כך שהטקסטורה נשארת לנשום דרכה. בוחרים אחד העיצובים שלנו או מעלים תמונה משלכם.",
+      "cta": "לעיצוב ה־Printboard"
+    }
   },
   "faq": {
     "eyebrow": "— שאלות נפוצות",
@@ -91,7 +101,15 @@
       "caption": "אור חם, עץ מלא ושלוש התמונות שבחרתם."
     },
     "stickyLabel": "קנייה מהירה",
-    "choosePhotos": "בחירת תמונות"
+    "choosePhotos": "בחירת תמונות",
+    "names": {
+      "lightboard": "Lightboard",
+      "printboard": "Printboard"
+    },
+    "taglines": {
+      "lightboard": "גלשן קיר מואר עם שלוש תמונות",
+      "printboard": "גלשן עץ עם תמונה מודפסת"
+    }
   },
   "photoCustomizer": {
     "heading": "התמונות שלכם",
@@ -214,7 +232,11 @@
     "indexMeta": "Lightboard | קולקציות",
     "allTitle": "כל המוצרים",
     "allMeta": "Lightboard | כל המוצרים",
-    "collectionMetaSuffix": "קולקציה"
+    "collectionMetaSuffix": "קולקציה",
+    "shopTitle": "החנות",
+    "shopIntro": "גלשני קיר בעבודת יד, עם התמונות שלכם. משלוח חינם לכל הארץ.",
+    "shopMeta": "גלשני קיר בעבודת יד עם התמונות שלכם: Lightboard מואר ו־Printboard מודפס על עץ. משלוח חינם לכל הארץ.",
+    "shopCta": "להתאמה אישית ←"
   },
   "blogs": {
     "indexTitle": "יומן",
@@ -324,7 +346,7 @@
   },
   "whatsapp": {
     "label": "דברו איתנו בוואטסאפ",
-    "prefill": "היי לייטבורד, יש לי שאלה:"
+    "prefill": "היי Lightboard, יש לי שאלה:"
   },
   "footer": {
     "brandDesc": "גלשני קיר מעץ מלא, עם אור חם והתמונות שלכם. עבודת יד, מאז 2019.",
@@ -371,7 +393,7 @@
     "titleAfter": "בדרך."
   },
   "usp": {
-    "label": "למה לייטבורד",
+    "label": "למה Lightboard",
     "items": [
       {
         "icon": "van",
@@ -398,5 +420,54 @@
   },
   "hand": {
     "customizer": "התמונות שלכם כאן ↓"
+  },
+  "printboard": {
+    "title": "Printboard",
+    "heading": "העיצוב שלכם",
+    "subheading": "בחרו אחד העיצובים שלנו או העלו תמונה משלכם. היא מודפסת על כל הגלשן.",
+    "previewLabel": "תצוגה מקדימה של ה־Printboard",
+    "previewEmpty": "בחרו עיצוב וראו אותו על הגלשן",
+    "sourcesLabel": "בחירת עיצוב",
+    "presetsTitle": "העיצובים שלנו",
+    "ownPhoto": "התמונה שלכם",
+    "upload": "העלאת תמונה",
+    "replace": "החלפת התמונה",
+    "adjust": "התאמת המיקום",
+    "remove": "הסרה",
+    "approve": "אישור העיצוב",
+    "ready": "העיצוב מוכן",
+    "needDesign": "בחרו עיצוב או תמונה כדי להמשיך",
+    "needApprove": "אשרו את העיצוב כדי להמשיך",
+    "hint": "תמונה אחת, מודפסת ישירות על העץ",
+    "cropTitle": "מיקום התמונה על הגלשן",
+    "cropHint": "גררו והגדילו עד שזה נראה טוב. מה שבתוך קו הגלשן יודפס.",
+    "livePreview": "ככה זה ייצא",
+    "lowRes": "התמונה קטנה יחסית לגלשן באורך 50 ס״מ, ולכן ההדפסה עלולה לצאת פחות חדה.",
+    "editFromCart": "עריכת העיצוב",
+    "cartDesign": "עיצוב",
+    "specs": [
+      {
+        "label": "מידות",
+        "value": "{size} ס״מ"
+      },
+      {
+        "label": "חומר",
+        "value": "עץ"
+      },
+      {
+        "label": "הדפסה",
+        "value": "ישירות על העץ"
+      },
+      {
+        "label": "תמונות",
+        "value": "תמונה אחת"
+      }
+    ],
+    "inYourHome": {
+      "eyebrow": "— בבית שלכם",
+      "title": "גלשנים אמיתיים, על קירות אמיתיים",
+      "caption": "כל Printboard מודפס ישירות על העץ, כך שהטקסטורה שלו נשארת לנשום דרך התמונה."
+    },
+    "chooseDesign": "בחירת עיצוב"
   }
 }

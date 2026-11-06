@@ -82,18 +82,21 @@ export function validatePhotoFile(file: File | null | undefined): ValidationResu
 /**
  * Validate already-loaded image dimensions.
  */
-export function validatePhotoDimensions({
-  width,
-  height,
-}: {
-  width: number;
-  height: number;
-}): ValidationResult {
+export function validatePhotoDimensions(
+  {
+    width,
+    height,
+  }: {
+    width: number;
+    height: number;
+  },
+  recommended: number = RECOMMENDED_PHOTO_DIMENSION,
+): ValidationResult {
   const shortSide = Math.min(width, height);
   if (shortSide < MIN_PHOTO_DIMENSION) {
     return {ok: false, reason: 'tooSmall'};
   }
-  return {ok: true, lowRes: shortSide < RECOMMENDED_PHOTO_DIMENSION};
+  return {ok: true, lowRes: shortSide < recommended};
 }
 
 /**
@@ -126,36 +129,57 @@ export function loadImageFromFile(
 /**
  * Default centered square crop in pixel coordinates.
  */
-export function getDefaultSquareCrop({
-  width,
-  height,
-}: {
+export function getDefaultSquareCrop(dims: {
   width: number;
   height: number;
 }): CropPixels {
-  const size = Math.min(width, height);
-  return {
-    x: Math.round((width - size) / 2),
-    y: Math.round((height - size) / 2),
-    width: size,
-    height: size,
-  };
+  return getDefaultCrop(dims, 1);
 }
 
 /**
- * Draw the crop rectangle of an image to a square canvas, then export to a
- * JPEG Blob at the configured output size.
+ * Largest crop of the given aspect (width / height) that fits the image,
+ * centered on a focal point (0–1 fractions, default the middle).
+ */
+export function getDefaultCrop(
+  {width, height}: {width: number; height: number},
+  aspect: number,
+  focal: {x?: number; y?: number} = {},
+): CropPixels {
+  let cw = width;
+  let ch = Math.round(width / aspect);
+  if (ch > height) {
+    ch = height;
+    cw = Math.round(height * aspect);
+  }
+  const fx = focal.x ?? 0.5;
+  const fy = focal.y ?? 0.5;
+  const x = Math.round(Math.min(Math.max(fx * width - cw / 2, 0), width - cw));
+  const y = Math.round(Math.min(Math.max(fy * height - ch / 2, 0), height - ch));
+  return {x, y, width: cw, height: ch};
+}
+
+/** Output size of a rendered crop: a square side, or an explicit box. */
+export type OutputSize = number | {width: number; height: number};
+
+function outputBox(size: OutputSize): {width: number; height: number} {
+  return typeof size === 'number' ? {width: size, height: size} : size;
+}
+
+/**
+ * Draw the crop rectangle of an image to a canvas (square, or the given
+ * box), then export to a JPEG Blob.
  */
 export function renderCropToJpegBlob(
   image: HTMLImageElement,
   crop: CropPixels,
-  outputSize: number = CROPPED_OUTPUT_SIZE,
+  outputSize: OutputSize = CROPPED_OUTPUT_SIZE,
   quality: number = CROPPED_OUTPUT_QUALITY,
 ): Promise<Blob> {
+  const box = outputBox(outputSize);
   return new Promise((resolve, reject) => {
     const canvas = document.createElement('canvas');
-    canvas.width = outputSize;
-    canvas.height = outputSize;
+    canvas.width = box.width;
+    canvas.height = box.height;
     const ctx = canvas.getContext('2d');
     if (!ctx) {
       reject(new Error('canvas-2d-unavailable'));
@@ -172,8 +196,8 @@ export function renderCropToJpegBlob(
       crop.height,
       0,
       0,
-      outputSize,
-      outputSize,
+      box.width,
+      box.height,
     );
     canvas.toBlob(
       (blob) => {
@@ -190,13 +214,33 @@ export function renderCropToJpegBlob(
 }
 
 /**
+ * Render a print file and keep it under the upload cap: large boxes (the
+ * 2000×5000 Printboard file) re-encode at lower quality until they fit.
+ */
+export async function renderCropUnderCap(
+  image: HTMLImageElement,
+  crop: CropPixels,
+  outputSize: OutputSize,
+  quality: number = CROPPED_OUTPUT_QUALITY,
+  maxBytes: number = MAX_PHOTO_BYTES,
+): Promise<Blob> {
+  let q = quality;
+  let blob = await renderCropToJpegBlob(image, crop, outputSize, q);
+  while (blob.size > maxBytes && q > 0.5) {
+    q -= 0.1;
+    blob = await renderCropToJpegBlob(image, crop, outputSize, q);
+  }
+  return blob;
+}
+
+/**
  * Convenience: read a File, default-crop or use supplied crop, return blob.
  * Frees the intermediate object URL.
  */
 export async function cropFileToJpegBlob(
   file: File,
   crop: CropPixels,
-  outputSize?: number,
+  outputSize?: OutputSize,
 ): Promise<Blob> {
   const {image, objectUrl} = await loadImageFromFile(file);
   try {

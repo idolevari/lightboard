@@ -57,10 +57,24 @@ export const DELIVERY_SPLIT = {
  *  the window if stock items are added. */
 export const RETURN_WINDOW_DAYS = 14;
 
-/** Products tagged with this in Shopify are personalized (made from the
- *  buyer's photos), so they use the "returns not permitted" policy. Keep in
- *  sync with REQUIRES_PHOTOS_TAG in the product route. */
-export const PERSONALIZED_TAG = 'requires-photos';
+/** Shopify product tags that switch on a photo customizer on the PDP.
+ *  `requires-photos` = Lightboard (three square photos);
+ *  `requires-print-photo` = Printboard (one photo printed on the board). */
+export const REQUIRES_PHOTOS_TAG = 'requires-photos';
+export const REQUIRES_PRINT_PHOTO_TAG = 'requires-print-photo';
+
+/** Products tagged with either customizer tag are personalized (made from
+ *  the buyer's photos), so they use the "returns not permitted" policy. */
+export const PERSONALIZED_TAGS: ReadonlyArray<string> = [
+  REQUIRES_PHOTOS_TAG,
+  REQUIRES_PRINT_PHOTO_TAG,
+];
+
+export function isPersonalized(
+  tags: ReadonlyArray<string> | null | undefined,
+): boolean {
+  return Boolean(tags?.some((t) => PERSONALIZED_TAGS.includes(t)));
+}
 
 /** How many photos the buyer uploads. Matches the PhotoCustomizer slots. */
 export const PHOTOS_PER_BOARD = 3;
@@ -81,7 +95,7 @@ export const KNOWS_ABOUT = [
  *  Leaves out anything Shopify already holds (price, colours, contact). */
 export const BRAND_SUMMARY = {
   en: `Lightboard is an Israeli handmade brand. Its main product, the Lightboard, is a solid-pine, surfboard-shaped wall piece with warm LED lights that holds ${PHOTOS_PER_BOARD} of your own photos. Each board is made to order in ${MADE_IN.en} and sold since ${FOUNDING_YEAR}. A popular gift for surfers, ocean lovers and anyone looking for a personal photo gift.`,
-  he: `ליטבורד הוא מותג ישראלי לעיצובי קיר בעבודת יד בהשראת גלישה. המוצר המרכזי: גלשן קיר מעץ אורן מלא, עם נורות לד באור חם ו-${PHOTOS_PER_BOARD} תמונות שאתם בוחרים. כל לוח נבנה בהזמנה אישית ב${MADE_IN.he}, מאז ${FOUNDING_YEAR}. מתנה לגולשים, לחובבי ים ולמי שמחפש מתנה אישית עם תמונות.`,
+  he: `Lightboard הוא מותג ישראלי לעיצובי קיר בעבודת יד בהשראת גלישה. המוצר המרכזי: גלשן קיר מעץ אורן מלא, עם נורות לד באור חם ו-${PHOTOS_PER_BOARD} תמונות שאתם בוחרים. כל לוח נבנה בהזמנה אישית ב${MADE_IN.he}, מאז ${FOUNDING_YEAR}. מתנה לגולשים, לחובבי ים ולמי שמחפש מתנה אישית עם תמונות.`,
 } as const;
 
 /** Gift use cases and search phrases the brand should answer. */

@@ -1,4 +1,5 @@
 import {useState, useCallback, useEffect, useId, useRef} from 'react';
+import type {CSSProperties, ReactNode} from 'react';
 import Cropper from 'react-easy-crop';
 import type {Area, Point} from 'react-easy-crop';
 import type {CropPixels} from '~/lib/photo-canvas';
@@ -11,6 +12,12 @@ type CropDialogProps = {
   cancelLabel: string;
   zoomLabel: string;
   hint?: string;
+  /** Crop aspect, width / height (default square). */
+  aspect?: number;
+  /** Drawn over the crop area (e.g. the board outline). */
+  overlay?: ReactNode;
+  /** Live preview beside the stage, re-rendered on every pan / zoom. */
+  renderPreview?: (cropPixels: CropPixels | null) => ReactNode;
   onSave: (cropPixels: CropPixels) => void;
   onCancel: () => void;
 };
@@ -19,9 +26,9 @@ const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 /**
- * Square-aspect crop modal.
+ * Crop modal (square by default; the Printboard uses the board's aspect).
  *
- * - `objectFit="cover"`: the photo always fills the square (no letterbox
+ * - `objectFit="cover"`: the photo always fills the crop (no letterbox
  *   bars), so what you see is what prints.
  * - Real modal behaviour: initial focus, Tab trap, Escape closes, focus
  *   returns to the control that opened it.
@@ -37,6 +44,9 @@ export function CropDialog({
   cancelLabel,
   zoomLabel,
   hint,
+  aspect = 1,
+  overlay,
+  renderPreview,
   onSave,
   onCancel,
 }: CropDialogProps) {
@@ -89,12 +99,17 @@ export function CropDialog({
     };
   }, []);
 
-  const handleCropComplete = useCallback(
-    (_area: Area, areaPixels: Area) => {
-      setCroppedAreaPixels(areaPixels);
-    },
-    [],
+  const handleCropComplete = useCallback((_area: Area, areaPixels: Area) => {
+    setCroppedAreaPixels(areaPixels);
+  }, []);
+  // Only the live preview needs every intermediate frame.
+  const [liveArea, setLiveArea] = useState<CropPixels | null>(
+    initialCrop ?? null,
   );
+  const handleCropAreaChange = useCallback((_area: Area, areaPixels: Area) => {
+    setLiveArea(areaPixels);
+  }, []);
+  const wide = aspect !== 1;
 
   function handleSave() {
     if (croppedAreaPixels) onSave(croppedAreaPixels);
@@ -115,25 +130,46 @@ export function CropDialog({
         onClick={onCancel}
         tabIndex={-1}
       />
-      <div className="crop-dialog__panel" ref={panelRef}>
+      <div
+        className={`crop-dialog__panel${wide ? ' is-tall' : ''}`}
+        ref={panelRef}
+      >
         <h2 className="crop-dialog__title" id={titleId}>
           {slotLabel}
         </h2>
-        <div className="crop-dialog__stage">
-          <Cropper
-            image={imageUrl}
-            crop={crop}
-            zoom={zoom}
-            aspect={1}
-            cropShape="rect"
-            showGrid={true}
-            onCropChange={setCrop}
-            onZoomChange={setZoom}
-            onCropComplete={handleCropComplete}
-            objectFit="cover"
-            initialCroppedAreaPixels={initialCrop ?? undefined}
-            restrictPosition={true}
-          />
+        <div className="crop-dialog__body">
+          <div
+            className="crop-dialog__stage"
+            style={{'--crop-aspect': String(aspect)} as CSSProperties}
+          >
+            <Cropper
+              image={imageUrl}
+              crop={crop}
+              zoom={zoom}
+              aspect={aspect}
+              cropShape="rect"
+              showGrid={true}
+              onCropChange={setCrop}
+              onZoomChange={setZoom}
+              onCropComplete={handleCropComplete}
+              onCropAreaChange={
+                renderPreview ? handleCropAreaChange : undefined
+              }
+              objectFit="cover"
+              initialCroppedAreaPixels={initialCrop ?? undefined}
+              restrictPosition={true}
+            />
+            {overlay ? (
+              <div className="crop-dialog__overlay" aria-hidden="true">
+                {overlay}
+              </div>
+            ) : null}
+          </div>
+          {renderPreview ? (
+            <div className="crop-dialog__preview">
+              {renderPreview(liveArea)}
+            </div>
+          ) : null}
         </div>
         {hint ? (
           <p className="crop-dialog__hint" id={hintId}>

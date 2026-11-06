@@ -18,8 +18,8 @@ import type {
 
 const HOME_PATH_RE = /^\/([a-z]{2}\/?)?$/;
 
-/** The one product the store sells — "Shop" goes straight to it. */
-export const SHOP_PATH = '/products/lightboard';
+/** The shop grid (Lightboard + Printboard). */
+export const SHOP_PATH = '/collections/all';
 
 type ResolvedCart = CartApiQueryFragment | CartReturn | null;
 type HeaderCart = Promise<ResolvedCart> | ResolvedCart;
@@ -72,7 +72,9 @@ function useActiveNavKey(items: NavItem[]): string | null {
   // Root data doesn't revalidate on client navigation, so derive the
   // locale-less path from the live location.
   const path = parseLocaleFromPath(location.pathname).rest || '/';
-  if (path.startsWith(SHOP_PATH)) return 'shop';
+  if (path.startsWith('/collections') || path.startsWith('/products')) {
+    return 'shop';
+  }
   if (path.startsWith('/pages/contact')) return 'contact';
   return null;
 }

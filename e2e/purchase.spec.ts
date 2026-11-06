@@ -64,7 +64,10 @@ test('buy a Lightboard up to the checkout redirect', async ({
     await expect(
       page.getByRole('button', {name: t.surprise.swap}),
     ).toBeVisible();
-    await expect(buy.getByRole('button', {name: t.needApprove})).toBeVisible();
+    // While photos await approval, "approve" is the only action: the
+    // add-to-cart block steps aside.
+    await expect(page.getByRole('button', {name: t.approve})).toBeVisible();
+    await expect(buy).toBeHidden();
   });
 
   await test.step('approve the photos', async () => {
@@ -119,4 +122,31 @@ test('buy a Lightboard up to the checkout redirect', async ({
     expect(url.protocol).toBe('https:');
     expect(url.pathname).toMatch(CHECKOUT_URL_RE);
   });
+});
+
+/**
+ * Regression: removing a photo after approval must un-approve, so the shopper
+ * can't add a board with an empty slot to the cart.
+ */
+test('removing a photo after approval blocks add to cart again', async ({
+  page,
+}) => {
+  await page.goto(PRODUCT_PATH);
+  await waitForHydration(page);
+  const buy = page.locator('.product-buy');
+
+  await page.getByRole('button', {name: t.surprise.button}).click();
+  await page.getByRole('button', {name: t.approve}).click();
+  await expect(page.getByText(t.ready)).toBeVisible();
+  await expect(
+    buy.getByRole('button', {name: new RegExp(he.product.addToCart)}),
+  ).toBeEnabled();
+
+  await page.getByRole('button', {name: new RegExp(`2.*${t.remove}`)}).click();
+
+  await expect(page.getByText(t.ready)).toHaveCount(0);
+  await expect(buy.getByRole('button', {name: t.needOnePhoto})).toBeVisible();
+  await expect(
+    buy.getByRole('button', {name: new RegExp(he.product.addToCart)}),
+  ).toHaveCount(0);
 });

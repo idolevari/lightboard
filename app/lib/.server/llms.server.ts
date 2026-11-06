@@ -16,7 +16,7 @@ import {
   HOW_TO_ORDER,
   MADE_IN,
   BOARDS_MADE_LABEL,
-  PERSONALIZED_TAG,
+  isPersonalized,
 } from '~/lib/brand-facts';
 import {formatPrice} from '~/lib/meta';
 import {SITE_NAME, SITE_URL, absoluteUrl} from '~/lib/seo-urls';
@@ -148,7 +148,7 @@ function productFacts(data: LlmsData, product: LlmsProduct): Array<string> {
   const amount = Number(price.amount);
   const he = colors(product, 'he');
   const en = colors(product, 'en');
-  const personalized = product.tags.includes(PERSONALIZED_TAG);
+  const personalized = isPersonalized(product.tags);
   return [
     `- Product: ${product.title}${brandName(product.vendor) === product.title ? '' : ` by ${brandName(product.vendor)}`}`,
     `- Price: ${formatPrice(price)} (${price.currencyCode}, VAT included)${product.availableForSale ? '' : ' (currently sold out)'}`,

@@ -13,6 +13,8 @@ type StickyBuyBarProps = {
   /** Photos approved (or not required) → the real CTA adds to cart. */
   ready: boolean;
   available: boolean;
+  /** Pending label override (Printboard: "choose a design"). */
+  pendingLabel?: string;
 };
 
 /**
@@ -34,13 +36,15 @@ export function StickyBuyBar({
   colorName,
   ready,
   available,
+  pendingLabel,
 }: StickyBuyBarProps) {
   const {dict} = useI18n();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     const target = buyRef.current;
-    if (!target || typeof IntersectionObserver === 'undefined') return undefined;
+    if (!target || typeof IntersectionObserver === 'undefined')
+      return undefined;
     const mq = window.matchMedia('(max-width: 768px)');
     let intersecting = true;
     const sync = () => setVisible(mq.matches && !intersecting);
@@ -67,9 +71,8 @@ export function StickyBuyBar({
   }, [visible]);
 
   function forward() {
-    const real = buyRef.current?.querySelector<HTMLButtonElement>(
-      'button.atc-btn',
-    );
+    const real =
+      buyRef.current?.querySelector<HTMLButtonElement>('button.atc-btn');
     if (!real || real.disabled) return;
     real.click();
   }
@@ -78,7 +81,7 @@ export function StickyBuyBar({
     ? dict.product.soldOut
     : ready
       ? dict.product.addToCart
-      : dict.product.choosePhotos;
+      : (pendingLabel ?? dict.product.choosePhotos);
 
   return (
     <div
@@ -98,7 +101,9 @@ export function StickyBuyBar({
           />
         ) : null}
         <span className="sticky-buy__text">
-          {colorName ? <span className="sticky-buy__color">{colorName}</span> : null}
+          {colorName ? (
+            <span className="sticky-buy__color">{colorName}</span>
+          ) : null}
           <Price data={price} className="sticky-buy__price" />
         </span>
       </div>
@@ -114,4 +119,3 @@ export function StickyBuyBar({
     </div>
   );
 }
-

@@ -1,6 +1,6 @@
 import {NavLink, useNavigate} from 'react-router';
 import {useI18n} from '~/lib/useI18n';
-import {useBusiness, whatsappHref} from '~/lib/brand';
+import {useBusiness} from '~/lib/brand';
 import {openCookiePreferences} from '~/lib/consent';
 import {WaveDivider} from '~/components/illustrations';
 
@@ -8,7 +8,6 @@ export function Footer() {
   const {dict, to} = useI18n();
   const f = dict.footer;
   const b = useBusiness();
-  const whatsapp = whatsappHref(b);
 
   return (
     <footer className="footer">
@@ -23,33 +22,21 @@ export function Footer() {
             height="33"
             decoding="async"
           />
-          <span className="footer-tagline" lang="en">
-            living · design · surfing
-          </span>
           <p className="footer-desc">{f.brandDesc}</p>
-          {(b?.instagram || whatsapp) && (
-            <div className="footer-social">
-              {b?.instagram && (
-                <a
-                  href={b.instagram}
-                  aria-label="Instagram"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  <InstagramIcon />
-                </a>
-              )}
-              {whatsapp && (
-                <a
-                  href={whatsapp}
-                  aria-label="WhatsApp"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  <img src="/whatsapp.svg" alt="" width="40" height="40" />
-                </a>
-              )}
-            </div>
+          {b?.instagram && (
+            <a
+              className="footer-ig"
+              href={b.instagram}
+              target="_blank"
+              rel="noreferrer"
+              // The accessible name must contain the visible handle (WCAG 2.5.3).
+              aria-label={`Instagram @${instagramHandle(b.instagram)}`}
+            >
+              <InstagramIcon />
+              <span lang="en" dir="ltr">
+                @{instagramHandle(b.instagram)}
+              </span>
+            </a>
           )}
         </div>
 
@@ -77,41 +64,27 @@ export function Footer() {
   );
 }
 
-/** Instagram app icon (official gradient), drawn inline so it stays crisp. */
+/** Instagram glyph, single-colour line style to match the brand. */
 function InstagramIcon() {
   return (
-    <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true">
-      <defs>
-        <radialGradient id="ig-grad" cx="0.3" cy="1.07" r="1.2">
-          <stop offset="0" stopColor="#fdf497" />
-          <stop offset="0.05" stopColor="#fdf497" />
-          <stop offset="0.45" stopColor="#fd5949" />
-          <stop offset="0.6" stopColor="#d6249f" />
-          <stop offset="0.9" stopColor="#285AEB" />
-        </radialGradient>
-      </defs>
-      <rect width="40" height="40" rx="11" fill="url(#ig-grad)" />
-      <rect
-        x="9.5"
-        y="9.5"
-        width="21"
-        height="21"
-        rx="6"
-        fill="none"
-        stroke="#fff"
-        strokeWidth="2.4"
-      />
-      <circle
-        cx="20"
-        cy="20"
-        r="5"
-        fill="none"
-        stroke="#fff"
-        strokeWidth="2.4"
-      />
-      <circle cx="26.2" cy="13.8" r="1.5" fill="#fff" />
+    <svg
+      width="26"
+      height="26"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      aria-hidden="true"
+    >
+      <rect x="3" y="3" width="18" height="18" rx="5.5" />
+      <circle cx="12" cy="12" r="4.2" />
+      <circle cx="17.4" cy="6.6" r="1.1" fill="currentColor" stroke="none" />
     </svg>
   );
+}
+
+function instagramHandle(url: string) {
+  return url.replace(/\/+$/, '').split('/').pop() ?? 'lightboardshop';
 }
 
 /**
