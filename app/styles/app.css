@@ -4646,3 +4646,6 @@ body.a11y-no-motion .hero-media img { transform: none !important; transition: no
 
 /* PDP price: no glow behind it. */
 .pdp-price::before { content: none; display: none; }
+
+/* While photos await approval, the customizer's approve button is the only CTA. */
+.product-buy.is-awaiting-approval { display: none; }

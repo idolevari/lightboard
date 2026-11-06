@@ -12,8 +12,15 @@ import {
 import {ProductPrice} from '~/components/ProductPrice';
 import {AutoLang} from '~/components/AutoLang';
 import {useI18n} from '~/lib/useI18n';
-import {getOptionValueHex, translateOptionValue} from '~/lib/productOptionLabels';
-import {ProductOptions, ProductCartAction} from '~/components/ProductForm';
+import {
+  getOptionValueHex,
+  translateOptionValue,
+} from '~/lib/productOptionLabels';
+import {
+  ProductOptions,
+  ProductCartAction,
+  PHOTO_SLOTS,
+} from '~/components/ProductForm';
 import {PhotoCustomizer} from '~/components/PhotoCustomizer/PhotoCustomizer';
 import {StickyBuyBar} from '~/components/StickyBuyBar';
 import {Doodle} from '~/components/illustrations';
@@ -156,7 +163,12 @@ async function loadCriticalData({context, params, request}: Route.LoaderArgs) {
 
 type MetafieldValue = {value?: string | null} | null | undefined;
 
-type MarketingSpec = {id: string; label: string; value: string; position: number};
+type MarketingSpec = {
+  id: string;
+  label: string;
+  value: string;
+  position: number;
+};
 
 type MarketingSource = {
   eyebrow_he?: MetafieldValue;
@@ -194,14 +206,8 @@ type MarketingSource = {
 };
 
 /** Hebrew is canonical; English falls back to it so nothing renders blank. */
-function pick(
-  he: MetafieldValue,
-  en: MetafieldValue,
-  locale: string,
-): string {
-  return locale === 'en'
-    ? en?.value || he?.value || ''
-    : he?.value || '';
+function pick(he: MetafieldValue, en: MetafieldValue, locale: string): string {
+  return locale === 'en' ? en?.value || he?.value || '' : he?.value || '';
 }
 
 /**
@@ -319,9 +325,7 @@ export default function Product() {
   );
 
   const {dict} = useI18n();
-  const [photosFilled, setPhotosFilled] = useState(
-    initialPhotoState ? 3 : 0,
-  );
+  const [photosFilled, setPhotosFilled] = useState(initialPhotoState ? 3 : 0);
   const buyRef = useRef<HTMLDivElement>(null);
   const colorValue =
     selectedVariant?.selectedOptions.find((o) => o.name === 'Color')?.value ??
@@ -330,23 +334,35 @@ export default function Product() {
     .find((o) => o.name === 'Color')
     ?.optionValues.find((v) => v.name === colorValue)?.swatch;
   const colorHex = colorValue
-    ? colorSwatch?.color ?? getOptionValueHex(colorValue) ?? null
+    ? (colorSwatch?.color ?? getOptionValueHex(colorValue) ?? null)
     : null;
   const ready = !requiresPhotos || Boolean(photoAttributes);
+  // All photos are in but not approved yet: the customizer's own "approve"
+  // button is the one action, so the add-to-cart block steps aside.
+  const awaitingApproval =
+    requiresPhotos &&
+    !isEditing &&
+    !photoAttributes &&
+    photosFilled >= PHOTO_SLOTS;
   const available = Boolean(selectedVariant?.availableForSale);
-  const usps = ((dict.usp?.items ?? []) as Array<{icon: string; label: string}>)
-    .slice(0, 3);
+  const usps = (
+    (dict.usp?.items ?? []) as Array<{icon: string; label: string}>
+  ).slice(0, 3);
 
   // ATC tapped while photos are missing: bring the customizer into view and
   // put focus on the first empty slot so the next action is obvious.
   function goToCustomizer() {
     const root = document.getElementById(CUSTOMIZER_ID);
     if (!root) return;
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const reduce = window.matchMedia(
+      '(prefers-reduced-motion: reduce)',
+    ).matches;
     root.scrollIntoView({block: 'start', behavior: reduce ? 'auto' : 'smooth'});
     const target =
       root.querySelector<HTMLElement>('.board-slots__pick:not([disabled])') ??
-      root.querySelector<HTMLElement>('.photo-customizer__approve:not([disabled])');
+      root.querySelector<HTMLElement>(
+        '.photo-customizer__approve:not([disabled])',
+      );
     target?.focus({preventScroll: true});
     root.classList.remove('is-pulsing');
     // Restart the attention pulse on the slot strip.
@@ -409,7 +425,10 @@ export default function Product() {
           />
         </div>
       ) : null}
-      <div className="product-buy" ref={buyRef}>
+      <div
+        className={`product-buy${awaitingApproval ? ' is-awaiting-approval' : ''}`}
+        ref={buyRef}
+      >
         <ProductCartAction
           selectedVariant={selectedVariant}
           requiresPhotos={requiresPhotos}

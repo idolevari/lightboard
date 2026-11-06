@@ -134,7 +134,7 @@ type ProductCartActionProps = {
   onNeedPhotos?: () => void;
 };
 
-const PHOTO_SLOTS = 3;
+export const PHOTO_SLOTS = 3;
 
 /**
  * Cart submission panel.
