@@ -1295,7 +1295,6 @@ function UspStrip() {
   if (items.length === 0) return null;
   return (
     <section className="usp" aria-label={dict.usp.label}>
-      <WaveDivider flip className="band-wave-top" />
       <ul className="usp-list container" role="list">
         {items.map((item, idx) => (
           <li key={item.label} className="usp-item">
@@ -1306,7 +1305,6 @@ function UspStrip() {
           </li>
         ))}
       </ul>
-      <WaveDivider className="section-wave" />
     </section>
   );
 }

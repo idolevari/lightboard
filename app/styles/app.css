@@ -4616,3 +4616,7 @@ body.a11y-no-motion .hero-media img { transform: none !important; transition: no
 }
 .hero-waves .wl-track--back path { fill-opacity: 0.35; }
 .hero-waves .wl-track--mid path { fill-opacity: 0.6; }
+
+/* USP strip sits on the page's paper texture: no band colour, no waves. */
+.usp { background: none; padding: 36px 0 40px; }
+@media (min-width: 900px) { .usp { padding: 56px 0 60px; } }
