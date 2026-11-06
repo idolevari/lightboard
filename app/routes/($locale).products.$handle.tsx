@@ -361,9 +361,6 @@ export default function Product() {
     <div className="product">
       <JsonLd data={jsonLd} />
       <header className="product-head">
-        {marketing.eyebrow ? (
-          <p className="pdp-eyebrow">{marketing.eyebrow}</p>
-        ) : null}
         {marketing.headlineHtml ? (
           <h1
             className="pdp-title"
@@ -403,11 +400,6 @@ export default function Product() {
       </div>
       {requiresPhotos ? (
         <div className="product-media" id={CUSTOMIZER_ID}>
-          {photosFilled === 0 && !isEditing && dict.hand?.customizer ? (
-            <span className="hand-note pdp-hand" aria-hidden="true">
-              {dict.hand.customizer}
-            </span>
-          ) : null}
           <PhotoCustomizer
             cartId={cartId}
             initialState={initialPhotoState}
