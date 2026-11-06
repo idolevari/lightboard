@@ -19,7 +19,9 @@ import {
 
 describe('board outline', () => {
   it('derives the aspect from the viewBox (≈0.3254, taller than wide)', () => {
-    expect(BOARD_ASPECT).toBeCloseTo(BOARD_VIEWBOX.width / BOARD_VIEWBOX.height);
+    expect(BOARD_ASPECT).toBeCloseTo(
+      BOARD_VIEWBOX.width / BOARD_VIEWBOX.height,
+    );
     expect(BOARD_ASPECT).toBeCloseTo(0.3254, 4);
   });
 

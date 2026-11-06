@@ -1,8 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {
-  PENDING_PRODUCTS,
-  legacyRedirect,
-} from '~/lib/.server/legacy-redirects';
+import {PENDING_PRODUCTS, legacyRedirect} from '~/lib/.server/legacy-redirects';
 
 const ORIGIN = 'https://lightboard.co.il';
 
@@ -27,9 +24,7 @@ describe('legacyRedirect', () => {
     expect(target('/checkout/')).toBe(`${ORIGIN}/cart`);
     expect(target('/my-account')).toBe(`${ORIGIN}/account`);
     expect(target('/about')).toBe(`${ORIGIN}/#story`);
-    expect(target('/refund_returns')).toBe(
-      `${ORIGIN}/policies/refund-policy`,
-    );
+    expect(target('/refund_returns')).toBe(`${ORIGIN}/policies/refund-policy`);
     expect(target('/feed')).toBe(`${ORIGIN}/`);
   });
 
@@ -60,9 +55,9 @@ describe('legacyRedirect', () => {
   it('sends pending and unknown product slugs to the catalogue', () => {
     expect(PENDING_PRODUCTS.has('surf-prints')).toBe(true);
     expect(target('/product/surf-prints/')).toBe(`${ORIGIN}/collections/all`);
-    expect(
-      target(`/product/${encodeURIComponent('מתלה-סקייטבורד')}`),
-    ).toBe(`${ORIGIN}/collections/all`);
+    expect(target(`/product/${encodeURIComponent('מתלה-סקייטבורד')}`)).toBe(
+      `${ORIGIN}/collections/all`,
+    );
     expect(target('/product/never-existed')).toBe(`${ORIGIN}/collections/all`);
   });
 
