@@ -78,9 +78,7 @@ type StoryAliasedNode = {
   p1_en?: AliasedField;
   p2_he?: AliasedField;
   p2_en?: AliasedField;
-  stats?:
-    | {references?: {nodes?: Array<StoryStatNode>} | null}
-    | null;
+  stats?: {references?: {nodes?: Array<StoryStatNode>} | null} | null;
 };
 
 type ProductSpecNode = {
@@ -318,9 +316,9 @@ function extractHeroSection(
 ): HeroSection | null {
   if (!node) return null;
   let tapeItems: Array<string> = [];
-  const tapeRaw = (
-    node as Record<string, AliasedField>
-  )[`tape_items_${locale === 'en' ? 'en' : 'he'}`]?.value;
+  const tapeRaw = (node as Record<string, AliasedField>)[
+    `tape_items_${locale === 'en' ? 'en' : 'he'}`
+  ]?.value;
   const tapeFallback = node.tape_items_he?.value;
   try {
     const parsed: unknown = JSON.parse(tapeRaw ?? tapeFallback ?? '[]');
@@ -330,8 +328,16 @@ function extractHeroSection(
   }
   return {
     eyebrow: pickField(node as Record<string, AliasedField>, 'eyebrow', locale),
-    titleLine1: pickField(node as Record<string, AliasedField>, 'title_line_1', locale),
-    titleLine2: pickField(node as Record<string, AliasedField>, 'title_line_2', locale),
+    titleLine1: pickField(
+      node as Record<string, AliasedField>,
+      'title_line_1',
+      locale,
+    ),
+    titleLine2: pickField(
+      node as Record<string, AliasedField>,
+      'title_line_2',
+      locale,
+    ),
     kicker: pickField(node as Record<string, AliasedField>, 'kicker', locale),
     cta: pickField(node as Record<string, AliasedField>, 'cta', locale),
     tape: tapeItems,
@@ -358,8 +364,16 @@ function extractStorySection(
   return {
     tag: node?.tag?.value ?? '',
     eyebrow: pickField(node as Record<string, AliasedField>, 'eyebrow', locale),
-    titleLine1: pickField(node as Record<string, AliasedField>, 'title_line_1', locale),
-    titleLine2: pickField(node as Record<string, AliasedField>, 'title_line_2', locale),
+    titleLine1: pickField(
+      node as Record<string, AliasedField>,
+      'title_line_1',
+      locale,
+    ),
+    titleLine2: pickField(
+      node as Record<string, AliasedField>,
+      'title_line_2',
+      locale,
+    ),
     p1: pickField(node as Record<string, AliasedField>, 'p1', locale),
     p2: pickField(node as Record<string, AliasedField>, 'p2', locale),
     stats,
@@ -444,7 +458,11 @@ export default function Homepage() {
               faqsResponse?.metaobjects?.nodes,
               locale,
               [
-                {target: 'question', heKey: 'question_he', enKey: 'question_en'},
+                {
+                  target: 'question',
+                  heKey: 'question_he',
+                  enKey: 'question_en',
+                },
                 {target: 'answer', heKey: 'answer_he', enKey: 'answer_en'},
               ],
             );
@@ -719,7 +737,12 @@ const HERO_SLIDES: Array<HeroSlideForRender> = [
     // The bus spans ~60% of the frame, so a 9:16 crop would slice it.
     // Phones get the native-portrait van-bed frame instead
     // (lightboard-03-van-bed-ocean-view.jpg · Jeremy Bishop · Unsplash License).
-    mobile: {img: PHOTOS.vanBed.url, w: PHOTOS.vanBed.w, h: PHOTOS.vanBed.h, pos: '55%'},
+    mobile: {
+      img: PHOTOS.vanBed.url,
+      w: PHOTOS.vanBed.w,
+      h: PHOTOS.vanBed.h,
+      pos: '55%',
+    },
   },
   {
     img: `${CDN}/tim-marshall-hIHh4E4_OGA-unsplash.jpg?v=1777138490`,
@@ -757,7 +780,12 @@ const HERO_SLIDES: Array<HeroSlideForRender> = [
 const HERO_DESKTOP_WIDTHS = [900, 1400, 2000, 2800];
 const HERO_MOBILE_WIDTHS = [540, 720, 900, 1080, 1350];
 
-function portrait(url: string, focalX: string | undefined, w?: number, h?: number) {
+function portrait(
+  url: string,
+  focalX: string | undefined,
+  w?: number,
+  h?: number,
+) {
   return cropSrcSet(url, {
     ratio: 9 / 16,
     focalX: focalX ?? '50%',
@@ -847,7 +875,10 @@ function Hero({
     const mount = () => {
       const ric = (
         window as Window & {
-          requestIdleCallback?: (cb: () => void, o?: {timeout: number}) => number;
+          requestIdleCallback?: (
+            cb: () => void,
+            o?: {timeout: number},
+          ) => number;
         }
       ).requestIdleCallback;
       if (ric) idleId = ric(() => setMountAll(true), {timeout: 3000});
@@ -861,8 +892,9 @@ function Hero({
     return () => {
       window.removeEventListener('load', mount);
       if (timer) window.clearTimeout(timer);
-      const cic = (window as Window & {cancelIdleCallback?: (id: number) => void})
-        .cancelIdleCallback;
+      const cic = (
+        window as Window & {cancelIdleCallback?: (id: number) => void}
+      ).cancelIdleCallback;
       if (idleId && cic) cic(idleId);
     };
   }, [mountAll]);
@@ -934,11 +966,26 @@ function Hero({
           {content?.cta && (
             <a href="#featured" className="hero-cta">
               <span>{content.cta}</span>
-              <span className="arrow" aria-hidden="true">→</span>
+              <span className="arrow" aria-hidden="true">
+                <svg
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M3 8h10M9 4l4 4-4 4" />
+                </svg>
+              </span>
             </a>
           )}
         </div>
-        <div className="hero-dots" role="group" aria-label={dict.hero.slideAria}>
+        <div
+          className="hero-dots"
+          role="group"
+          aria-label={dict.hero.slideAria}
+        >
           {activeSlides.map((s, j) => (
             <button
               key={s.id ?? s.img}
@@ -966,10 +1013,14 @@ function Hero({
 
       <div className="hero-stamp" aria-hidden="true">
         <StampBadge />
-        {dict.hand?.stamp && <span className="hand-note">{dict.hand.stamp}</span>}
+        {dict.hand?.stamp && (
+          <span className="hand-note">{dict.hand.stamp}</span>
+        )}
       </div>
 
-      <div className="scroll-hint" aria-hidden="true">SCROLL</div>
+      <div className="scroll-hint" aria-hidden="true">
+        SCROLL
+      </div>
 
       {tape.length > 0 && (
         <div className="hero-tape" aria-hidden="true">
@@ -1053,9 +1104,8 @@ function FeaturedLightboard({
   // Drive the swatch picker from the live Shopify variant data so the merchant
   // can add/rename/recolor variants in admin without a code deploy.
   const colorOption =
-    featuredProduct?.options?.find(
-      (o: {name: string}) => o.name === 'Color',
-    ) ?? null;
+    featuredProduct?.options?.find((o: {name: string}) => o.name === 'Color') ??
+    null;
   const colorValues: Array<{
     id: string;
     name: string;
@@ -1069,7 +1119,11 @@ function FeaturedLightboard({
   // — the merchant edits these in Shopify Admin → Products → Lightboard.
   const eyebrow = localizedMetafield(featuredProduct, 'eyebrow', locale);
   const headlineHtml = localizedMetafield(featuredProduct, 'headline', locale);
-  const description = localizedMetafield(featuredProduct, 'description', locale);
+  const description = localizedMetafield(
+    featuredProduct,
+    'description',
+    locale,
+  );
   const tagMadeToOrder = localizedMetafield(
     featuredProduct,
     'tagMadeToOrder',
@@ -1232,7 +1286,9 @@ function BuyBar({
       <div className="feat3-actions">
         <Link to={href} prefetch="intent" className="feat3-cta">
           <span>{ctaPrimary}</span>
-          <span className="arrow" aria-hidden="true">→</span>
+          <span className="arrow" aria-hidden="true">
+            →
+          </span>
         </Link>
       </div>
     </div>
@@ -1360,12 +1416,7 @@ function Story({content}: {content: StorySection | null}) {
               <div className="story-stats">
                 <Surfboard className="story-board" />
                 {content.stats.map((st, idx) => (
-                  <StoryStat
-                    key={st.id}
-                    n={st.n}
-                    k={st.k}
-                    delay={idx * 120}
-                  />
+                  <StoryStat key={st.id} n={st.n} k={st.k} delay={idx * 120} />
                 ))}
               </div>
             )}
@@ -1501,7 +1552,10 @@ function Testimonials({items}: {items: Array<MetaobjectFieldRecord>}) {
           </div>
         </Reveal>
         <Reveal delay={120}>
-          <div className="testify-stage" aria-live={rotate.paused ? 'polite' : 'off'}>
+          <div
+            className="testify-stage"
+            aria-live={rotate.paused ? 'polite' : 'off'}
+          >
             <blockquote key={i} className="testify-quote">
               «{q.body}»
             </blockquote>
@@ -1511,7 +1565,9 @@ function Testimonials({items}: {items: Array<MetaobjectFieldRecord>}) {
         <div className="testify-nav">
           <button
             type="button"
-            onClick={() => setI((x: number) => (x - 1 + quotes.length) % quotes.length)}
+            onClick={() =>
+              setI((x: number) => (x - 1 + quotes.length) % quotes.length)
+            }
             aria-label={t.prev}
             className="testify-nav-btn"
           >
@@ -1580,7 +1636,9 @@ function FinalCta({handle}: {handle?: string | null}) {
           {c.kicker && <p className="final-cta-kicker">{c.kicker}</p>}
           <Link to={href} prefetch="intent" className="hero-cta final-cta-btn">
             <span>{c.cta}</span>
-            <span className="arrow" aria-hidden="true">→</span>
+            <span className="arrow" aria-hidden="true">
+              →
+            </span>
           </Link>
         </Reveal>
       </div>
@@ -1743,7 +1801,6 @@ const HOMEPAGE_SECTIONS_QUERY = `#graphql
     }
   }
 `;
-
 
 export function ErrorBoundary() {
   return <RouteError />;

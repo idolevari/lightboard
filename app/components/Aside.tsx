@@ -1,10 +1,4 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import {createContext, useContext, useEffect, useRef, useState} from 'react';
 import {useId} from 'react';
 import type {ReactNode} from 'react';
 import {useI18n} from '~/lib/useI18n';
@@ -71,12 +65,12 @@ export function Aside({children, heading, type}: AsideProps) {
       {signal: abortController.signal},
     );
 
+    // Move focus into the dialog by focusing the panel itself (tabindex=-1,
+    // no visible ring). Focusing the first link made Safari draw a focus
+    // ring on it every time the drawer opened; keyboard users still reach
+    // the first control with a single Tab.
     const focusTimer = setTimeout(() => {
-      const focusables = asideRef.current?.querySelectorAll<HTMLElement>(
-        'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
-      );
-      const target = focusables?.[1] ?? focusables?.[0];
-      target?.focus();
+      asideRef.current?.focus({preventScroll: true});
     }, 50);
 
     return () => {
@@ -105,7 +99,7 @@ export function Aside({children, heading, type}: AsideProps) {
         tabIndex={expanded ? 0 : -1}
         aria-label={dict.common.close}
       />
-      <aside ref={asideRef} {...(expanded ? {} : {inert: ''})}>
+      <aside ref={asideRef} tabIndex={-1} {...(expanded ? {} : {inert: ''})}>
         <header>
           <h2 id={id}>{heading}</h2>
           <button
