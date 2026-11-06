@@ -1,0 +1,259 @@
+/*
+ * Product page: layout, gallery, buy box, sticky mobile buy bar
+ * and the add-to-cart button.
+ */
+
+/* ============================================
+   ADD TO CART — full width, never a dead button
+   ============================================ */
+.atc { display: flex; flex-direction: column; gap: 8px; }
+.atc form { margin: 0; }
+button.atc-btn,
+.atc-btn {
+  display: flex;
+  width: 100%;
+  min-height: 56px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--white);
+  font-family: var(--sans);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  cursor: pointer;
+}
+button.atc-btn:hover:not(:disabled) { background: var(--ink-2); color: var(--white); }
+button.atc-btn--pending {
+  background: transparent;
+  color: var(--ink);
+  border: 1.5px solid var(--ink);
+}
+button.atc-btn--pending:hover { background: var(--cream-2); color: var(--ink); }
+button.atc-btn:disabled { background: var(--cream-3); color: var(--ink-soft); cursor: not-allowed; }
+.atc-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+.atc-progress { display: inline-flex; gap: 4px; }
+.atc-progress span {
+  width: 18px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--cream-3);
+}
+.atc-progress span.on { background: var(--teal-text); }
+
+/* ---------- Product page layout ---------- */
+.pdp-specs { grid-area: specs; }
+.pdp-home {
+  grid-area: home;
+  margin-top: clamp(24px, 5vw, 56px);
+  padding-top: clamp(28px, 4vw, 48px);
+  border-top: 1px solid var(--rule);
+}
+.pdp-eyebrow {
+  margin: 0 0 10px;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--driftwood);
+}
+.product h1.pdp-title {
+  font-size: clamp(40px, 9vw, 64px);
+  line-height: 0.98;
+  margin: 0 0 14px;
+  /* Product headline: one clean word, one weight, one colour. */
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+.pdp-title em { color: var(--teal-ink); }
+.pdp-price {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 20px;
+}
+.pdp-price::before {
+  position: absolute;
+  inset: -28px 0 -14px;
+  z-index: -1;
+  background: var(--glow);
+  opacity: 0.75;
+  pointer-events: none;
+  /* PDP price: no glow behind it. */
+  content: none;
+  display: none;
+}
+.product-head .product-price.product-price--display { font-size: inherit; }
+.price-display {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 4px;
+  font-family: var(--serif);
+  font-weight: 300;
+  font-variant-numeric: lining-nums;
+  color: var(--ink);
+}
+.price-display .num { font-size: 46px; line-height: 1; letter-spacing: -0.02em; }
+.price-display .cur { font-size: 21px; line-height: 1; margin-top: 4px; color: var(--sunset-ink); }
+.pdp-usps {
+  list-style: none;
+  margin: 18px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+.pdp-usps li { display: inline-flex; align-items: center; gap: 6px; margin: 0; }
+.product-media .board-canvas {
+  border-radius: 18px;
+  box-shadow: 0 0 0 8px var(--white), 0 0 0 9px var(--rule), 0 28px 50px -30px rgba(11,58,74,0.45);
+}
+.product-media .board { padding: 9px; }
+.product .feat3-swatch .dot { width: 22px; height: 22px; }
+.pdp-h2 {
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: 28px;
+  line-height: 1.1;
+  margin: 0 0 12px;
+}
+.pdp-specs .feat3-ticker { margin: 0; }
+.pdp-specs dd { margin: 0; }
+.pdp-home-title {
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: clamp(32px, 5vw, 52px);
+  line-height: 1;
+  margin: 0 0 24px;
+}
+.pdp-home-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.pdp-home figure { margin: 0; }
+.pdp-home-main img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  border-radius: 18px;
+}
+.pdp-home-room {
+  position: relative;
+  width: 72%;
+  margin-inline-start: auto;
+  margin-top: -64px;
+  padding: 10px 10px 14px;
+  background: var(--white);
+  box-shadow: 0 22px 40px -20px rgba(11, 58, 74, 0.45);
+  transform: rotate(2.5deg);
+}
+.pdp-home-grid.is-single .pdp-home-room { width: 100%; margin-top: 0; transform: none; }
+.pdp-home-room img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 5; object-fit: cover; }
+.pdp-home-room figcaption { margin-top: 10px; font-size: 14px; color: var(--driftwood); }
+@media (min-width: 900px) {
+  .pdp-home-grid { grid-template-columns: 7fr 5fr; align-items: end; gap: 40px; max-width: 980px; }
+  .pdp-home-grid.is-single { grid-template-columns: minmax(0, 560px); }
+  .pdp-home-room { width: auto; margin: 0 0 32px; }
+}
+
+/* ---------- Sticky mobile buy bar ---------- */
+.sticky-buy { display: none; }
+@media (max-width: 768px) {
+  .sticky-buy {
+    position: fixed;
+    z-index: 8500; /* under the FABs (9000), over content */
+    inset-inline: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 64px;
+    padding: 8px var(--container-px) calc(8px + env(safe-area-inset-bottom, 0px));
+    background: rgba(244, 237, 224, 0.92);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid var(--rule);
+    box-shadow: 0 -10px 28px -14px rgba(11, 58, 74, 0.35);
+    transform: translateY(110%);
+    transition: transform var(--dur-ui) var(--ease-out-soft);
+  }
+  .sticky-buy.is-visible { transform: none; }
+  /* FABs ride above the bar while it is up. */
+  .wa-fab, .a11y-toggle { transition: translate var(--dur-ui) var(--ease-out-soft), transform 0.15s ease, filter 0.15s ease, background 0.15s ease; }
+  body.has-buybar :is(.wa-fab, .a11y-toggle) {
+    translate: 0 calc(-72px - env(safe-area-inset-bottom, 0px));
+  }
+  body.has-buybar .a11y-panel { bottom: calc(140px + env(safe-area-inset-bottom, 0px)); }
+  /* Constant reserve on the PDP (the bar is always in the DOM there), so
+     showing it never shifts layout. */
+  html:has(.sticky-buy) .footer { padding-bottom: calc(168px + env(safe-area-inset-bottom, 0px)); }
+  html:has(.overlay.expanded) .sticky-buy,
+  html:has(.crop-dialog) .sticky-buy { display: none; }
+}
+.sticky-buy__info { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.sticky-buy__dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  box-shadow: 0 0 0 2px var(--white), 0 0 0 3.5px var(--sunset);
+}
+.sticky-buy__text { display: flex; flex-direction: column; line-height: 1.15; min-width: 0; }
+.sticky-buy__color { font-size: 12px; color: var(--driftwood); }
+.sticky-buy__price { font-family: var(--serif); font-size: 20px; color: var(--ink); }
+.sticky-buy__btn {
+  min-height: 48px;
+  padding: 10px 22px;
+  border-radius: 999px;
+  background: var(--brand-lime);
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: transform var(--dur-tap) var(--ease-pop), background var(--dur-ui) ease;
+}
+.sticky-buy__btn:hover { background: var(--brand-lime-2); }
+.sticky-buy__btn:active { transform: scale(0.97); }
+.sticky-buy__btn.is-pending { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--ink); }
+.sticky-buy__btn:disabled { background: var(--cream-3); color: var(--ink-soft); cursor: not-allowed; }
+body.a11y-high-contrast .sticky-buy { background: #000; border-top: 2px solid #fff; }
+body.a11y-high-contrast .sticky-buy__btn { background: #000 !important; color: #ffeb3b !important; border: 2px solid #ffeb3b !important; box-shadow: none; }
+
+/* Primary ATC: lime, one primary colour site-wide (M9). */
+button.atc-btn:not(.atc-btn--pending):not(:disabled) { background: var(--brand-lime); color: var(--ink); }
+button.atc-btn:not(.atc-btn--pending):hover:not(:disabled) { background: var(--brand-lime-2); color: var(--ink); }
+button.atc-btn { transition: transform var(--dur-tap) var(--ease-pop), background var(--dur-ui) ease; }
+button.atc-btn:active:not(:disabled) { transform: scale(0.98); }
+.product h1.pdp-title em { font-weight: inherit; color: inherit; }
+
+/* While photos await approval, the customizer's approve button is the only CTA. */
+.product-buy.is-awaiting-approval { display: none; }
+
+/* PDP option label ("צבע"): a real heading, not a tiny mono caption. */
+.product-form .feat3-picker-head {
+  font-family: var(--sans);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink);
+  margin-bottom: 14px;
+}

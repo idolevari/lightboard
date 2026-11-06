@@ -1,0 +1,129 @@
+/*
+ * Hydrogen aside (cart / search / menu drawer) and its overlay.
+ */
+
+/* ============================================
+   HYDROGEN CHROME — preserve cart aside + overlay mechanics
+   ============================================ */
+@media (max-width: 45em) {
+  html:has(.overlay.expanded) { overflow: hidden; }
+}
+
+aside {
+  background: var(--cream);
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.3);
+  height: 100vh;
+  width: min(var(--aside-width), 100vw);
+  position: fixed;
+  right: calc(-1 * var(--aside-width));
+  top: 0;
+  transition: transform 200ms ease-in-out;
+  color: var(--ink);
+}
+[dir="rtl"] aside {
+  right: auto;
+  left: calc(-1 * var(--aside-width));
+}
+
+aside header {
+  align-items: center;
+  border-bottom: 1px solid var(--rule);
+  display: flex;
+  height: var(--header-height);
+  justify-content: space-between;
+  padding: 0 24px;
+  background: var(--cream);
+  position: static;
+  color: var(--ink);
+}
+aside header h2 {
+  margin: 0;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 22px;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+aside header .close {
+  font-weight: bold;
+  opacity: 0.8;
+  text-decoration: none;
+  transition: all 200ms;
+  width: var(--tap-min);
+  height: var(--tap-min);
+  margin-inline-end: -10px;
+  border-radius: 50%;
+  color: var(--ink-soft);
+  font-size: 26px;
+  line-height: 1;
+  background: none;
+  border: none;
+}
+aside header .close:hover { opacity: 1; color: var(--ink); }
+aside .aside-body { margin: 1.5rem; }
+aside p { margin: 0 0 0.25rem; }
+aside p:last-child { margin: 0; }
+aside li { margin-bottom: 0.125rem; }
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.overlay {
+  background: rgba(11,58,74,0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  bottom: 0; left: 0; right: 0; top: 0;
+  opacity: 0;
+  pointer-events: none;
+  position: fixed;
+  transition: opacity 300ms ease-in-out;
+  visibility: hidden;
+  z-index: 200;
+}
+.overlay .close-outside {
+  background: transparent;
+  border: none;
+  color: transparent;
+  height: 100%;
+  left: 0;
+  position: absolute;
+  top: 0;
+  width: calc(100% - var(--aside-width));
+}
+.overlay .light { background: rgba(255, 255, 255, 0.5); }
+.overlay .cancel {
+  cursor: default;
+  height: 100%;
+  position: absolute;
+  width: 100%;
+}
+.overlay.expanded {
+  opacity: 1;
+  pointer-events: auto;
+  visibility: visible;
+}
+.overlay.expanded aside {
+  transform: translateX(calc(var(--aside-width) * -1));
+}
+[dir="rtl"] .overlay.expanded aside {
+  transform: translateX(var(--aside-width));
+}
+
+button.reset {
+  border: 0;
+  background: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+button.reset > * { margin: 0; }
+button.reset:not(:has(> *)) { height: 1.5rem; line-height: 1.5rem; }
+button.reset:hover:not(:has(> *)) { text-decoration: underline; cursor: pointer; }

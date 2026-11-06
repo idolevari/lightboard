@@ -1,0 +1,341 @@
+/*
+ * Site header: fixed nav bar, language toggle, cart button and
+ * the mobile menu drawer.
+ */
+
+/* ============================================
+   NAV  (the storefront header)
+   ============================================ */
+.header.lb-nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  padding: 22px 0;
+  background: transparent;
+  border: none;
+  height: auto;
+  min-height: 0;
+  transition: background 0.3s ease, padding 0.3s ease, box-shadow 0.3s ease, color 0.3s ease;
+  color: var(--white);
+  display: block;
+}
+.header.lb-nav.scrolled {
+  background: var(--cream);
+  padding: 12px 0;
+  box-shadow: 0 1px 0 var(--rule);
+  color: var(--ink);
+}
+.lb-nav-inner {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 24px;
+}
+.lb-nav-left, .lb-nav-right {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+.lb-nav-right { justify-content: flex-end; }
+@media (max-width: 720px) {
+  /* Compact three-zone mobile header: burger | logo | cart. Search,
+     account and language live in the burger drawer (MobileMenu). */
+  .lb-nav-inner { gap: 8px; }
+  .lb-nav-right, .lb-nav-left { gap: 8px; }
+  .lb-nav-right .lb-icon-btn,
+  .lb-nav-right .lb-lang-toggle--desktop { display: none; }
+}
+.lb-nav a.lb-nav-link {
+  position: relative;
+  padding: 4px 0;
+  opacity: 0.9;
+  transition: opacity 0.15s, color 0.15s;
+  color: inherit;
+}
+.lb-nav a.lb-nav-link:hover { opacity: 1; color: inherit; }
+.lb-nav a.lb-nav-link.active::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0;
+  bottom: -4px;
+  height: 1.5px;
+  background: currentColor;
+}
+
+/* Hamburger / desktop menu link visibility swap.
+   Desktop: text links visible, burger hidden.
+   <720px: burger visible, text links hidden — menu items move to the
+   MobileMenuAside (already wired into PageLayout). */
+.lb-nav-burger {
+  display: none;
+  width: var(--tap-min);
+  height: var(--tap-min);
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.lb-nav-burger:hover { background: rgba(255,255,255,0.12); }
+.header.lb-nav.scrolled .lb-nav-burger:hover { background: rgba(11,58,74,0.08); }
+.lb-nav-burger > span {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 18px;
+}
+.lb-nav-burger > span > span {
+  display: block;
+  height: 1.5px;
+  width: 100%;
+  background: currentColor;
+  border-radius: 1px;
+}
+@media (max-width: 720px) {
+  .lb-nav-link--desktop { display: none; }
+  .lb-nav-burger { display: inline-flex; }
+}
+
+.lb-logo-link {
+  display: inline-flex;
+  align-items: center;
+  /* Match the previous text logo's tap height so layout proportions
+     stay consistent with the rest of the nav row. */
+  min-height: var(--tap-min);
+}
+.lb-logo-img {
+  display: block;
+  height: 22px;
+  width: auto;
+  max-width: 100%;
+}
+@media (max-width: 720px) {
+  /* Slightly smaller on phones so the wordmark + cart icon + lang
+     toggle all sit comfortably in the 375px row. */
+  .lb-logo-img { height: 18px; }
+}
+
+.lb-lang-toggle {
+  display: inline-flex;
+  align-items: stretch;
+  padding: 2px;
+  border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  line-height: 1;
+  color: inherit;
+  /* Keep HE/EN order stable in both directions. */
+  direction: ltr;
+}
+.lb-lang-toggle .lb-lang-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  min-height: 32px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  color: inherit;
+  opacity: 0.7;
+  transition: background-color 0.18s ease, color 0.18s ease, opacity 0.18s ease;
+}
+.lb-lang-toggle .lb-lang-btn:hover { opacity: 1; color: inherit; }
+.lb-lang-toggle .lb-lang-btn.active {
+  background: var(--white);
+  color: var(--ink);
+  opacity: 1;
+}
+.header.lb-nav.scrolled .lb-lang-toggle .lb-lang-btn.active,
+.lb-lang-toggle--menu .lb-lang-btn.active {
+  background: var(--ink);
+  color: var(--white);
+}
+.lb-lang-toggle--menu .lb-lang-btn { min-height: 40px; min-width: 48px; }
+
+.lb-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tap-min); height: var(--tap-min);
+  border-radius: 50%;
+  transition: background 0.15s;
+  color: inherit;
+}
+.lb-icon-btn:hover { background: rgba(255,255,255,0.12); }
+.header.lb-nav.scrolled .lb-icon-btn:hover { background: rgba(11,58,74,0.08); }
+
+.lb-cart-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 14px;
+  min-height: var(--tap-min);
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: inherit;
+  background: transparent;
+}
+@media (max-width: 720px) {
+  /* Icon-only round cart on phones — saves ~50px in the right cluster
+     so logo + hamburger + cart + lang toggle all fit at 375px. */
+  .lb-cart-btn {
+    padding: 0;
+    width: var(--tap-min);
+    height: var(--tap-min);
+    border-radius: 50%;
+    gap: 0;
+  }
+  /* Label stays in the accessibility tree (sr-only), never display:none. */
+  .lb-cart-label {
+    position: absolute;
+    width: 1px; height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .lb-cart-count {
+    position: absolute;
+    top: -4px;
+    inset-inline-end: -4px;
+  }
+}
+.lb-cart-count {
+  align-items: center;
+  justify-content: center;
+  min-width: 18px; height: 18px;
+  padding: 0 5px;
+  font-size: 10px;
+  background: var(--brand-lime);
+  color: var(--ink);
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-weight: 600;
+  /* M11 — add-to-cart success + cart badge pop */
+  display: inline-flex;
+  animation: lb-pop 300ms var(--ease-pop);
+}
+
+/* ============================================
+   MOBILE MENU DRAWER
+   ============================================ */
+.mobile-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-height: 100%;
+  overflow-y: auto;
+}
+.mobile-menu__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--rule);
+}
+.mobile-menu__list li { margin: 0; border-bottom: 1px solid var(--rule); }
+.mobile-menu__link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 60px;
+  padding: 10px 4px;
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: 26px;
+  line-height: 1.15;
+  color: var(--ink);
+}
+.mobile-menu__link::after {
+  content: "←";
+  font-family: var(--sans);
+  font-size: 18px;
+  color: var(--ink-soft);
+}
+[dir="ltr"] .mobile-menu__link::after { content: "→"; }
+.mobile-menu__link.is-active {
+  color: var(--teal-text);
+  justify-content: flex-start;
+}
+.mobile-menu__link.is-active::before {
+  content: "";
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  margin-inline-end: 10px;
+  order: -1;
+}
+.mobile-menu__link.is-active::after { margin-inline-start: auto; }
+
+.mobile-menu__utils {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.mobile-menu__util {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--tap-min);
+  padding: 8px 16px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 15px;
+}
+.mobile-menu__util:hover { background: var(--cream-2); color: var(--ink); }
+.lb-lang-toggle--menu { margin-inline-start: auto; color: var(--ink); }
+
+.mobile-menu__contact {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 20px;
+  border-top: 1px solid var(--rule);
+}
+.mobile-menu__wa {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 10px 20px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--white);
+  font-weight: 600;
+}
+.mobile-menu__wa:hover { background: var(--ink-2); color: var(--white); }
+.mobile-menu__wa img { width: 24px; height: 24px; }
+.mobile-menu__legal {
+  list-style: none;
+  margin: auto 0 0;
+  padding: 16px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  font-size: 13px;
+}
+.mobile-menu__legal li { margin: 0; }
+.mobile-menu__legal a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  color: var(--ink-soft);
+}

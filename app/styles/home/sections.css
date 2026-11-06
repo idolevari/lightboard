@@ -1,0 +1,420 @@
+/*
+ * Homepage sections below the products: USP strip, story,
+ * FAQ and the final call-to-action photo band.
+ */
+
+/* ============================================
+   SECTION SCAFFOLDING
+   ============================================ */
+section { position: relative; }
+.section-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.section-title {
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: clamp(40px, 5vw, 72px);
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  margin: 0;
+  font-variation-settings: "SOFT" 30;
+}
+.section-title em { font-style: italic; font-variation-settings: "SOFT" 90, "WONK" 1; color: var(--teal-text); }
+
+/* ============================================
+   STORY
+   ============================================ */
+.story {
+  padding: var(--section-py) 0;
+  background: var(--cream-2);
+  position: relative;
+  background-color: var(--cream);
+  overflow: hidden;
+  padding-bottom: calc(var(--section-py) + 32px);
+}
+.story-grid {
+  display: grid;
+  grid-template-columns: 5fr 7fr;
+  gap: clamp(40px, 6vw, 80px);
+  align-items: center;
+}
+@media (max-width: 900px) {
+  .story-grid { grid-template-columns: 1fr; }
+}
+.story-media {
+  position: relative;
+  aspect-ratio: 4/5;
+  overflow: hidden;
+  border-radius: 2px;
+  /* Two-layer lift: a hard ink offset (matches the footer's deep
+     ocean), plus a softer ambient drop behind it so the photo reads
+     as floating, not flat-stickered. The offset flips in RTL so it
+     stays inside the page. */
+  box-shadow: 16px 16px 0 rgba(196, 100, 58, 0.9), 0 32px 60px -18px rgba(11, 58, 74, 0.38);
+}
+.story-media img { width: 100%; height: 100%; object-fit: cover; }
+.story-media .tag {
+  position: absolute;
+  top: 20px; inset-inline-start: 20px;
+  padding: 6px 12px;
+  background: var(--white);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  border-radius: 999px;
+}
+.story-copy h2 {
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: clamp(36px, 4vw, 60px);
+  line-height: 1.02;
+  letter-spacing: -0.025em;
+  margin: 0 0 28px;
+}
+.story-copy h2 em {
+  font-style: italic;
+  font-variation-settings: "SOFT" 90, "WONK" 1;
+  color: var(--teal-ink);
+}
+.story-copy p {
+  font-size: 16px;
+  line-height: 1.8;
+  color: var(--ink-soft);
+  max-width: 52ch;
+  margin: 0 0 20px;
+}
+.story-grid > * { min-width: 0; }
+.story-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  margin-top: 40px;
+  padding-top: 32px;
+  border-top: 1px solid var(--rule);
+  position: relative;
+}
+.story-stats .stat {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  padding-inline: 24px;
+}
+.story-stats .stat + .stat {
+  border-inline-start: 1px solid var(--rule);
+}
+.story-stats .stat:first-child {
+  padding-inline-start: 0;
+}
+.story-stats .stat:last-child {
+  padding-inline-end: 0;
+}
+@media (max-width: 480px) {
+  .story-stats .stat { padding-inline: 0; }
+  .story-stats .stat + .stat { padding-inline-start: 12px; }
+}
+.story-stats .stat b {
+  display: block;
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: 40px;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+  font-variation-settings: "SOFT" 30;
+  white-space: nowrap;
+}
+/* Declared AFTER the base `.stat b` rule on purpose: same specificity, so
+   source order decides. (It used to sit above and never applied, letting
+   40px nowrap numbers push the grid past the gutter.) */
+@media (max-width: 480px) {
+  .story-stats { gap: 16px; }
+  .story-stats .stat b { font-size: 28px; }
+}
+
+/* ============================================
+   FAQ
+   ============================================ */
+.faq {
+  padding: var(--section-py-lg) 0;
+  background: var(--cream);
+  position: relative;
+  background-color: var(--fog);
+  padding-bottom: calc(var(--section-py-lg) + 24px);
+}
+.faq-container {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(0, 1.6fr);
+  gap: clamp(40px, 7vw, 96px);
+  align-items: start;
+}
+@media (max-width: 820px) {
+  .faq-container { grid-template-columns: 1fr; gap: 40px; }
+}
+.faq-head { position: sticky; top: 100px; }
+@media (max-width: 820px) {
+  .faq-head { position: static; }
+}
+.faq-title {
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: clamp(40px, 5vw, 68px);
+  line-height: 1;
+  letter-spacing: -0.025em;
+  margin: 16px 0 0;
+  color: var(--ink);
+  font-variation-settings: "SOFT" 30;
+}
+.faq-title em {
+  font-style: italic;
+  font-variation-settings: "SOFT" 90, "WONK" 1;
+}
+.faq-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--rule-strong);
+}
+.faq-item { border-bottom: 1px solid var(--rule-strong); }
+.faq-q {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 22px 4px;
+  cursor: pointer;
+  color: var(--ink);
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: clamp(18px, 1.6vw, 22px);
+  line-height: 1.35;
+  letter-spacing: -0.005em;
+  text-align: start;
+  transition: color 0.18s ease;
+}
+.faq-q-text { flex: 1; }
+.faq-mark {
+  position: relative;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  display: inline-block;
+}
+.faq-mark span {
+  position: absolute;
+  inset: 50% 0 auto 0;
+  height: 1.5px;
+  background: var(--ink);
+  transform: translateY(-50%);
+  transition: transform 0.25s ease, background 0.25s ease;
+}
+.faq-mark span:last-child { transform: translateY(-50%) rotate(90deg); }
+.faq-item.open .faq-mark span { background: var(--brand-teal); }
+.faq-item.open .faq-mark span:last-child { transform: translateY(-50%) rotate(0deg); }
+.faq-a-wrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.32s ease;
+}
+.faq-item.open .faq-a-wrap { grid-template-rows: 1fr; }
+.faq-a {
+  overflow: hidden;
+  min-height: 0;
+}
+.faq-a p {
+  margin: 0 0 24px;
+  padding-inline-end: clamp(12px, 6vw, 60px);
+  color: var(--ink-soft);
+  font-size: 16px;
+  line-height: 1.7;
+  max-width: 60ch;
+}
+@media (prefers-reduced-motion: reduce) {
+  .faq-a-wrap { transition: none; }
+  .faq-mark span { transition: none; }
+}
+
+/* ---------- Paper grain (static tile, no blend layer) ---------- */
+.usp,
+.story,
+.faq {
+  background-image: url('/illustrations/grain.svg');
+  background-size: 180px 180px;
+}
+
+/* ---------- USP strip ---------- */
+.usp {
+  position: relative;
+  background-color: var(--cream-2);
+  /* USP strip sits on the page's paper texture: no band colour, no waves. */
+  background: none;
+  padding: 36px 0 40px;
+}
+.usp .section-wave { color: var(--cream); }
+.usp-list {
+  list-style: none;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px 16px;
+}
+.usp-item { margin: 0; }
+.usp-reveal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+  font-size: 15px;
+  line-height: 1.35;
+  color: var(--ink);
+  padding: 4px 8px;
+}
+.usp .doodle { width: 30px; height: 30px; color: var(--ink); }
+@media (min-width: 900px) {
+  .usp-list { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; }
+  .usp-item + .usp-item { border-inline-start: 1.5px dashed var(--rule-strong); }
+  .usp-reveal { font-size: 16px; }
+}
+
+/* ---------- Story: sun, photos and stats ---------- */
+.story > .container { position: relative; z-index: 1; }
+.story-sun {
+  position: absolute;
+  top: 24px;
+  inset-inline-end: -48px;
+  width: clamp(180px, 22vw, 300px);
+  color: rgba(11, 58, 74, 0.14);
+  --sun: rgba(246, 201, 91, 0.45);
+  pointer-events: none;
+  z-index: 0;
+}
+.story-media-wrap { position: relative; margin-bottom: 14%; }
+@media (min-width: 900px) { .story-media-wrap { margin-bottom: 0; } }
+.story-media,
+[dir="rtl"] .story-media { border-radius: 4px; }
+[dir="rtl"] .story-media {
+  box-shadow: -16px 16px 0 rgba(196, 100, 58, 0.9), 0 32px 60px -18px rgba(11, 58, 74, 0.38);
+}
+.story-polaroid {
+  position: absolute;
+  margin: 0;
+  width: 40%;
+  inset-inline-end: -4%;
+  bottom: -14%;
+  padding: 8px 8px 28px;
+  background: var(--white);
+  box-shadow: 0 18px 36px -16px rgba(11, 58, 74, 0.45);
+  transform: rotate(-4deg);
+  z-index: 2;
+}
+.story-polaroid img { width: 100%; height: auto; aspect-ratio: 4 / 5; object-fit: cover; }
+.story-board {
+  position: absolute;
+  top: -58px;
+  inset-inline-end: 4px;
+  width: 22px;
+  color: var(--ink);
+  --board: var(--cream-2);
+  transform: rotate(16deg);
+}
+.story .section-wave { color: var(--fog); }
+
+/* ---------- FAQ: accents and van ---------- */
+.faq-title em { color: var(--teal-ink); }
+.faq-q:hover { color: var(--teal-ink); }
+.faq-van {
+  width: 120px;
+  margin-top: 28px;
+  color: var(--ink);
+  --paper: var(--fog);
+}
+@media (min-width: 821px) { .faq-van { width: 170px; margin-top: 40px; } }
+
+/* ---------- Photo band (final CTA) ---------- */
+.band-photo { position: absolute; inset: 0; z-index: -2; display: block; }
+.band-photo img { width: 100%; height: 100%; object-fit: cover; }
+
+.final-cta {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  min-height: 60svh;
+  display: flex;
+  align-items: center;
+  text-align: center;
+  background: #0b3a4a;
+  color: #fbf8f2;
+  padding: var(--section-py-lg) 0 calc(var(--section-py-lg) + 48px);
+}
+.final-cta .band-photo img { object-position: 52% 50%; }
+.final-cta::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(180deg, rgba(11,58,74,0.55) 0%, rgba(11,58,74,0.35) 50%, rgba(11,58,74,0.7) 100%);
+}
+.final-cta-sun {
+  position: absolute;
+  inset-inline: 0;
+  bottom: -2px;
+  margin-inline: auto;
+  width: min(440px, 86vw);
+  color: rgba(251, 248, 242, 0.55);
+  --sun: rgba(246, 201, 91, 0.6);
+  z-index: -1;
+  pointer-events: none;
+}
+.final-cta-inner { position: relative; width: 100%; }
+.final-cta-title {
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: clamp(38px, 7vw, 80px);
+  line-height: 1;
+  color: #fbf8f2;
+  margin: 0 auto 18px;
+  max-width: 16ch;
+  text-shadow: 0 2px 24px rgba(11, 58, 74, 0.45);
+}
+.final-cta-kicker {
+  max-width: 38ch;
+  margin: 0 auto 28px;
+  font-size: 16px;
+  line-height: 1.6;
+  color: rgba(251, 248, 242, 0.94);
+}
+.final-cta-btn { justify-content: center; }
+@media (max-width: 600px) { .final-cta-btn { display: flex; } }
+
+/* Story sun on phones: rise from behind the photo's top corner instead of
+   hiding behind it, a touch stronger so it actually reads. */
+@media (max-width: 899px) {
+  .story-sun {
+    top: -16px;
+    inset-inline-end: 44px;
+    width: 132px;
+    color: rgba(11, 58, 74, 0.26);
+    --sun: rgba(246, 201, 91, 0.8);
+  }
+  .story-media-wrap { z-index: 1; }
+}
+@media (min-width: 900px) { .usp { padding: 56px 0 60px; } }
+
+/* Story sun stays still (owner preference). */
+.story-sun .sun-rays__rays { animation: none !important; transform: none; }

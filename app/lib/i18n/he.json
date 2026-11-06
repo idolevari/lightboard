@@ -7,7 +7,6 @@
     "home": "בית",
     "shop": "חנות",
     "about": "אודות",
-    "journal": "יומן",
     "contact": "דברו איתנו",
     "cart": "סל",
     "search": "חיפוש",
@@ -71,17 +70,7 @@
     "titleLine1": "לפני שאתם",
     "titleLine2": "שואלים."
   },
-  "testify": {
-    "eyebrow": "— מהקירות שלכם",
-    "prev": "הקודם",
-    "next": "הבא",
-    "dotLabel": "המלצה {n} מתוך {total}",
-    "regionLabel": "המלצות",
-    "pause": "עצירת ההמלצות",
-    "play": "הפעלת ההמלצות"
-  },
   "product": {
-    "metaSuffix": "מוצר",
     "description": "תיאור",
     "addToCart": "הוספה לסל",
     "soldOut": "אזל כרגע",
@@ -121,7 +110,6 @@
     "approve": "אישור התמונות",
     "saveChanges": "שמירת שינויים",
     "saveAndReturn": "שמירה וחזרה לסל",
-    "approvedNote": "התמונות שמורות. אפשר להוסיף לסל.",
     "savedNote": "השינויים נשמרו.",
     "uploading": "מעלים…",
     "cropSave": "שמירה",
@@ -169,11 +157,8 @@
     "discounts": "קופון",
     "discountsLabel": "קופון",
     "discountCode": "קוד קופון",
-    "discountApply": "החלה",
     "discountRemove": "הסרת קופון",
-    "discountRemoveBtn": "הסרה",
     "discountApplyAria": "החלת קוד קופון",
-    "giftCards": "כרטיסי מתנה",
     "giftCardsLabel": "כרטיסי מתנה",
     "giftCardCode": "קוד כרטיס מתנה",
     "giftCardCodeAria": "החלת קוד כרטיס מתנה",
@@ -230,8 +215,6 @@
   "collections": {
     "indexTitle": "קולקציות",
     "indexMeta": "Lightboard | קולקציות",
-    "allTitle": "כל המוצרים",
-    "allMeta": "Lightboard | כל המוצרים",
     "collectionMetaSuffix": "קולקציה",
     "shopTitle": "החנות",
     "shopIntro": "גלשני קיר בעבודת יד, עם התמונות שלכם. משלוח חינם לכל הארץ.",
@@ -241,14 +224,9 @@
   "blogs": {
     "indexTitle": "יומן",
     "indexMeta": "Lightboard | יומן",
-    "allArticles": "כל הפוסטים",
-    "readMore": "להמשך קריאה ←",
-    "publishedOn": "פורסם ב",
     "by": "מאת"
   },
-  "pages": {
-    "metaSuffix": ""
-  },
+  "pages": {},
   "policies": {
     "indexTitle": "מדיניות",
     "indexMeta": "Lightboard | מדיניות",
@@ -262,12 +240,9 @@
     }
   },
   "account": {
-    "metaSuffix": "חשבון",
     "myAccount": "החשבון שלי",
     "welcome": "היי",
     "signOut": "התנתקות",
-    "signIn": "התחברות",
-    "ordersTitle": "ההזמנות שלי",
     "orders": "הזמנות",
     "profile": "פרופיל",
     "addresses": "כתובות",
@@ -323,10 +298,6 @@
     "kicker": "הקישור שבור או שהדף זז. בואו נחזור הביתה.",
     "cta": "לדף הבית"
   },
-  "discount": {
-    "applied": "הקופון הופעל.",
-    "applyError": "הקוד לא עבד. בדקו אותו ונסו שוב."
-  },
   "a11y": {
     "open": "פתיחת תפריט נגישות",
     "close": "סגירת תפריט נגישות",
@@ -350,9 +321,6 @@
   },
   "footer": {
     "brandDesc": "גלשני קיר מעץ מלא, עם אור חם והתמונות שלכם. עבודת יד, מאז 2019.",
-    "metaAddressLabel": "כתובת",
-    "metaPhoneLabel": "טלפון",
-    "metaEmailLabel": "מייל",
     "rights": "LIGHTBOARD · כל הזכויות שמורות",
     "legal": [
       {
@@ -417,9 +385,6 @@
     "title": "מוכנים להדליק את הקיר?",
     "kicker": "שלוש תמונות שאתם אוהבים, עשרים נורות חמות, וגלשן עץ אחד שמחכה להן.",
     "cta": "בחירת תמונות"
-  },
-  "hand": {
-    "customizer": "התמונות שלכם כאן ↓"
   },
   "printboard": {
     "title": "Printboard",

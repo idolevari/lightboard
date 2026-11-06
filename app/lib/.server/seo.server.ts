@@ -22,12 +22,7 @@
  */
 
 import type {SeoConfig, Storefront} from '@shopify/hydrogen';
-import type {
-  Article,
-  BreadcrumbList,
-  CollectionPage,
-  WithContext,
-} from 'schema-dts';
+import type {Article, CollectionPage, WithContext} from 'schema-dts';
 import {
   ALTERNATE_NAMES,
   BRAND_SUMMARY,
@@ -666,21 +661,6 @@ export function collectionSeo(input: CollectionSeoInput): SeoResult {
         : undefined,
     },
     jsonLd: [pageLd],
-  };
-}
-
-export function breadcrumbs(
-  items: ReadonlyArray<{name: string; url: string}>,
-): WithContext<BreadcrumbList> {
-  return {
-    '@context': SCHEMA_CONTEXT,
-    '@type': 'BreadcrumbList',
-    itemListElement: items.map((item, index) => ({
-      '@type': 'ListItem',
-      position: index + 1,
-      name: item.name,
-      item: item.url,
-    })),
   };
 }
 

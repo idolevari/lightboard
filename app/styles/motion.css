@@ -1,0 +1,108 @@
+/*
+ * Motion: keyframes, the .is-live loop gate and the reduced-motion /
+ * "stop animations" kill switches. Must load last.
+ */
+
+/* ============================================
+   MOTION — honour prefers-reduced-motion
+   ============================================ */
+.hero.is-paused .hero-tape-track { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) {
+  .hero-tape-track { animation: none; }
+  .hero-media {
+    transform: none !important;
+    transition: opacity 0s !important;
+  }
+  html { scroll-behavior: auto; }
+}
+.motion-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tap-min);
+  height: var(--tap-min);
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+.hero-dots .motion-toggle,
+.hero-dots .motion-toggle.on {
+  width: 36px;
+  height: 36px;
+  margin-inline-start: 12px;
+  border: 1px solid rgba(251,248,242,0.6);
+  border-radius: 50%;
+  justify-content: center;
+}
+.hero-dots .motion-toggle::before { content: none; }
+
+/* ==========================================================
+   MOTION (M1–M15) — transform/opacity only
+   ========================================================== */
+@keyframes lb-spin { to { transform: rotate(360deg); } }
+@keyframes lb-drift { to { transform: translateX(-50%); } }
+@keyframes lb-pop { 0% { transform: scale(1); } 50% { transform: scale(1.18); } 100% { transform: scale(1); } }
+@keyframes lb-rise { from { opacity: 0; transform: translateY(20px); } }
+@keyframes lb-rise-transform { from { transform: translateY(20px); } }
+[dir="rtl"] .wl-track { animation-direction: reverse; }
+.is-live :is(.sun-rays__rays, .wl-track) {
+  animation-play-state: running;
+}
+/* The hero's own pause button stops its decorative loops too (WCAG 2.2.2). */
+.hero.is-stopped :is(.wl-track) { animation-play-state: paused; }
+/* M13 marquee: also pause while the hero is off-screen. */
+.hero:not(.is-live) .hero-tape-track { animation-play-state: paused; }
+
+/* M3 hero copy entrance — CSS only, runs on first paint (no JS gate);
+   the H1 only moves (never starts invisible) so LCP text isn't delayed. */
+@media (prefers-reduced-motion: no-preference) {
+  .hero-inner > .hero-eyebrow { animation: lb-rise 0.8s var(--ease-out-soft) 0.1s both; }
+  .hero-inner > .hero-title { animation: lb-rise-transform 0.8s var(--ease-out-soft) 0.18s both; }
+  .hero-inner > .hero-meta { animation: lb-rise 0.8s var(--ease-out-soft) 0.3s both; }
+  .hero-inner > .hero-dots { animation: lb-rise 0.8s var(--ease-out-soft) 0.4s both; }
+
+  /* M5 — progressive scroll parallax (Chrome/Edge, Safari 26+). */
+  @supports (animation-timeline: view()) {
+    .hero-stage {
+      animation: lb-parallax linear both;
+      animation-timeline: view();
+      animation-range: exit 0% exit 100%;
+    }
+    .hero .wave-layers {
+      animation: lb-parallax-waves linear both;
+      animation-timeline: view();
+      animation-range: exit 0% exit 100%;
+    }
+  }
+}
+@keyframes lb-parallax { to { transform: translateY(12%); } }
+@keyframes lb-parallax-waves { to { transform: translateY(-20px); } }
+
+/* M1 — reveal stagger uses the same soft ease. */
+.reveal { transition-duration: var(--dur-reveal); transition-timing-function: var(--ease-out-soft); }
+
+/* Kill switch: OS reduced motion + the a11y menu's "stop animations". */
+@media (prefers-reduced-motion: reduce) {
+  .sun-rays__rays,
+  .wl-track,
+  .hero-tape-track,
+  .feat3-swatch.on .dot,
+  .lb-cart-count { animation: none !important; }
+  .scroll-hint::after { animation: none !important; }
+  .hero-media img, .hero-media.is-active img { transform: none !important; transition: none !important; }
+  .feat3-photo { transition: none; }
+  .hero-cta, .feat3-cta, .final-cta-btn { transition: background var(--dur-ui) ease, color var(--dur-ui) ease; }
+  .hero-cta:active, .feat3-cta:active, .final-cta-btn:active { transform: none; }
+  :is(.hero-cta, .feat3-cta, .final-cta-btn):hover .arrow { translate: none; }
+}
+body.a11y-no-motion *,
+body.a11y-no-motion *::before,
+body.a11y-no-motion *::after {
+  animation: none !important;
+  scroll-behavior: auto !important;
+}
+body.a11y-no-motion .hero-media { transition: opacity 0s !important; }
+body.a11y-no-motion .hero-media img { transform: none !important; transition: none !important; }

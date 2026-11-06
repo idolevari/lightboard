@@ -3,14 +3,11 @@ import {useLoaderData} from 'react-router';
 import {
   getSelectedProductOptions,
   Analytics,
-  Image,
   useOptimisticVariant,
   getProductOptions,
   getAdjacentAndFirstAvailableVariants,
   useSelectedOptionInUrlParam,
 } from '@shopify/hydrogen';
-import {ProductPrice} from '~/components/ProductPrice';
-import {AutoLang} from '~/components/AutoLang';
 import {useI18n} from '~/lib/useI18n';
 import {
   getOptionValueHex,
@@ -19,9 +16,9 @@ import {
 import {ProductOptions, ProductCartAction} from '~/components/ProductForm';
 import {PhotoCustomizer} from '~/components/PhotoCustomizer/PhotoCustomizer';
 import {StickyBuyBar} from '~/components/StickyBuyBar';
-import {Doodle} from '~/components/illustrations';
-import type {DoodleName} from '~/components/illustrations';
-import {PHOTOS, cropSrcSet, withParams} from '~/lib/photos';
+import {ProductHead} from '~/components/product/ProductHead';
+import {ProductSpecs} from '~/components/product/ProductSpecs';
+import {InYourHome, PrintboardOnTheWall} from '~/components/product/InYourHome';
 import type {PhotoCustomizerInitialState} from '~/components/PhotoCustomizer/PhotoCustomizer';
 import {redirectIfHandleIsLocalized} from '~/lib/.server/redirect.server';
 import {checkForTrailingEncodedSpaces} from '~/lib/.server/url.server';
@@ -375,9 +372,6 @@ export default function Product() {
     !photoAttributes &&
     photosFilled >= slotCount;
   const available = Boolean(selectedVariant?.availableForSale);
-  const usps = (
-    (dict.usp?.items ?? []) as Array<{icon: string; label: string}>
-  ).slice(0, 3);
   // Specs: the product's `marketing.specs` metaobjects when set in Shopify,
   // else (Printboard) the i18n fallback.
   const specs =
@@ -418,46 +412,17 @@ export default function Product() {
 
   // Mobile reading order (and DOM / heading order): name + price → color →
   // live preview + photo slots → add to cart → details. On desktop the
-  // customizer moves into the left column via grid areas (app.css).
+  // customizer moves into the left column via grid areas (product/pdp.css).
   return (
     <div className="product">
       <JsonLd data={jsonLd} />
-      <header className="product-head">
-        {marketing.headlineHtml ? (
-          <h1
-            className="pdp-title"
-            dangerouslySetInnerHTML={{__html: marketing.headlineHtml}}
-          />
-        ) : (
-          <h1 className="pdp-title">
-            {/* No marketing headline yet: use the i18n product name.
-                Product names stay in English in both locales (owner pref);
-                AutoLang marks Latin text lang="en" for screen readers. */}
-            {isPrint && dict.printboard?.title ? (
-              <AutoLang text={dict.printboard.title} />
-            ) : (
-              <AutoLang text={title} />
-            )}
-          </h1>
-        )}
-        <div className="pdp-price">
-          <ProductPrice
-            price={selectedVariant?.price}
-            compareAtPrice={selectedVariant?.compareAtPrice}
-            display
-          />
-        </div>
-        {usps.length > 0 ? (
-          <ul className="pdp-usps" role="list">
-            {usps.map((u) => (
-              <li key={u.label}>
-                <Doodle name={u.icon as DoodleName} size={20} />
-                <span>{u.label}</span>
-              </li>
-            ))}
-          </ul>
-        ) : null}
-      </header>
+      <ProductHead
+        headlineHtml={marketing.headlineHtml}
+        title={title}
+        isPrint={isPrint}
+        price={selectedVariant?.price}
+        compareAtPrice={selectedVariant?.compareAtPrice}
+      />
       <div className="product-variant">
         <ProductOptions productOptions={productOptions} />
       </div>
@@ -495,21 +460,7 @@ export default function Product() {
           onNeedPhotos={goToCustomizer}
         />
       </div>
-      {specs.length > 0 ? (
-        <section className="pdp-specs" aria-labelledby="pdp-specs-title">
-          <h2 id="pdp-specs-title" className="pdp-h2">
-            {dict.product.specsTitle}
-          </h2>
-          <dl className="feat3-ticker">
-            {specs.map((spec) => (
-              <div className="feat3-tick" key={spec.id}>
-                <dt className="k">{spec.label}</dt>
-                <dd className="v">{spec.value}</dd>
-              </div>
-            ))}
-          </dl>
-        </section>
-      ) : null}
+      <ProductSpecs specs={specs} />
       {descriptionHtml ? (
         <div
           className="product-description"
@@ -556,125 +507,6 @@ export default function Product() {
         }}
       />
     </div>
-  );
-}
-
-type LifestyleImage = {
-  id?: string | null;
-  url: string;
-  altText?: string | null;
-  width?: number | null;
-  height?: number | null;
-};
-
-/**
- * "In your home" strip: the product's own on-the-wall shot (first product
- * image that isn't a variant render, managed in Shopify) next to a sunlit
- * room from the brand photo set.
- */
-function InYourHome({lifestyle}: {lifestyle: LifestyleImage | null}) {
-  const {dict} = useI18n();
-  const t = dict.product.inYourHome;
-  const room = PHOTOS.sunlitRoom;
-  if (!t?.title) return null;
-  return (
-    <section className="pdp-home" aria-labelledby="pdp-home-title">
-      <div className="pdp-home-head">
-        <p className="pdp-eyebrow">{t.eyebrow}</p>
-        <h2 id="pdp-home-title" className="pdp-home-title">
-          {t.title}
-        </h2>
-      </div>
-      <div className={`pdp-home-grid${lifestyle ? '' : ' is-single'}`}>
-        {lifestyle ? (
-          <figure className="pdp-home-main">
-            <Image
-              data={lifestyle}
-              alt={lifestyle.altText ?? ''}
-              sizes="(min-width: 900px) 55vw, 92vw"
-              aspectRatio="4/5"
-              crop="center"
-              loading="lazy"
-            />
-          </figure>
-        ) : null}
-        <figure className="pdp-home-room">
-          <img
-            src={withParams(room.url, 'width=900')}
-            srcSet={cropSrcSet(room.url, {
-              ratio: 4 / 5,
-              focalX: '30%',
-              srcW: room.w,
-              srcH: room.h,
-              widths: [480, 720, 960, 1280],
-            })}
-            sizes="(min-width: 900px) 38vw, 92vw"
-            alt=""
-            width={960}
-            height={1200}
-            loading="lazy"
-            decoding="async"
-          />
-          <figcaption>{t.caption}</figcaption>
-        </figure>
-      </div>
-    </section>
-  );
-}
-
-/**
- * Printboard "in your home" strip: the product's own photos of finished
- * boards on real walls (Shopify product images), one large and the rest in
- * a scrolling row on phones / a grid on desktop.
- */
-function PrintboardOnTheWall({images}: {images: Array<LifestyleImage>}) {
-  const {dict} = useI18n();
-  const t = dict.printboard?.inYourHome;
-  if (!t?.title || images.length === 0) return null;
-  const [main, ...rest] = images;
-  return (
-    <section className="pdp-home pb-home" aria-labelledby="pdp-home-title">
-      <div className="pdp-home-head">
-        <p className="pdp-eyebrow">{t.eyebrow}</p>
-        <h2 id="pdp-home-title" className="pdp-home-title">
-          {t.title}
-        </h2>
-        <p className="pb-home-caption">{t.caption}</p>
-      </div>
-      <div className="pb-home-grid">
-        <figure className="pb-home-main">
-          <Image
-            data={main}
-            alt={main.altText ?? ''}
-            sizes="(min-width: 900px) 50vw, 92vw"
-            aspectRatio="1/1"
-            loading="lazy"
-          />
-        </figure>
-        {rest.length > 0 ? (
-          // Scrolls sideways on phones, so it must be keyboard-focusable.
-          <ul
-            className="pb-home-row"
-            role="list"
-            // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
-            tabIndex={0}
-            aria-label={t.title}
-          >
-            {rest.map((img) => (
-              <li key={img.id ?? img.url}>
-                <Image
-                  data={img}
-                  alt={img.altText ?? ''}
-                  sizes="(min-width: 900px) 22vw, 44vw"
-                  aspectRatio="1/1"
-                  loading="lazy"
-                />
-              </li>
-            ))}
-          </ul>
-        ) : null}
-      </div>
-    </section>
   );
 }
 

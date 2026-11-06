@@ -102,6 +102,9 @@ export function BoardCanvas({
   const rects =
     SLOT_RECTS_BY_COLOR[color ?? ''] ?? SLOT_RECTS_BY_COLOR[DEFAULT_COLOR];
   const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
+  // Slots are positional (slot N is always the Nth photo, whatever the
+  // color), so the slot number is the stable key for both lists below.
+  const slotIds = rects.map((_, n) => `slot-${n + 1}`);
   // Shopify CDN URLs include a `?v=...` cache-buster, so append width via `&`.
   const srcSep = imageUrl?.includes('?') ? '&' : '?';
   const filledCount = slots.filter((s) => !!s?.thumbnailUrl).length;
@@ -157,11 +160,11 @@ export function BoardCanvas({
           const slot = slots[i];
           const filled = !!slot?.thumbnailUrl;
           return (
-            // Pointer shortcut only — the labelled, keyboard-reachable
-            // controls for the same actions live in the strip below.
-            // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+            // Pointer shortcut only (aria-hidden) — the labelled,
+            // keyboard-reachable controls for the same actions live in the
+            // strip below.
             <div
-              key={i}
+              key={slotIds[i]}
               className={`board-canvas__slot ${filled ? 'is-filled' : 'is-empty'}`}
               style={{
                 left: `${rect.left}%`,
@@ -199,7 +202,7 @@ export function BoardCanvas({
           const filled = !!slot?.thumbnailUrl;
           return (
             <li
-              key={i}
+              key={slotIds[i]}
               className={`board-slots__tile${filled ? ' is-filled' : ''}${slot?.error ? ' has-error' : ''}`}
               onDrop={(e) => handleDrop(i, e)}
               onDragOver={(e) => e.preventDefault()}

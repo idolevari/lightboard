@@ -1,0 +1,48 @@
+/*
+ * Hebrew typography: tracking and accent-word overrides for
+ * html[lang="he"]. Loads after the components it adjusts.
+ */
+
+/* ============================================
+   HEBREW EYEBROWS — wide tracking breaks Hebrew
+   word shapes; keep it for Latin only.
+   ============================================ */
+html[lang="he"] :is(
+  .section-eyebrow,
+  .hero-eyebrow,
+  .feat3-eye,
+  .feat3-picker-head,
+  .feat3-tick .k,
+  .feat3-swatch,
+  .feat3-price .note,
+  .story-stats .stat,
+  .story-media .tag,
+  .footer-bottom,
+  .policy-back,
+  .cart-summary-heading,
+  .predictive-search-result h5,
+  .feat3-cta,
+  .hero-cta,
+  .cart .cart-summary-page summary,
+  .cart .cart-line-photos__edit
+) {
+  letter-spacing: 0.02em;
+}
+
+/* ---------- Typography ---------- */
+html[lang="he"] :is(
+  .hero-title, .section-title, .feat3-title, .story-copy h2,
+  .faq-title, .product h1, .final-cta-title, .cart > h1, .pdp-home-title
+) {
+  /* Hebrew needs far less negative tracking than Latin display type. */
+  letter-spacing: -0.01em;
+}
+html[lang="he"] :is(.section-eyebrow, .hero-eyebrow, .feat3-eye, .pdp-eyebrow) {
+  letter-spacing: 0.04em;
+}
+
+/* ---------- Hebrew accent word: Ploni 800 instead of a faux italic ---------- */
+html[lang="he"] :is(.hero-title, .feat3-title, .pdp-title, .story-copy h2, .faq-title, .section-title) em {
+  font-style: normal;
+  font-weight: 800;
+}

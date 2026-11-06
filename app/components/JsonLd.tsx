@@ -24,7 +24,7 @@ export function JsonLd({data}: JsonLdProps) {
     <script
       type="application/ld+json"
       suppressHydrationWarning
-      // eslint-disable-next-line react/no-danger -- output is escaped by serializeJsonLd
+      // Safe: serializeJsonLd escapes the output.
       dangerouslySetInnerHTML={{
         __html: serializeJsonLd(json.length === 1 ? json[0] : json),
       }}

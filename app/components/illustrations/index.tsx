@@ -2,7 +2,7 @@
  * "Golden Hour Van" illustration kit — hand-drawn SVGs inlined as tiny
  * components so they theme through `currentColor` and CSS custom properties
  * (`--sun`, `--board`, `--bulb`, `--wave-line`, …) and can animate (see the
- * MOTION block in app.css).
+ * app/styles/motion.css).
  *
  * Every illustration here is decorative: `aria-hidden` + `focusable=false`.
  * Explicit width/height or aspect-ratio boxes keep CLS at 0.
@@ -11,7 +11,6 @@
  * (see <LiveLoop/>), and never under prefers-reduced-motion or the
  * accessibility menu's "stop animations" switch.
  */
-import {useId} from 'react';
 import type {CSSProperties, ReactNode} from 'react';
 import {useInView} from '~/lib/useInView';
 
@@ -163,135 +162,6 @@ export function WaveLayers({className = ''}: {className?: string}) {
   );
 }
 
-const BULBS: Array<[number, number]> = [
-  [30, 29],
-  [87, 35.9],
-  [144, 42.2],
-  [201, 46.9],
-  [258, 50.8],
-  [315, 50.3],
-  [372, 48.8],
-  [429, 45.1],
-  [486, 40.2],
-  [543, 32],
-];
-const CLIPS: Array<[number, number, number]> = [
-  [128, 34.1, -6],
-  [300, 44, 3],
-  [470, 34.4, -4],
-];
-
-/** The product in one line: warm bulbs + clipped photos on a sagging wire. */
-export function StringLights({className = '', style}: SvgProps) {
-  return (
-    <svg
-      viewBox="0 0 600 110"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      className={`string-lights ${className}`}
-      style={style}
-      {...hidden}
-    >
-      <path d="M0 14C120 58 480 58 600 14" />
-      <g fill="var(--bulb, #ffbc7d)" strokeWidth="1.4">
-        {BULBS.map(([cx, cy], n) => (
-          <ellipse
-            key={cx}
-            className="sl__bulb"
-            cx={cx}
-            cy={cy}
-            rx="6"
-            ry="8"
-            style={{'--n': n} as CSSProperties}
-          />
-        ))}
-      </g>
-      {CLIPS.map(([x, y, r]) => (
-        <g key={x} transform={`translate(${x} ${y}) rotate(${r})`}>
-          <path d="M-3-4h6v10h-6z" fill="var(--clip, #c9b58d)" stroke="none" />
-          <rect
-            x="-17"
-            y="4"
-            width="34"
-            height="40"
-            rx="1.5"
-            fill="var(--paper, #fbf8f2)"
-          />
-          <rect
-            x="-13"
-            y="8"
-            width="26"
-            height="24"
-            fill="var(--photo, #27cfdc)"
-            fillOpacity=".55"
-            stroke="none"
-          />
-        </g>
-      ))}
-    </svg>
-  );
-}
-
-/** Lime circular stamp: "LIVING · DESIGN · SURFING · LIGHTBOARD". Ring rotates (M7). */
-export function StampBadge({className = '', style}: SvgProps) {
-  const pathId = `sb-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
-  return (
-    <svg
-      viewBox="0 0 160 160"
-      className={`stamp-badge ${className}`}
-      style={style}
-      {...hidden}
-    >
-      <defs>
-        <path
-          id={pathId}
-          d="M80 80m-58 0a58 58 0 1 1 116 0a58 58 0 1 1-116 0"
-        />
-      </defs>
-      <circle cx="80" cy="80" r="76" fill="var(--badge-bg, #dadb65)" />
-      <circle
-        cx="80"
-        cy="80"
-        r="70"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.2"
-        strokeDasharray="2 4"
-      />
-      <g className="stamp-badge__ring">
-        <text
-          fontFamily="'JetBrains Mono', ui-monospace, monospace"
-          fontSize="12"
-          letterSpacing="2"
-          fill="currentColor"
-          direction="ltr"
-        >
-          <textPath href={`#${pathId}`} textLength="360" lengthAdjust="spacing">
-            LIVING · DESIGN · SURFING · LIGHTBOARD ·
-          </textPath>
-        </text>
-      </g>
-      <path d="M62 92a18 18 0 0 1 36 0z" fill="currentColor" />
-      <path
-        d="M56 92.5h48M80 60v6M66 65l3 4.6M94 65l-3 4.6M57 76l4.6 2.2M103 76l-4.6 2.2"
-        stroke="currentColor"
-        strokeWidth="2.6"
-        strokeLinecap="round"
-        fill="none"
-      />
-      <path
-        d="M60 100c6.6-3 13.4-3 20 0s13.4 3 20 0"
-        stroke="currentColor"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        fill="none"
-      />
-    </svg>
-  );
-}
-
 /** Line-art split-window bus with a board on the roof. Faces reading-start in RTL. */
 export function Van({className = '', style}: SvgProps) {
   return (
@@ -359,28 +229,6 @@ export function Surfboard({className = '', style}: SvgProps) {
         strokeWidth="2"
       />
       <path d="M36 206h8" strokeWidth="2" />
-    </svg>
-  );
-}
-
-/** Two palms + a wind-swept Monterey cypress on a dune line (silhouette). */
-export function Palms({className = '', style}: SvgProps) {
-  return (
-    <svg
-      viewBox="0 0 260 200"
-      fill="currentColor"
-      className={`palms-art ${className}`}
-      style={style}
-      {...hidden}
-    >
-      <path d="M206 198c-2-18-1-34 3-48 3-10 9-18 16-24l2.4 2.2c-6.4 5.8-11.6 13-14.4 22-3.6 12-4.4 28-2.6 47.8z" />
-      <path d="M214 148c-6-5-14-7-22-6l-4-3.4c7-1.6 15-.8 22 2.4zM220 128c-9-3-19-2-27 2l-3-3c9-4.6 20-5.4 30-1.8z" />
-      <path d="M150 140c10-6 24-8 38-6 12-5 27-5 40 0 9-.4 16 2 20 6-14 3-30 3-46 1-17 3-35 3-52-1zM164 120c11-7 26-9 40-6 11-4 24-3 35 2 7 0 12 2 15 5-13 3-27 3-41 1-16 3-33 3-49-2zM180 100c9-6 21-8 33-5 9-3 19-2 27 2 5 0 9 2 11 4-10 2-21 2-32 1-13 2-27 2-39-2z" />
-      <path d="M83 198c-3-30-1-70 8-112l3 .6c-8 40-10 80-7 111z" />
-      <path d="M92 86c-12-14-30-18-48-12 14 0 26 5 34 14-14-6-30-4-42 6 16-4 30-1 41 6-10 3-18 10-22 20 10-8 21-12 32-12zM94 86c10-15 27-21 46-18-14 2-26 8-33 17 14-7 31-6 43 3-16-3-30-1-41 7 11 2 19 9 24 19-11-7-22-10-33-9zM93 84c-1-14-8-26-20-32 10 7 15 17 17 28 3-12 11-22 22-26-11 1-19 8-24 17z" />
-      <path d="M42 198c-2-20 0-44 6-66l2.8.5c-5 22-7 44-5.5 65z" />
-      <path d="M49 132c-8-9-19-12-31-8 9 0 17 3 22 9-9-3-19-2-27 4 10-2 19-1 26 4-6 2-11 6-14 13 7-5 14-8 21-8zM51 132c7-10 18-13 30-11-9 1-17 5-21 11 9-4 20-3 28 2-10-2-19 0-26 5 7 1 12 6 15 12-7-4-14-6-21-6z" />
-      <path d="M0 198c40-6 90-8 130-4 40 4 90 3 130-2v8H0z" />
     </svg>
   );
 }
