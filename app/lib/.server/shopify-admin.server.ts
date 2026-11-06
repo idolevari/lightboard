@@ -24,16 +24,41 @@ function adminEndpoint(env: AdminEnv): string {
   return `https://${env.PUBLIC_STORE_DOMAIN}/admin/api/${ADMIN_API_VERSION}/graphql.json`;
 }
 
+type UserError = {field?: Array<string> | null; message: string};
+
+/** Response shapes of the three documents below (only the fields read). */
+type StagedUploadsCreateData = {
+  stagedUploadsCreate?: {
+    stagedTargets?: Array<{
+      url?: string | null;
+      resourceUrl?: string | null;
+      parameters?: Array<{name: string; value: string}>;
+    }>;
+    userErrors?: Array<UserError>;
+  } | null;
+};
+type FileCreateData = {
+  fileCreate?: {
+    files?: Array<{id?: string | null}> | null;
+    userErrors?: Array<UserError>;
+  } | null;
+};
+type FileNodeData = {
+  node?: {
+    fileStatus?: string | null;
+    image?: {url?: string | null} | null;
+  } | null;
+};
+
 /**
  * Run an Admin GraphQL query/mutation. Throws on transport failure or top-level
- * `errors`. Returns the `data` object.
+ * `errors`. Returns the `data` object, typed by the caller.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Shopify Admin GraphQL response shapes vary per query; callers narrow as needed
-async function adminGraphql(
+async function adminGraphql<TData>(
   env: AdminEnv,
   query: string,
   variables?: Record<string, unknown>,
-): Promise<any> {
+): Promise<TData | undefined> {
   if (!env.PRIVATE_SHOPIFY_ADMIN_API_TOKEN) {
     throw new Error('PRIVATE_SHOPIFY_ADMIN_API_TOKEN is not set');
   }
@@ -49,7 +74,7 @@ async function adminGraphql(
     throw new Error(`admin-api-${response.status}`);
   }
   const json = (await response.json()) as {
-    data?: unknown;
+    data?: TData;
     errors?: Array<unknown>;
   };
   if (json.errors?.length) {
@@ -141,17 +166,21 @@ export async function uploadImageToShopifyFiles(
   const {blob, filename, mimeType, alt} = input;
 
   // 1. Create a staged upload target.
-  const stagedData = await adminGraphql(env, STAGED_UPLOADS_CREATE, {
-    input: [
-      {
-        resource: 'IMAGE',
-        filename,
-        mimeType,
-        httpMethod: 'POST',
-        fileSize: String(blob.size),
-      },
-    ],
-  });
+  const stagedData = await adminGraphql<StagedUploadsCreateData>(
+    env,
+    STAGED_UPLOADS_CREATE,
+    {
+      input: [
+        {
+          resource: 'IMAGE',
+          filename,
+          mimeType,
+          httpMethod: 'POST',
+          fileSize: String(blob.size),
+        },
+      ],
+    },
+  );
   const stagedErrors = stagedData?.stagedUploadsCreate?.userErrors ?? [];
   if (stagedErrors.length) {
     throw new Error(`staged-upload-errors: ${JSON.stringify(stagedErrors)}`);
@@ -177,7 +206,7 @@ export async function uploadImageToShopifyFiles(
   }
 
   // 3. Create the File record from the staged resource.
-  const createData = await adminGraphql(env, FILE_CREATE, {
+  const createData = await adminGraphql<FileCreateData>(env, FILE_CREATE, {
     files: [
       {
         alt: alt ?? '',
@@ -213,7 +242,9 @@ async function pollFileUntilReady(
   let intervalMs = 300;
   const startedAt = Date.now();
   for (;;) {
-    const data = await adminGraphql(env, FILE_NODE_QUERY, {id: fileId});
+    const data = await adminGraphql<FileNodeData>(env, FILE_NODE_QUERY, {
+      id: fileId,
+    });
     const node = data?.node;
     if (node?.fileStatus === 'READY' && node?.image?.url) {
       return {id: fileId, url: node.image.url};
