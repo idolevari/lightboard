@@ -4620,3 +4620,6 @@ body.a11y-no-motion .hero-media img { transform: none !important; transition: no
 /* USP strip sits on the page's paper texture: no band colour, no waves. */
 .usp { background: none; padding: 36px 0 40px; }
 @media (min-width: 900px) { .usp { padding: 56px 0 60px; } }
+
+/* Story sun stays still (owner preference). */
+.story-sun .sun-rays__rays { animation: none !important; transform: none; }
