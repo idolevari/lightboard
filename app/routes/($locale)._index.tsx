@@ -1,7 +1,7 @@
 import {Await, Link, useLoaderData} from 'react-router';
 import {Suspense, useCallback, useEffect, useState} from 'react';
 import type {FocusEvent} from 'react';
-import {Image} from '@shopify/hydrogen';
+import type {HomeProductCardFragment} from 'storefrontapi.generated';
 import {useI18n} from '~/lib/useI18n';
 import {useInView} from '~/lib/useInView';
 import {MOTION_EVENT, prefersNoMotion} from '~/lib/motion';
@@ -16,6 +16,9 @@ import {metaLocale, routeMeta} from '~/lib/seo-urls';
 import {homeSeoCopy} from '~/lib/meta';
 import {sanitizeShopifyHtml} from '~/lib/.server/sanitize.server';
 import {RouteError} from '~/components/RouteError';
+import {ProductCarousel} from '~/components/ProductCarousel';
+import type {CarouselImage} from '~/components/ProductCarousel';
+import {PRINTBOARD_SIZE_LABEL} from '~/lib/customizer-config';
 import {AutoLang} from '~/components/AutoLang';
 import {
   Doodle,
@@ -188,7 +191,8 @@ export async function loader(args: Route.LoaderArgs) {
       url: absoluteUrl('/', locale),
     });
     return {
-      featuredProduct: null,
+      featuredProduct: null as HomeProductCard | null,
+      printboard: null as HomeProductCard | null,
       faqs: Promise.resolve(
         null,
       ) as Promise<SimpleMetaobjectQueryResponse | null>,
@@ -204,6 +208,73 @@ export async function loader(args: Route.LoaderArgs) {
   const deferredData = loadDeferredData(args);
   const criticalData = await loadCriticalData(args);
   return {...deferredData, ...criticalData};
+}
+
+/** Second product block on the homepage, fetched by handle (it's unlisted). */
+const HOME_PRINTBOARD_HANDLE = 'printboard';
+/** Max photos in a homepage product carousel. */
+const CAROUSEL_MAX = 6;
+
+/** Card data shipped to the client: the product minus the raw image lists. */
+export type HomeProductCard = Omit<
+  HomeProductCardFragment,
+  'images' | 'variants'
+> & {carousel: Array<CarouselImage>};
+
+const withoutQuery = (url: string) => url.split('?')[0];
+
+/**
+ * Pick the homepage carousel photos from the product's images, in Admin
+ * order: drop the per-variant renders (any image a variant points at, or the
+ * old 920×920 "Lightboard surfboard — <color>" PNGs), but always keep the
+ * product's featured image. With `lifestyleFirst`, the portrait lifestyle
+ * shots come right after the first photo, ahead of the square ones.
+ */
+function pickCarouselImages(
+  product: HomeProductCardFragment,
+  {lifestyleFirst = false}: {lifestyleFirst?: boolean} = {},
+): Array<CarouselImage> {
+  const featured = product.featuredImage?.url
+    ? withoutQuery(product.featuredImage.url)
+    : null;
+  const variantUrls = new Set(
+    product.variants.nodes
+      .map((v) => v.image?.url)
+      .filter((url): url is string => Boolean(url))
+      .map(withoutQuery),
+  );
+  const kept = product.images.nodes.filter((image) => {
+    const url = withoutQuery(image.url);
+    if (url === featured) return true;
+    if (variantUrls.has(url)) return false;
+    return !/^Lightboard surfboard/i.test(image.altText ?? '');
+  });
+  if (!lifestyleFirst || kept.length < 3) return kept.slice(0, CAROUSEL_MAX);
+  const [first, ...rest] = kept;
+  const portrait = (i: (typeof kept)[number]) =>
+    (i.height ?? 0) > (i.width ?? 0);
+  return [
+    first,
+    ...rest.filter(portrait),
+    ...rest.filter((i) => !portrait(i)),
+  ].slice(0, CAROUSEL_MAX);
+}
+
+function toHomeProductCard(
+  product: HomeProductCardFragment | null | undefined,
+  options?: {lifestyleFirst?: boolean},
+): HomeProductCard | null {
+  if (!product) return null;
+  const carousel = pickCarouselImages(product, options);
+  const clean = sanitizeFeaturedHeadline(product) ?? product;
+  // Ship only the picked photos; the raw image / variant lists stay server-side.
+  const card: Partial<HomeProductCardFragment> = {...clean};
+  delete card.images;
+  delete card.variants;
+  return {
+    ...(card as Omit<HomeProductCardFragment, 'images' | 'variants'>),
+    carousel,
+  };
 }
 
 /**
@@ -231,33 +302,55 @@ async function loadCriticalData({context, request}: Route.LoaderArgs) {
   const locale = detectLocaleFromRequest(request);
   const dict = getDictionary(locale);
   const {storefront} = context;
-  const [productData, heroData, homepageData] = await Promise.all([
-    storefront
-      .query(FEATURED_PRODUCT_QUERY, {cache: storefront.CacheShort()})
-      .catch((error) => {
-        console.error(error);
-        return null;
-      }),
-    storefront
-      .query(HERO_SLIDES_QUERY, {
-        cache: merchantContentCache(storefront),
-      })
-      .catch((error) => {
-        console.error(error);
-        return null;
-      }),
-    storefront
-      .query(HOMEPAGE_SECTIONS_QUERY, {
-        cache: merchantContentCache(storefront),
-      })
-      .catch((error) => {
-        console.error(error);
-        return null;
-      }),
-  ]);
-  const featuredProduct = sanitizeFeaturedHeadline(
-    productData?.shop?.featured?.reference ?? null,
+  const [productData, printboardData, heroData, homepageData] =
+    await Promise.all([
+      storefront
+        .query(FEATURED_PRODUCT_QUERY, {cache: storefront.CacheShort()})
+        .catch((error) => {
+          console.error(error);
+          return null;
+        }),
+      // Runs in parallel with the rest; a failure only hides the block.
+      storefront
+        .query(HOME_PRODUCT_BY_HANDLE_QUERY, {
+          cache: merchantContentCache(storefront),
+          variables: {handle: HOME_PRINTBOARD_HANDLE},
+        })
+        .catch((error) => {
+          console.error(error);
+          return null;
+        }),
+      storefront
+        .query(HERO_SLIDES_QUERY, {
+          cache: merchantContentCache(storefront),
+        })
+        .catch((error) => {
+          console.error(error);
+          return null;
+        }),
+      storefront
+        .query(HOMEPAGE_SECTIONS_QUERY, {
+          cache: merchantContentCache(storefront),
+        })
+        .catch((error) => {
+          console.error(error);
+          return null;
+        }),
+    ]);
+  const featuredReference = productData?.shop?.featured?.reference;
+  const featuredProduct = toHomeProductCard(
+    featuredReference && 'handle' in featuredReference
+      ? featuredReference
+      : null,
   );
+  const printboardCard = toHomeProductCard(printboardData?.product, {
+    lifestyleFirst: true,
+  });
+  // Never show the same product twice if the merchant features the Printboard.
+  const printboard =
+    printboardCard && printboardCard.handle !== featuredProduct?.handle
+      ? printboardCard
+      : null;
   const {seo: baseSeo, jsonLd} = simpleSeo({
     title: dict.meta.title,
     description: dict.meta.description,
@@ -265,6 +358,7 @@ async function loadCriticalData({context, request}: Route.LoaderArgs) {
   });
   return {
     featuredProduct,
+    printboard,
     heroSlides: extractHeroSlides(heroData?.metaobjects?.nodes),
     hero: extractHeroSection(homepageData?.shop?.hero?.reference, locale),
     story: extractStorySection(homepageData?.shop?.story?.reference, locale),
@@ -457,7 +551,12 @@ export default function Homepage() {
   return (
     <>
       <Hero slides={data.heroSlides} content={data.hero} />
-      <FeaturedLightboard featuredProduct={data.featuredProduct} />
+      <FeaturedProduct
+        product={data.featuredProduct}
+        sectionId="featured"
+        ctaLabel={data.dict.featured.ctaPrimary}
+      />
+      <FeaturedPrintboard product={data.printboard} />
       <UspStrip />
       <Story content={data.story} />
       <Suspense fallback={<DeferredSectionFallback />}>
@@ -1076,19 +1175,37 @@ function extractProductSpecs(
     .sort((a, b) => a.position - b.position);
 }
 
-function FeaturedLightboard({
-  featuredProduct,
+type FeaturedCopy = {
+  eyebrow?: string;
+  title?: string;
+  description?: string;
+  specs?: Array<ProductSpecRendered>;
+};
+
+/**
+ * One homepage product block (photo carousel + copy + price + CTA). Copy
+ * comes from the product's `marketing.*` metafields; `fallback` fills any
+ * field the merchant hasn't set yet (e.g. the Printboard).
+ */
+function FeaturedProduct({
+  product,
+  sectionId,
+  ctaLabel,
+  fallback,
+  mirrored = false,
 }: {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- featured product reference comes via shop.metafield.reference; no single generated fragment captures all aliased metafields
-  featuredProduct: any;
+  product: HomeProductCard | null;
+  sectionId: string;
+  ctaLabel: string;
+  fallback?: FeaturedCopy;
+  mirrored?: boolean;
 }) {
   const {dict, locale} = useI18n();
   const f = dict.featured;
   // Drive the swatch picker from the live Shopify variant data so the merchant
   // can add/rename/recolor variants in admin without a code deploy.
   const colorOption =
-    featuredProduct?.options?.find((o: {name: string}) => o.name === 'Color') ??
-    null;
+    product?.options?.find((o: {name: string}) => o.name === 'Color') ?? null;
   const colorValues: Array<{
     id: string;
     name: string;
@@ -1097,37 +1214,51 @@ function FeaturedLightboard({
   const [selectedColor, setSelectedColor] = useState<string | null>(
     colorValues[0]?.name ?? null,
   );
-  const productImage = featuredProduct?.featuredImage;
-  // All marketing copy comes from product metafields (namespace "marketing")
-  // — the merchant edits these in Shopify Admin → Products → Lightboard.
-  const eyebrow = localizedMetafield(featuredProduct, 'eyebrow', locale);
-  const headlineHtml = localizedMetafield(featuredProduct, 'headline', locale);
-  const description = localizedMetafield(
-    featuredProduct,
-    'description',
-    locale,
-  );
-  const shipNote = localizedMetafield(featuredProduct, 'shipNote', locale);
-  const specs = extractProductSpecs(featuredProduct, locale);
-  const altText =
-    productImage?.altText || featuredProduct?.title || 'Lightboard';
+  // Marketing copy comes from product metafields (namespace "marketing")
+  // — the merchant edits these in Shopify Admin → Products.
+  const eyebrow =
+    localizedMetafield(product, 'eyebrow', locale) || fallback?.eyebrow || '';
+  const headlineHtml = localizedMetafield(product, 'headline', locale);
+  const description =
+    localizedMetafield(product, 'description', locale) ||
+    fallback?.description ||
+    '';
+  const shipNote = localizedMetafield(product, 'shipNote', locale);
+  const metaSpecs = extractProductSpecs(product, locale);
+  const specs = metaSpecs.length > 0 ? metaSpecs : (fallback?.specs ?? []);
+  const names = dict.product.names as Record<string, string> | undefined;
+  const name =
+    (product && names?.[product.handle]) ||
+    product?.title ||
+    fallback?.title ||
+    'Lightboard';
+  const titleId = `${sectionId}-title`;
   return (
-    <section className="feat3" id="featured">
+    <section
+      className={`feat3${mirrored ? ' feat3--mirror' : ''}`}
+      id={sectionId}
+      aria-labelledby={titleId}
+    >
       <div className="feat3-grid">
         <LiveLoop className="feat3-media">
           <div className="feat3-stage">
-            {productImage ? (
-              <Image
-                data={productImage}
-                alt={altText}
-                className="feat3-photo"
+            {product && product.carousel.length > 0 ? (
+              <ProductCarousel
+                images={product.carousel}
+                fallbackAlt={name}
                 sizes="(min-width: 980px) 55vw, 100vw"
-                loading="lazy"
+                labels={{
+                  carousel: f.photosLabel.replace('{name}', name),
+                  slide: f.slideLabel,
+                  goTo: f.goToSlide,
+                  prev: f.prevSlide,
+                  next: f.nextSlide,
+                }}
               />
             ) : (
               <img
                 src="/lightboard-lifestyle.jpg"
-                alt={altText}
+                alt={name}
                 className="feat3-photo"
                 loading="lazy"
               />
@@ -1138,13 +1269,18 @@ function FeaturedLightboard({
         <div className="feat3-rail">
           <Reveal>
             {eyebrow && <div className="feat3-eye">{eyebrow}</div>}
-            {headlineHtml && (
+            {headlineHtml ? (
               <h2
+                id={titleId}
                 className="feat3-title"
                 dangerouslySetInnerHTML={{
                   __html: headlineHtml,
                 }}
               />
+            ) : (
+              <h2 id={titleId} className="feat3-title">
+                {name}
+              </h2>
             )}
             {description && <p className="feat3-desc">{description}</p>}
           </Reveal>
@@ -1193,21 +1329,47 @@ function FeaturedLightboard({
             </div>
           )}
 
-          {featuredProduct ? (
+          {product ? (
             <BuyBar
-              price={featuredProduct.priceRange?.minVariantPrice?.amount}
-              currencyCode={
-                featuredProduct.priceRange?.minVariantPrice?.currencyCode
-              }
+              price={product.priceRange?.minVariantPrice?.amount}
+              currencyCode={product.priceRange?.minVariantPrice?.currencyCode}
               note={shipNote}
-              ctaPrimary={f.ctaPrimary}
-              handle={featuredProduct.handle}
-              variantColor={selectedColor}
+              ctaPrimary={ctaLabel}
+              handle={product.handle}
+              variantColor={colorValues.length > 1 ? selectedColor : null}
             />
           ) : null}
         </div>
       </div>
     </section>
+  );
+}
+
+/** Printboard block: no marketing metafields yet, so copy comes from i18n. */
+function FeaturedPrintboard({product}: {product: HomeProductCard | null}) {
+  const {dict} = useI18n();
+  if (!product) return null;
+  const copy = dict.featured.printboard;
+  const specs = (
+    (dict.printboard?.specs ?? []) as Array<{label: string; value: string}>
+  ).map((spec, i) => ({
+    id: `pb-spec-${i}`,
+    k: spec.label,
+    v: spec.value.replace('{size}', PRINTBOARD_SIZE_LABEL),
+    position: i,
+  }));
+  return (
+    <FeaturedProduct
+      product={product}
+      sectionId="featured-printboard"
+      ctaLabel={copy.cta}
+      mirrored
+      fallback={{
+        eyebrow: copy.eyebrow,
+        description: copy.description,
+        specs,
+      }}
+    />
   );
 }
 
@@ -1522,59 +1684,85 @@ function FinalCta({handle}: {handle?: string | null}) {
 
 /* ---------------- QUERIES ---------------- */
 
+/**
+ * Everything a homepage product block needs. The carousel photos are picked
+ * from `images` on the server (see pickCarouselImages) and `variants` is
+ * only read to skip per-variant renders.
+ */
+const HOME_PRODUCT_CARD_FRAGMENT = `#graphql
+  fragment HomeProductCard on Product {
+    id
+    title
+    handle
+    priceRange {
+      minVariantPrice { amount currencyCode }
+    }
+    featuredImage { id url altText width height }
+    images(first: 12) {
+      nodes { id url altText width height }
+    }
+    variants(first: 50) {
+      nodes { id image { url } }
+    }
+    options {
+      id
+      name
+      optionValues {
+        id
+        name
+        swatch { color }
+      }
+    }
+    eyebrow_he: metafield(namespace: "marketing", key: "eyebrow_he") { value }
+    eyebrow_en: metafield(namespace: "marketing", key: "eyebrow_en") { value }
+    headline_he: metafield(namespace: "marketing", key: "headline_he") { value }
+    headline_en: metafield(namespace: "marketing", key: "headline_en") { value }
+    description_he: metafield(namespace: "marketing", key: "description_he") { value }
+    description_en: metafield(namespace: "marketing", key: "description_en") { value }
+    shipNote_he: metafield(namespace: "marketing", key: "ship_note_he") { value }
+    shipNote_en: metafield(namespace: "marketing", key: "ship_note_en") { value }
+    specs: metafield(namespace: "marketing", key: "specs") {
+      references(first: 20) {
+        nodes {
+          ... on Metaobject {
+            id
+            label_he: field(key: "label_he") { value }
+            label_en: field(key: "label_en") { value }
+            value_he: field(key: "value_he") { value }
+            value_en: field(key: "value_en") { value }
+            position: field(key: "position") { value }
+          }
+        }
+      }
+    }
+  }
+`;
+
 const FEATURED_PRODUCT_QUERY = `#graphql
   query FeaturedProduct($country: CountryCode, $language: LanguageCode)
     @inContext(country: $country, language: $language) {
     shop {
       featured: metafield(namespace: "custom", key: "featured_product") {
         reference {
-          ... on Product {
-            id
-            title
-            handle
-            priceRange {
-              minVariantPrice { amount currencyCode }
-            }
-            featuredImage { id url altText width height }
-            options {
-              id
-              name
-              optionValues {
-                id
-                name
-                swatch { color }
-              }
-            }
-            eyebrow_he: metafield(namespace: "marketing", key: "eyebrow_he") { value }
-            eyebrow_en: metafield(namespace: "marketing", key: "eyebrow_en") { value }
-            headline_he: metafield(namespace: "marketing", key: "headline_he") { value }
-            headline_en: metafield(namespace: "marketing", key: "headline_en") { value }
-            description_he: metafield(namespace: "marketing", key: "description_he") { value }
-            description_en: metafield(namespace: "marketing", key: "description_en") { value }
-            tagMadeToOrder_he: metafield(namespace: "marketing", key: "tag_made_to_order_he") { value }
-            tagMadeToOrder_en: metafield(namespace: "marketing", key: "tag_made_to_order_en") { value }
-            tagDimensions: metafield(namespace: "marketing", key: "tag_dimensions") { value }
-            shipNote_he: metafield(namespace: "marketing", key: "ship_note_he") { value }
-            shipNote_en: metafield(namespace: "marketing", key: "ship_note_en") { value }
-            specs: metafield(namespace: "marketing", key: "specs") {
-              references(first: 20) {
-                nodes {
-                  ... on Metaobject {
-                    id
-                    label_he: field(key: "label_he") { value }
-                    label_en: field(key: "label_en") { value }
-                    value_he: field(key: "value_he") { value }
-                    value_en: field(key: "value_en") { value }
-                    position: field(key: "position") { value }
-                  }
-                }
-              }
-            }
-          }
+          ...HomeProductCard
         }
       }
     }
   }
+  ${HOME_PRODUCT_CARD_FRAGMENT}
+`;
+
+const HOME_PRODUCT_BY_HANDLE_QUERY = `#graphql
+  query HomeProductByHandle(
+    $country: CountryCode
+    $language: LanguageCode
+    $handle: String!
+  ) @inContext(country: $country, language: $language) {
+    product(handle: $handle) {
+      ...HomeProductCard
+    }
+  }
+  ${HOME_PRODUCT_CARD_FRAGMENT}
 `;
 
 const FAQS_QUERY = `#graphql

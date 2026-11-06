@@ -3947,6 +3947,101 @@ html[lang="he"] :is(.section-eyebrow, .hero-eyebrow, .feat3-eye, .pdp-eyebrow) {
   animation: lb-pop 280ms var(--ease-pop);
 }
 
+/* Second product block mirrors the first on desktop (photo on the other side). */
+@media (min-width: 981px) {
+  .feat3--mirror .feat3-grid { grid-template-columns: 1fr 1.25fr; }
+  .feat3--mirror .feat3-media { order: 2; }
+}
+.feat3 + .feat3 { padding-top: 0; }
+/* Hebrew has no case; keep Latin product names (Printboard) as written. */
+html[lang="he"] .feat3-cta { text-transform: none; }
+
+/* ---------- Product photo carousel (scroll-snap, no autoplay) ---------- */
+.pcar { position: absolute; inset: 0; }
+.pcar-track {
+  display: flex;
+  height: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+.pcar-track::-webkit-scrollbar { display: none; }
+.pcar-track:focus-visible { outline: 3px solid var(--teal-ink); outline-offset: -3px; }
+.pcar-slide {
+  position: relative;
+  flex: 0 0 100%;
+  scroll-snap-align: start;
+}
+.pcar-photo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.pcar-bars {
+  position: absolute;
+  z-index: 2;
+  inset-inline: 0;
+  bottom: 8px;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+.pcar-bar {
+  pointer-events: auto;
+  appearance: none;
+  background: none;
+  border: 0;
+  margin: 0;
+  padding: 12px 4px;
+  cursor: pointer;
+  border-radius: 8px;
+}
+.pcar-bar span {
+  display: block;
+  width: 18px;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 0 0 1px rgba(11, 58, 74, 0.3), 0 1px 4px rgba(11, 58, 74, 0.25);
+  transition: width var(--dur-ui) var(--ease-out-soft), background var(--dur-ui) ease;
+}
+.pcar-bar.is-active span { width: 30px; background: var(--white); }
+.pcar-bar:focus-visible { outline: 2px solid var(--white); outline-offset: -2px; }
+.pcar-arrow { display: none; }
+@media (hover: hover) and (pointer: fine) and (min-width: 981px) {
+  .pcar-arrow {
+    position: absolute;
+    z-index: 2;
+    top: 50%;
+    translate: 0 -50%;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(244, 237, 224, 0.92);
+    color: var(--ink);
+    box-shadow: 0 6px 18px -8px rgba(11, 58, 74, 0.5);
+    cursor: pointer;
+    transition: opacity var(--dur-ui) ease, background var(--dur-ui) ease;
+  }
+  .pcar-arrow:hover { background: var(--white); }
+  .pcar-arrow:focus-visible { outline: 3px solid var(--teal-ink); outline-offset: 2px; }
+  .pcar-arrow:disabled { opacity: 0.35; cursor: default; }
+  .pcar-arrow--prev { inset-inline-start: 14px; }
+  .pcar-arrow--next { inset-inline-end: 14px; }
+  .pcar-arrow--prev svg { scale: -1 1; }
+  [dir="rtl"] .pcar-arrow--prev svg { scale: 1 1; }
+  [dir="rtl"] .pcar-arrow--next svg { scale: -1 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pcar-bar span, .pcar-arrow { transition: none; }
+}
+
 /* ---------- USP strip ---------- */
 .usp {
   position: relative;

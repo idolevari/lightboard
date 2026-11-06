@@ -54,7 +54,17 @@
   },
   "featured": {
     "finishLabel": "צבע",
-    "ctaPrimary": "בחירת תמונות"
+    "ctaPrimary": "בחירת תמונות",
+    "photosLabel": "התמונות של {name}",
+    "slideLabel": "{n} מתוך {total}",
+    "goToSlide": "תמונה {n} מתוך {total}",
+    "prevSlide": "התמונה הקודמת",
+    "nextSlide": "התמונה הבאה",
+    "printboard": {
+      "eyebrow": "— חדש מהסטודיו",
+      "description": "גלשן עץ עם תמונה מודפסת ישירות על העץ, כך שהטקסטורה נשארת לנשום דרכה. בוחרים אחד העיצובים שלנו או מעלים תמונה משלכם.",
+      "cta": "לעיצוב ה־Printboard"
+    }
   },
   "faq": {
     "eyebrow": "— שאלות נפוצות",

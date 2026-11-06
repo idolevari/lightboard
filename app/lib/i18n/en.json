@@ -54,7 +54,17 @@
   },
   "featured": {
     "finishLabel": "Color",
-    "ctaPrimary": "Choose your photos"
+    "ctaPrimary": "Choose your photos",
+    "photosLabel": "{name} photos",
+    "slideLabel": "{n} of {total}",
+    "goToSlide": "Photo {n} of {total}",
+    "prevSlide": "Previous photo",
+    "nextSlide": "Next photo",
+    "printboard": {
+      "eyebrow": "— New from the studio",
+      "description": "A wooden board with your photo printed straight on the wood, so the grain still breathes through it. Pick one of our designs or upload your own photo.",
+      "cta": "Design your Printboard"
+    }
   },
   "faq": {
     "eyebrow": "— FAQ",
