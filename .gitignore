@@ -24,3 +24,6 @@ tsconfig.tsbuildinfo
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+
+# Local-only agent notes (contain private details)
+CLAUDE.md

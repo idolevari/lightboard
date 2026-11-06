@@ -1,8 +1,16 @@
 {
   "name": "lightboard",
+  "version": "1.0.0",
+  "description": "Hebrew-first headless Shopify storefront (Hydrogen + Oxygen) with a live photo-print product customizer.",
+  "author": "Ido Lev Ari",
+  "license": "UNLICENSED",
+  "homepage": "https://lightboard.co.il",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/idolevari/lightboard.git"
+  },
   "private": true,
   "sideEffects": false,
-  "version": "2026.4.1",
   "type": "module",
   "scripts": {
     "build": "shopify hydrogen build --codegen",
