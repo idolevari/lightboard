@@ -45,6 +45,21 @@ test('product page has no serious accessibility violations', async ({page}) => {
   await expectNoSeriousViolations(page, 'product');
 });
 
+test('printboard page has no serious accessibility violations', async ({
+  page,
+}) => {
+  await page.goto('/products/printboard');
+  await waitForHydration(page);
+  await page.getByRole('radiogroup').getByRole('radio').first().click();
+  await expectNoSeriousViolations(page, 'printboard');
+});
+
+test('shop grid has no serious accessibility violations', async ({page}) => {
+  await page.goto('/collections/all');
+  await waitForHydration(page);
+  await expectNoSeriousViolations(page, 'shop');
+});
+
 test('cart has no serious accessibility violations', async ({page}) => {
   await addBoardToCart(page);
   await page.goto('/cart');
