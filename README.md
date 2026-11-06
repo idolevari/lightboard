@@ -78,9 +78,14 @@ For the full rationale and a per-layer guide, see `CLAUDE.md`.
 ```
 app/
   components/    UI components (Header, Footer, CartLineItem, PhotoCustomizer, ...)
+    home/        Homepage sections (Hero, FeaturedProduct, Story, Faq, ...)
+    product/     Product-page pieces (ProductHead, ProductSpecs, InYourHome)
+  graphql/       Storefront + Customer Account API documents
   lib/           Helpers: i18n, brand, sanitize, coming-soon, meta, fragments
+    .server/     Server-only code (SEO graph, Admin API, upload guards, ...)
   routes/        File-based routing — ($locale) prefix on customer paths
-  styles/        reset.css + app.css (palette, typography, layout)
+  styles/        app.css @imports tokens, base, layout/, home/, product/,
+                 pages/, cart, a11y, typography, motion (one built file)
 public/          Static assets (logo SVGs, favicon, fallback images)
 ```
 
