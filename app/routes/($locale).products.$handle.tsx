@@ -377,12 +377,6 @@ export default function Product() {
             compareAtPrice={selectedVariant?.compareAtPrice}
             display
           />
-          {marketing.shipNote ? (
-            <p className="pdp-ship">
-              <Doodle name="van" size={20} />
-              <span>{marketing.shipNote}</span>
-            </p>
-          ) : null}
         </div>
         {usps.length > 0 ? (
           <ul className="pdp-usps" role="list">
