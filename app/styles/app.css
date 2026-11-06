@@ -3813,13 +3813,23 @@ html[lang="he"] :is(.section-eyebrow, .hero-eyebrow, .feat3-eye, .pdp-eyebrow) {
 .hero-cta:hover { background: var(--white); color: var(--ink); transform: none; }
 .hero-cta:active { transform: scale(0.97); }
 .hero-cta .arrow { transition: translate var(--dur-ui) var(--ease-out-soft), background 0.2s; }
+/* Compact pill: content-width, 48px tall (still a comfortable tap target). */
+.hero-cta { padding: 12px 14px 12px 22px; gap: 12px; min-height: 48px; }
+[dir="rtl"] .hero-cta { padding: 12px 22px 12px 14px; }
+/* Keep the arrow circle a flex box in RTL too (the global [dir=rtl] .arrow
+   rule sets inline-block, which knocked the glyph off-centre). */
+.hero-cta .arrow,
+[dir="rtl"] .hero-cta .arrow { display: inline-grid; place-items: center; width: 26px; height: 26px; line-height: 0; }
+.hero-cta .arrow svg { display: block; width: 14px; height: 14px; }
+/* The drawer panel takes focus on open (tabindex=-1) — no ring on the panel. */
+.overlay aside:focus { outline: none; }
 .hero-cta:hover .arrow,
 .feat3-cta:hover .arrow,
 .final-cta-btn:hover .arrow { translate: -4px 0; }
 [dir="ltr"] :is(.hero-cta, .feat3-cta, .final-cta-btn):hover .arrow { translate: 4px 0; }
 @media (max-width: 600px) {
   .hero-meta { border-top: 0; padding-top: 0; margin-top: 20px; }
-  .hero-cta { align-self: stretch; justify-content: space-between; font-size: 15px; }
+  .hero-cta { align-self: flex-start; font-size: 14px; }
   .hero-dots { margin-top: 16px; }
 }
 .hero-tape { bottom: calc(var(--wl-h) * 0.5); border-top: 0; }
