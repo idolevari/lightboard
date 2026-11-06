@@ -1,0 +1,90 @@
+/*
+ * Element defaults, shared utilities, scroll reveal, paper grain
+ * and the illustration primitives.
+ */
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+html { background: var(--cream); }
+body {
+  font-family: var(--sans);
+  color: var(--ink);
+  background: var(--cream);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+  background-image: url('/illustrations/grain.svg');
+  background-size: 180px 180px;
+}
+img { display: block; max-width: 100%; border-radius: 0; }
+a { color: inherit; text-decoration: none; }
+a:hover { color: var(--teal-text); }
+button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--serif);
+  color: var(--ink);
+  letter-spacing: -0.02em;
+  font-weight: 400;
+  font-variation-settings: "SOFT" 30;
+}
+
+.serif { font-family: var(--serif); font-weight: 400; font-variation-settings: "SOFT" 30, "WONK" 0; letter-spacing: -0.01em; }
+.mono  { font-family: var(--mono); letter-spacing: 0.02em; }
+.script { font-family: var(--script); font-weight: 500; }
+
+.container {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 var(--container-px);
+}
+
+/* ============================================
+   SCROLL REVEAL — generic fade-up applied to
+   any element wrapped in <Reveal>. The hook
+   (useInView) toggles `.is-in` once the element
+   crosses ~20% into the viewport. CountUp values
+   honor prefers-reduced-motion in JS; this CSS
+   honors it for the fade-up.
+   ============================================ */
+.reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+.reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+.doodle { display: inline-block; flex: 0 0 auto; vertical-align: middle; }
+
+/* ---------- Illustration primitives ---------- */
+.wave-divider {
+  display: block;
+  width: 100%;
+  height: 32px;
+  pointer-events: none;
+}
+.wave-divider--flip { transform: scaleY(-1); }
+@media (min-width: 900px) { .wave-divider { height: 56px; } }
+.section-wave { position: absolute; inset-inline: 0; bottom: -1px; z-index: 1; }
+.sun-rays { display: block; width: 100%; height: auto; aspect-ratio: 200 / 112; overflow: visible; }
+.sun-rays__rays {
+  transform-box: view-box;
+  transform-origin: 100px 104px;
+  /* M6: slow spin, paused until an ancestor is .is-live (motion.css). */
+  animation: lb-spin 60s linear infinite;
+  animation-play-state: paused;
+}
+.van-art { display: block; width: 100%; height: auto; aspect-ratio: 240 / 150; }
+.surfboard-art { display: block; width: 100%; height: auto; aspect-ratio: 80 / 240; }

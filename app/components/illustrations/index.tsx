@@ -2,7 +2,7 @@
  * "Golden Hour Van" illustration kit — hand-drawn SVGs inlined as tiny
  * components so they theme through `currentColor` and CSS custom properties
  * (`--sun`, `--board`, `--bulb`, `--wave-line`, …) and can animate (see the
- * MOTION block in app.css).
+ * app/styles/motion.css).
  *
  * Every illustration here is decorative: `aria-hidden` + `focusable=false`.
  * Explicit width/height or aspect-ratio boxes keep CLS at 0.

@@ -88,7 +88,7 @@ export function links() {
       href: 'https://fonts.gstatic.com',
       crossOrigin: 'anonymous',
     },
-    // Hebrew body/display text renders in self-hosted Ploni (app.css,
+    // Hebrew body/display text renders in self-hosted Ploni (tokens.css,
     // unicode-range limited). Preload the light cut: it paints the hero and
     // most Hebrew copy, so the LCP text isn't waiting on font discovery.
     {
@@ -98,7 +98,7 @@ export function links() {
       type: 'font/woff2',
       crossOrigin: 'anonymous',
     },
-    // Only the Latin families app.css actually uses: Fraunces (serif,
+    // Only the Latin families the styles actually use: Fraunces (serif,
     // weights 300-500 + italic; the SOFT/WONK axes were ~100 KB and are
     // dropped), Heebo (sans fallback for Latin), JetBrains Mono (labels).
     // Removed: Inter and Frank Ruhl Libre (shadowed by Ploni/Heebo) and

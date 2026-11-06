@@ -1,0 +1,129 @@
+/*
+ * Design tokens: self-hosted Ploni faces and the :root palette,
+ * type, spacing and motion custom properties.
+ */
+
+/* Ploni — Hebrew display face from the original WordPress site.
+   `unicode-range` constrains Ploni to Hebrew characters only, so Latin
+   copy still gets Fraunces/Heebo as designed. The browser only fetches
+   the woff2 if a Hebrew glyph in range actually appears on the page.
+   font-display:swap so we don't block render on the fetch. */
+@font-face {
+  font-family: "Ploni";
+  src: url("/fonts/ploni-light-aaa.woff2") format("woff2"),
+       url("/fonts/ploni-light-aaa.woff") format("woff");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0590-05FF, U+FB1D-FB4F, U+200F, U+202B, U+202E;
+}
+@font-face {
+  font-family: "Ploni";
+  src: url("/fonts/ploni-ultrabold-aaa.woff2") format("woff2"),
+       url("/fonts/ploni-ultrabold-aaa.woff") format("woff");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0590-05FF, U+FB1D-FB4F, U+200F, U+202B, U+202E;
+}
+
+:root {
+  /* Editorial palette */
+  --cream: #f4ede0;
+  --cream-2: #ebe2d2;
+  --cream-3: #ddd2bd;
+  --ink: #0b3a4a;
+  --ink-2: #14505f;
+  --ink-soft: #2a6270;
+  --sand: #c9b58d;
+  /* Brand palette pulled from the Lightboard logo + WP Elementor system
+     colors (teal + lime). WP precedent uses lime for action surfaces and
+     teal for accent/highlights, and that's the hierarchy we mirror. */
+  --brand-teal: #27cfdc;
+  --brand-teal-2: #1ea3af;
+  --brand-lime: #dadb65;
+  --brand-lime-2: #c4c558;
+  --brand-peach: #ffbc7d;
+  /* `--orange` stays defined as the primary-accent token for legacy
+     selectors across the storefront, but now points at the brand teal.
+     Surfaces that read as CTA-action use --brand-lime explicitly. */
+  /* Text-safe teal: #27cfdc is 1.6:1 on cream, so it is reserved for
+     fills, dots and borders. Any teal *text* uses this (4.6:1 on cream). */
+  --teal-text: #0e6f78; /* = --teal-ink (5.06:1 on cream) */
+  --orange: var(--brand-teal);
+  --orange-2: var(--brand-teal-2);
+  --teal: var(--brand-teal);
+  --white: #fbf8f2;
+
+  /* Golden hour accents. Measured on
+     --cream #f4ede0 / --cream-2 #ebe2d2 (WCAG 2.x):
+     --sunset-ink 5.27 / 4.78 · --teal-ink 5.06 / 4.59 · --driftwood 5.54 / 5.02.
+     --sun and --sunset are decorative / ≥24px only (sunset 3.45:1). */
+  --sun: #f6c95b;
+  --sunset: #c4643a;
+  --sunset-ink: #9c4a26;
+  --teal-ink: #0e6f78;
+  --driftwood: #725a41;
+  --fog: #e3e6df;
+  --glow: radial-gradient(60% 50% at 50% 100%, rgba(255,188,125,.55), rgba(246,201,91,.18) 45%, transparent 70%);
+
+  /* Motion tokens */
+  --ease-out-soft: cubic-bezier(.22,1,.36,1);
+  --ease-swell: cubic-bezier(.45,.05,.25,1);
+  --ease-pop: cubic-bezier(.34,1.56,.64,1);
+  --dur-tap: 140ms;
+  --dur-ui: 220ms;
+  --dur-reveal: 700ms;
+
+  --rule: rgba(11, 58, 74, 0.14);
+  --rule-strong: rgba(11, 58, 74, 0.28);
+
+  /* Legacy aliases for the rest of the Hydrogen scaffold */
+  --color-sand: var(--cream);
+  --color-cream: var(--cream-2);
+  --color-wood: var(--ink);
+  --color-wood-soft: var(--ink-soft);
+  --color-terracotta: var(--orange);
+  --color-terracotta-dark: var(--orange-2);
+  --color-sage: #8FA68E;
+  --color-tan: var(--sand);
+  --color-border: var(--rule);
+  --color-dark: var(--ink);
+  --color-light: var(--cream);
+
+  /* Type stacks — Hebrew-first with Latin fallbacks. Ploni sits in
+     every stack (sans / serif / mono / script). Its `unicode-range`
+     limits it to Hebrew glyphs, so it wins for HE copy in every role
+     while Fraunces (serif), Heebo (sans) and JetBrains (mono) still win
+     for Latin. Caveat was dropped: the .script class is unused. */
+  --serif: "Fraunces", "Ploni", Georgia, serif;
+  --sans: "Ploni", "Heebo", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  --mono: "JetBrains Mono", "Ploni", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --script: "Ploni", cursive;
+
+  --font-body: var(--sans);
+  --font-display: var(--serif);
+  --font-serif: var(--serif);
+
+  /* Hydrogen chrome */
+  --aside-width: 420px;
+  --cart-aside-summary-height-with-discount: 300px;
+  --cart-aside-summary-height: 250px;
+  --grid-item-width: 320px;
+  --header-height: 80px;
+
+  /* ============================================
+     RESPONSIVE TOKENS
+     Use these everywhere instead of fixed pixel values for spacing.
+     They scale fluidly between mobile and desktop without needing
+     per-section media queries.
+     Breakpoints we honour: 480 (small phone), 600 (large phone),
+     768 (tablet), 900 (small laptop), 1100 (laptop). Add @media
+     overrides only when fluid scaling alone can't express the change
+     (e.g. a multi-column grid that must collapse).
+     ============================================ */
+  --container-px: clamp(20px, 4vw, 40px);
+  --section-py: clamp(48px, 7vw, 88px);
+  --section-py-lg: clamp(60px, 8vw, 104px);
+  --tap-min: 44px;
+}

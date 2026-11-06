@@ -1,0 +1,341 @@
+/*
+ * Homepage hero: rotating photo stage, copy, slide dots, tape and waves.
+ */
+
+/* ============================================
+   HERO
+   ============================================ */
+.hero {
+  position: relative;
+  height: 100vh;
+  /* svh = small-viewport-height: avoids the iOS toolbar overflow that
+     100vh causes (a notorious phone gotcha). Falls back to 100vh. */
+  height: 100svh;
+  min-height: 580px;
+  color: var(--white);
+  overflow: hidden;
+  margin: 0;
+  --wl-h: 72px;
+  --wl-3: var(--cream);
+}
+.hero-media {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 1.2s ease;
+}
+.hero-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  user-select: none;
+  object-position: var(--hero-pos, 50% 50%);
+  transform: scale(1);
+  transition: transform 7s ease-out;
+}
+.hero-media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(11,58,74,0.42) 0%, rgba(11,58,74,0.08) 38%, rgba(11,58,74,0.62) 100%);
+}
+.hero-inner {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding-bottom: calc(var(--wl-h) + 64px);
+}
+.hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin-bottom: 28px;
+  opacity: 0.85;
+}
+.hero-eyebrow .tick { width: 28px; height: 1px; background: currentColor; }
+.hero-title {
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: clamp(40px, 9vw, 148px);
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+  margin: 0 0 28px;
+  font-variation-settings: "SOFT" 30, "WONK" 1;
+  max-width: 14ch;
+  color: var(--white);
+}
+.hero-title em {
+  font-style: italic;
+  font-weight: 300;
+  font-variation-settings: "SOFT" 90, "WONK" 1;
+}
+.hero-meta {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+  border-top: 1px solid rgba(255,255,255,0.25);
+  padding-top: 24px;
+  margin-top: 32px;
+}
+@media (max-width: 600px) {
+  .hero-meta {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 20px;
+    border-top: 0;
+    padding-top: 0;
+    margin-top: 20px;
+  }
+}
+.hero-kicker {
+  max-width: 420px;
+  font-size: 14px;
+  line-height: 1.6;
+  opacity: 0.92;
+  margin: 0;
+}
+.hero-cta {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: var(--brand-lime);
+  color: var(--ink);
+  transition:
+    transform var(--dur-tap) var(--ease-pop),
+    background var(--dur-ui) ease,
+    color var(--dur-ui) ease;
+  /* Compact pill: content-width, 48px tall (still a comfortable tap target). */
+  padding: 12px 14px 12px 22px;
+  gap: 12px;
+  min-height: 48px;
+}
+.hero-cta .arrow {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--white);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  transition: translate var(--dur-ui) var(--ease-out-soft), background 0.2s;
+}
+.hero-cta:hover .arrow { background: var(--ink); color: var(--brand-lime); }
+
+/* Flip the right-arrow glyph for RTL pages — the literal "→" character is
+   direction-neutral in Unicode and doesn't auto-mirror, so we mirror with
+   CSS for every .arrow span across the storefront. */
+[dir="rtl"] .arrow { display: inline-block; transform: scaleX(-1); }
+
+.hero-dots {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 32px;
+  z-index: 3;
+  position: relative;
+}
+.hero-dots button {
+  /* Tap target 44×44 (WCAG); the visible 2px bar is centered inside via
+     ::before. Width still animates between idle and active for the
+     visual indicator. */
+  height: var(--tap-min);
+  display: inline-flex;
+  align-items: center;
+  background: transparent;
+  transition: width 0.3s;
+  cursor: pointer;
+  border: none;
+  padding: 0;
+  width: 24px;
+  position: relative;
+}
+.hero-dots button::before {
+  content: "";
+  display: block;
+  width: 100%;
+  height: 2px;
+  background: rgba(251,248,242,0.4);
+  border-radius: 2px;
+  transition: background 0.3s;
+}
+.hero-dots button.on { width: 44px; }
+.hero-dots button.on::before { background: var(--white); }
+.hero-dots .count {
+  margin-inline-start: 16px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  opacity: 0.9;
+}
+
+.hero-tape {
+  position: absolute;
+  left: 0; right: 0;
+  z-index: 3;
+  background: rgba(11, 58, 74, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 14px 0;
+  overflow: hidden;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.92);
+  bottom: calc(var(--wl-h) * 0.5);
+  border-top: 0;
+}
+.hero-tape-track {
+  display: flex;
+  gap: 48px;
+  white-space: nowrap;
+  animation: marquee 40s linear infinite;
+  width: max-content;
+}
+.hero-tape-track span {
+  display: inline-flex;
+  align-items: center;
+  gap: 48px;
+}
+.hero-tape-track .dot-sep {
+  display: inline-block;
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: var(--sun);
+}
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+[dir="rtl"] .hero-tape-track { animation-direction: reverse; }
+
+.scroll-hint {
+  position: absolute;
+  right: 40px;
+  bottom: 80px;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  opacity: 0.7;
+  writing-mode: vertical-rl;
+  color: var(--white);
+}
+[dir="rtl"] .scroll-hint { right: auto; left: 40px; writing-mode: vertical-lr; }
+@media (max-width: 768px) {
+  /* Hint adds clutter on phones where vertical scroll is implicit. */
+  .scroll-hint { display: none; }
+}
+.scroll-hint::after {
+  content: "";
+  width: 1px; height: 40px;
+  background: currentColor;
+  opacity: 0.6;
+  animation: scroll-pulse 2s ease-in-out infinite;
+}
+@keyframes scroll-pulse {
+  0%, 100% { transform: scaleY(0.4); transform-origin: top; }
+  50% { transform: scaleY(1); transform-origin: top; }
+}
+
+/* ---------- Photo stage, glow, CTA and shoreline waves ---------- */
+@media (min-width: 900px) { .hero { --wl-h: 120px; } }
+.hero-stage { position: absolute; inset: 0; overflow: hidden; }
+.hero-media.is-active { opacity: 1; }
+.hero-media picture { display: block; width: 100%; height: 100%; }
+.hero-media.is-active img { transform: scale(1.06); }
+@media (max-aspect-ratio: 4/5) {
+  /* The portrait <source> is already a focal-point crop. */
+  .hero-media img { object-position: 50% 50%; }
+}
+.hero-glow {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: var(--glow);
+  opacity: 0.85;
+}
+.hero-eyebrow-sep { opacity: 0.5; margin: 0 8px; }
+.hero-eyebrow-label { font-family: var(--mono); opacity: 0.9; }
+.hero-title em { color: var(--sun); }
+.hero-cta:hover { background: var(--white); color: var(--ink); transform: none; }
+.hero-cta:active { transform: scale(0.97); }
+[dir="rtl"] .hero-cta { padding: 12px 22px 12px 14px; }
+/* Keep the arrow circle a flex box in RTL too (the global [dir=rtl] .arrow
+   rule sets inline-block, which knocked the glyph off-centre). */
+.hero-cta .arrow,
+[dir="rtl"] .hero-cta .arrow { display: inline-grid; place-items: center; width: 26px; height: 26px; line-height: 0; }
+.hero-cta .arrow svg { display: block; width: 14px; height: 14px; }
+/* The drawer panel takes focus on open (tabindex=-1) — no ring on the panel. */
+.overlay aside:focus { outline: none; }
+.hero-cta:hover .arrow,
+.feat3-cta:hover .arrow,
+.final-cta-btn:hover .arrow { translate: -4px 0; }
+[dir="ltr"] :is(.hero-cta, .feat3-cta, .final-cta-btn):hover .arrow { translate: 4px 0; }
+@media (max-width: 600px) {
+  .hero-cta { align-self: flex-start; font-size: 14px; }
+  .hero-dots { margin-top: 16px; }
+}
+.hero-tape-item { display: inline-flex; align-items: center; gap: 48px; }
+@media (max-width: 480px) {
+  /* Calm phones: the USP strip right below carries these messages. */
+  .hero-tape { display: none; }
+  .hero-inner { padding-bottom: calc(var(--wl-h) + 8px); }
+}
+.wave-layers {
+  position: absolute;
+  inset-inline: 0;
+  bottom: -1px;
+  height: var(--wl-h);
+  z-index: 3;
+  overflow: hidden;
+  pointer-events: none;
+}
+.wl-track {
+  position: absolute;
+  left: 0; /* physical on purpose: a 200% track must start at the left edge in RTL too */
+  bottom: 0;
+  width: 200%;
+  height: 100%;
+  animation: lb-drift var(--wl-dur, 30s) linear infinite;
+  animation-play-state: paused;
+}
+.wl-track svg,
+.wl-front { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+.wl-track--back { --wl-dur: 38s; }
+.wl-track--mid { --wl-dur: 26s; }
+
+/* Hero bottom on phones: no tape band (the USP strip below says the same),
+   and a cleaner shoreline — translucent foam over the photo, then cream.
+   The old tan middle layer read as mud. */
+@media (max-width: 899px) {
+  .hero-tape { display: none; }
+}
+.hero-waves {
+  --wl-1: rgba(255, 255, 255, 0.55);
+  --wl-2: rgba(244, 237, 224, 0.9);
+}
+.hero-waves .wl-track--back path { fill-opacity: 0.35; }
+.hero-waves .wl-track--mid path { fill-opacity: 0.6; }

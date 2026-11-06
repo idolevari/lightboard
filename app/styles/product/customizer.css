@@ -1,0 +1,462 @@
+/*
+ * Lightboard photo customizer: board canvas, photo slots and the
+ * crop dialog.
+ */
+
+/* ============================================
+   PHOTO CUSTOMIZER — PDP photo upload + crop
+   ============================================ */
+.photo-customizer {
+  margin: 0;
+}
+.photo-customizer__header {
+  margin-bottom: 16px;
+}
+.photo-customizer__title {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 22px;
+  margin: 0 0 4px 0;
+  color: var(--ink);
+}
+.photo-customizer__subtitle {
+  font-size: 14px;
+  color: var(--ink-soft);
+  margin: 0;
+}
+.board-canvas {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--cream);
+}
+.board-canvas__bg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  user-select: none;
+}
+.board-canvas__slot {
+  position: absolute;
+  overflow: hidden;
+  border-radius: 2px;
+  cursor: pointer;
+}
+.board-canvas__slot.is-empty::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.0);
+  transition: background 0.15s ease;
+  pointer-events: none;
+}
+.board-canvas__slot.is-empty:hover::before {
+  background: rgba(39, 207, 220, 0.18);
+}
+.board-canvas__pick {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  color: var(--ink-soft);
+  font-family: var(--mono);
+}
+.board-canvas__pick:hover { color: var(--brand-teal); }
+.board-canvas__pick[disabled] { cursor: not-allowed; opacity: 0.5; }
+.board-canvas__num {
+  font-family: var(--font-display);
+  font-size: clamp(20px, 4vw, 36px);
+  color: var(--ink-soft);
+  line-height: 1;
+}
+.board-canvas__plus {
+  font-size: clamp(18px, 3.2vw, 28px);
+  font-weight: 300;
+  line-height: 1;
+}
+.board-canvas__photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  user-select: none;
+}
+.board-canvas__file-input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.photo-customizer__upload-error {
+  margin: 12px 0 0 0;
+  padding: 10px 12px;
+  background: rgba(220, 60, 60, 0.12);
+  border: 1px solid rgba(220, 60, 60, 0.4);
+  color: rgb(140, 30, 30);
+  border-radius: 8px;
+  font-size: 13px;
+}
+.photo-customizer__actions {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.photo-customizer__approve {
+  appearance: none;
+  border: 0;
+  min-height: 52px;
+  background: var(--brand-lime);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 14px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+.photo-customizer__approve:hover:not(:disabled) {
+  background: var(--brand-lime-2);
+}
+.photo-customizer__approve:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.photo-customizer__approve[disabled] {
+  background: var(--cream-2);
+  color: var(--ink-soft);
+  cursor: not-allowed;
+}
+.photo-customizer__progress {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink-soft);
+  text-align: center;
+}
+.photo-customizer__ready {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: #e3f1e6;
+  color: #1d5a2c;
+  font-weight: 600;
+}
+.photo-customizer__messages {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+}
+.photo-customizer__messages li {
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+.photo-customizer__messages .is-error {
+  background: rgba(220, 60, 60, 0.1);
+  border: 1px solid rgba(220, 60, 60, 0.4);
+  color: #8c1e1e;
+}
+.photo-customizer__messages .is-warning {
+  background: rgba(218, 219, 101, 0.25);
+  border: 1px solid rgba(150, 140, 30, 0.4);
+  color: var(--ink);
+}
+
+/* "Surprise me" — frosted-glass pill overlaid on the board image at the
+   top-start corner. Populates the three slots with curated brand photos so
+   customers without photos handy can still buy a Lightboard.
+   Pulses gently when slots are empty; dims to ~50% once all are filled. */
+.board-canvas__surprise {
+  position: absolute;
+  top: 12px;
+  inset-inline-start: 12px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px) saturate(140%);
+  -webkit-backdrop-filter: blur(10px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  cursor: pointer;
+  box-shadow: 0 2px 14px rgba(11, 58, 74, 0.18);
+  transition: opacity 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+.board-canvas__surprise:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(11, 58, 74, 0.18);
+}
+.board-canvas__surprise:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.board-canvas__surprise[data-state='filled'] {
+  opacity: 0.55;
+}
+.board-canvas__surprise[data-state='filled']:hover:not(:disabled) {
+  opacity: 1;
+}
+.board-canvas__surprise[data-state='empty'] {
+  animation: surprise-nudge 2.8s ease-in-out infinite;
+}
+@keyframes surprise-nudge {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+.board-canvas__surprise-icon {
+  font-size: 18px;
+  line-height: 1;
+  /* Color hint for environments that render ✨ as a text glyph (some
+     monochrome font fallbacks). When the emoji renders in color, the OS
+     ignores this value. */
+  color: var(--sunset);
+}
+@media (prefers-reduced-motion: reduce) {
+  .board-canvas__surprise[data-state='empty'] { animation: none; }
+}
+@media (max-width: 480px) {
+  .board-canvas__surprise {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+}
+
+/* ============================================
+   CROP DIALOG
+   ============================================ */
+.crop-dialog {
+  position: fixed;
+  inset: 0;
+  /* Above the header (100), drawers (200) and the floating buttons (9000+). */
+  z-index: 9500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  overflow-y: auto;
+}
+.crop-dialog__backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 58, 74, 0.72);
+  backdrop-filter: blur(2px);
+  border: 0;
+  cursor: pointer;
+  /* Native button reset so the full-screen click target doesn't pick up a
+     theme background or focus ring. */
+  appearance: none;
+  padding: 0;
+}
+.crop-dialog__panel {
+  position: relative;
+  width: min(520px, 100%);
+  max-height: calc(100vh - 32px);
+  background: var(--cream);
+  border-radius: 16px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 30px 60px -20px rgba(0,0,0,0.5);
+  overflow-y: auto;
+}
+.crop-dialog__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 20px;
+  color: var(--ink);
+}
+.crop-dialog__stage {
+  position: relative;
+  /* Stage stays square at all sizes. Cap via max-width so the aspect-ratio
+     rule never falls back to a rectangle. */
+  width: 100%;
+  max-width: min(60vh, 480px);
+  aspect-ratio: 1 / 1;
+  margin: 0 auto;
+  background: var(--ink);
+  border-radius: 10px;
+  overflow: hidden;
+}
+/* react-easy-crop renders a darker overlay outside the crop area via a huge
+   box-shadow on the crop-area div. We don't want that visual treatment — the
+   whole stage IS the crop area. Force the crop area to fill the container
+   and drop the outer overlay. */
+.crop-dialog__stage .reactEasyCrop_CropArea {
+  width: 100% !important;
+  height: 100% !important;
+  box-shadow: none !important;
+  color: rgba(255, 255, 255, 0.0); /* react-easy-crop uses currentColor for the shadow */
+}
+.crop-dialog__stage .reactEasyCrop_CropAreaGrid::before,
+.crop-dialog__stage .reactEasyCrop_CropAreaGrid::after {
+  border-color: rgba(255, 255, 255, 0.55);
+}
+.crop-dialog__zoom {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink-soft);
+}
+.crop-dialog__zoom input[type=range] {
+  flex: 1;
+  height: 32px;
+  accent-color: var(--ink);
+  cursor: pointer;
+}
+.crop-dialog__hint { margin: 0; font-size: 13px; color: var(--ink-soft); text-align: center; }
+.crop-dialog__stage:focus-within { outline: 2px solid var(--ink); outline-offset: 3px; }
+.crop-dialog__actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+.crop-dialog__btn {
+  appearance: none;
+  border: 0;
+  min-height: var(--tap-min);
+  padding: 10px 22px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  font-family: var(--font-body);
+}
+.crop-dialog__btn--ghost {
+  background: transparent;
+  color: var(--ink-soft);
+  border: 1px solid var(--rule);
+}
+.crop-dialog__btn--primary {
+  /* White on #27cfdc was 1.6:1; ink gives 10:1. */
+  background: var(--ink);
+  color: var(--white);
+}
+.crop-dialog__btn--primary[disabled] {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ============================================
+   PHOTO SLOTS STRIP — the labelled controls under
+   the board (pick / crop / remove, ≥40px targets)
+   ============================================ */
+.board-canvas__slot.is-empty .board-canvas__pick { pointer-events: none; }
+.board-slots {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.board-slots__tile {
+  position: relative;
+  margin: 0;
+  aspect-ratio: 1 / 1;
+  border-radius: 10px;
+  background: var(--white);
+  border: 1.5px dashed var(--rule-strong);
+  overflow: hidden;
+}
+.board-slots__tile.is-filled { border-style: solid; border-color: var(--rule); }
+.board-slots__tile.has-error { border-color: rgba(200, 50, 50, 0.7); }
+.board-slots__pick {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 13px;
+  cursor: pointer;
+}
+.board-slots__pick:hover { background: var(--cream-2); }
+.board-slots__plus { font-size: 28px; line-height: 1; font-weight: 300; }
+.board-slots__thumb {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+.board-slots__thumb img { width: 100%; height: 100%; object-fit: cover; }
+.board-slots__actions {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 4px;
+  pointer-events: none;
+}
+.board-slots__icon {
+  pointer-events: auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 0;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(251, 248, 242, 0.95);
+  color: var(--ink);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+}
+.board-slots__icon:hover { background: var(--white); }
+.board-slots__icon--danger:hover { color: #9b2c1f; }
+.board-slots__icon[disabled],
+.board-slots__pick[disabled],
+.board-slots__thumb[disabled] { opacity: 0.5; cursor: not-allowed; }
+.board-slots__tile .board-canvas__file-input { pointer-events: none; }
+#customizer.is-pulsing .board-slots__tile:not(.is-filled) {
+  animation: slot-pulse 1.2s ease-out 2;
+}
+@keyframes slot-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(15, 118, 128, 0.55); }
+  100% { box-shadow: 0 0 0 12px rgba(15, 118, 128, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  #customizer.is-pulsing .board-slots__tile:not(.is-filled) {
+    animation: none;
+    border-color: var(--teal-text);
+  }
+}

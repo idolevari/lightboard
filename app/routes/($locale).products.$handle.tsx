@@ -418,7 +418,7 @@ export default function Product() {
 
   // Mobile reading order (and DOM / heading order): name + price → color →
   // live preview + photo slots → add to cart → details. On desktop the
-  // customizer moves into the left column via grid areas (app.css).
+  // customizer moves into the left column via grid areas (product/pdp.css).
   return (
     <div className="product">
       <JsonLd data={jsonLd} />
