@@ -4,7 +4,6 @@ import {
   MIN_PHOTO_DIMENSION,
   fetchRemoteImageAsBlob,
   getDefaultCrop,
-  getDefaultSquareCrop,
   validatePhotoDimensions,
   validatePhotoFile,
 } from '~/lib/photo-canvas';
@@ -81,7 +80,7 @@ describe('validatePhotoDimensions', () => {
 
 describe('default crops', () => {
   it('centres the largest square on a landscape photo', () => {
-    expect(getDefaultSquareCrop({width: 4000, height: 3000})).toEqual({
+    expect(getDefaultCrop({width: 4000, height: 3000}, 1)).toEqual({
       x: 500,
       y: 0,
       width: 3000,

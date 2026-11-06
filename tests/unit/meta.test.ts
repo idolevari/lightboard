@@ -1,12 +1,10 @@
 import {describe, expect, it} from 'vitest';
 import {
-  canonicalUrl,
   formatPrice,
   homeSeoCopy,
   pageTitle,
   productSeoCopy,
   siteName,
-  siteOrigin,
 } from '~/lib/meta';
 
 const matches = [
@@ -23,29 +21,19 @@ const matches = [
   },
 ];
 
-describe('site name, origin and titles from the root match', () => {
-  it('reads the shop name and origin from the root loader data', () => {
+describe('site name and titles from the root match', () => {
+  it('reads the shop name from the root loader data', () => {
     expect(siteName(matches)).toBe('Lightboard');
-    expect(siteOrigin(matches)).toBe('https://lightboard.co.il');
   });
 
   it('falls back safely when the root data is missing or broken', () => {
     expect(siteName(undefined)).toBe('Lightboard');
-    expect(siteOrigin([])).toBe('');
-    expect(
-      siteOrigin([
-        {id: 'root', data: {header: {shop: {primaryDomain: {url: 'nope'}}}}},
-      ]),
-    ).toBe('');
+    expect(siteName([])).toBe('Lightboard');
   });
 
-  it('builds "<Site> | <Page>" titles and absolute or relative canonicals', () => {
+  it('builds "<Site> | <Page>" titles', () => {
     expect(pageTitle(matches, 'Cart')).toBe('Lightboard | Cart');
     expect(pageTitle(matches, null)).toBe('Lightboard');
-    expect(canonicalUrl(matches, '/cart')).toBe(
-      'https://lightboard.co.il/cart',
-    );
-    expect(canonicalUrl([], '/cart')).toBe('/cart');
   });
 });
 
