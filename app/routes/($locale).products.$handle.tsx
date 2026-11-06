@@ -16,11 +16,7 @@ import {
   getOptionValueHex,
   translateOptionValue,
 } from '~/lib/productOptionLabels';
-import {
-  ProductOptions,
-  ProductCartAction,
-  PHOTO_SLOTS,
-} from '~/components/ProductForm';
+import {ProductOptions, ProductCartAction} from '~/components/ProductForm';
 import {PhotoCustomizer} from '~/components/PhotoCustomizer/PhotoCustomizer';
 import {StickyBuyBar} from '~/components/StickyBuyBar';
 import {Doodle} from '~/components/illustrations';
@@ -37,9 +33,14 @@ import {RouteError} from '~/components/RouteError';
 import {absoluteUrl, productSeo} from '~/lib/.server/seo.server';
 import {metaLocale, routeMeta} from '~/lib/seo-urls';
 import {productSeoCopy} from '~/lib/meta';
+import {
+  CUSTOMIZER_CONFIG,
+  LINE_ATTR,
+  customizerKindForTags,
+} from '~/lib/customizer-config';
+import type {CustomizerKind} from '~/lib/customizer-config';
 import type {Route} from './+types/($locale).products.$handle';
 
-const REQUIRES_PHOTOS_TAG = 'requires-photos';
 const CUSTOMIZER_ID = 'customizer';
 
 type CartLineAttribute = {key: string; value?: string | null};
@@ -51,7 +52,12 @@ export const meta: Route.MetaFunction = ({data, matches}) => {
   return routeMeta({
     matches,
     data,
-    overrides: productSeoCopy(product, price, metaLocale(matches)),
+    overrides: productSeoCopy(
+      product,
+      price,
+      metaLocale(matches),
+      data.customizerKind,
+    ),
     ogType: 'product',
     extra: price
       ? [
@@ -105,8 +111,10 @@ async function loadCriticalData({context, params, request}: Route.LoaderArgs) {
   // The API handle might be localized, so redirect to the localized handle
   redirectIfHandleIsLocalized(request, {handle, data: product});
 
-  const requiresPhotos =
-    Array.isArray(product.tags) && product.tags.includes(REQUIRES_PHOTOS_TAG);
+  // `requires-photos` → Lightboard customizer, `requires-print-photo` →
+  // Printboard customizer (see ~/lib/customizer-config).
+  const customizerKind = customizerKindForTags(product.tags);
+  const requiresPhotos = Boolean(customizerKind);
   // Signed-session proof that this visitor rendered a photo product page;
   // /api/photos/upload rejects requests without it.
   if (requiresPhotos) grantPhotoUploads(context.session);
@@ -118,7 +126,10 @@ async function loadCriticalData({context, params, request}: Route.LoaderArgs) {
       (n: {id: string}) => n.id === editLineId,
     );
     if (line) {
-      initialPhotoState = parsePhotoStateFromAttributes(line.attributes);
+      initialPhotoState = parsePhotoStateFromAttributes(
+        line.attributes,
+        customizerKind,
+      );
       if (initialPhotoState) resolvedEditLineId = editLineId;
     }
   }
@@ -153,6 +164,7 @@ async function loadCriticalData({context, params, request}: Route.LoaderArgs) {
     },
     marketing: extractMarketing(product, locale),
     requiresPhotos,
+    customizerKind,
     editLineId: resolvedEditLineId,
     initialPhotoState,
     cartId: cartData?.id ?? null,
@@ -261,31 +273,41 @@ function loadDeferredData() {
 }
 
 /**
- * Pull the cropped photo URLs off a cart line's attributes. Originals and
- * crop rects are persisted in the buyer's localStorage on approve, so the
- * merchant-visible order line only carries the three Photo URLs.
+ * Pull the cropped photo URLs off a cart line's attributes. For the
+ * Lightboard, originals and crop rects are persisted in the buyer's
+ * localStorage on approve, so the merchant-visible order line only carries
+ * the three Photo URLs. A Printboard line also carries its original photo or
+ * its ready-made design id.
  */
 function buildAttributesFromInitial(initial: PhotoCustomizerInitialState) {
-  return [
-    {key: 'Photo 1', value: initial.croppedUrls[0]},
-    {key: 'Photo 2', value: initial.croppedUrls[1]},
-    {key: 'Photo 3', value: initial.croppedUrls[2]},
-  ];
+  return initial.croppedUrls.map((value, i) => ({
+    key: LINE_ATTR.photo(i + 1),
+    value,
+  }));
 }
 
 function parsePhotoStateFromAttributes(
   attributes: Array<CartLineAttribute> | null | undefined,
+  kind: CustomizerKind | null,
 ): PhotoCustomizerInitialState | null {
-  if (!Array.isArray(attributes)) return null;
+  if (!kind || !Array.isArray(attributes)) return null;
+  const {slotCount} = CUSTOMIZER_CONFIG[kind];
   const map = new Map(attributes.map((a) => [a.key, a.value]));
-  const photo1 = map.get('Photo 1');
-  const photo2 = map.get('Photo 2');
-  const photo3 = map.get('Photo 3');
-  if (!photo1 || !photo2 || !photo3) return null;
+  const croppedUrls = Array.from(
+    {length: slotCount},
+    (_, i) => map.get(LINE_ATTR.photo(i + 1)) ?? '',
+  );
+  if (croppedUrls.some((u) => !u)) return null;
+  const isPrint = kind === 'printboard';
   return {
-    croppedUrls: [photo1, photo2, photo3],
-    originalUrls: [null, null, null],
-    crops: [null, null, null],
+    croppedUrls,
+    originalUrls: croppedUrls.map((_, i) =>
+      isPrint && i === 0 ? (map.get(LINE_ATTR.original) ?? null) : null,
+    ),
+    crops: croppedUrls.map(() => null),
+    presetIds: croppedUrls.map((_, i) =>
+      isPrint && i === 0 ? (map.get(LINE_ATTR.designId) ?? null) : null,
+    ),
   };
 }
 
@@ -294,11 +316,16 @@ export default function Product() {
     product,
     marketing,
     requiresPhotos,
+    customizerKind,
     editLineId,
     initialPhotoState,
     cartId,
     jsonLd,
   } = useLoaderData<typeof loader>();
+  const isPrint = customizerKind === 'printboard';
+  const slotCount = customizerKind
+    ? CUSTOMIZER_CONFIG[customizerKind].slotCount
+    : 0;
 
   // Optimistically selects a variant with given available variant information
   const selectedVariant = useOptimisticVariant(
@@ -325,7 +352,9 @@ export default function Product() {
   );
 
   const {dict} = useI18n();
-  const [photosFilled, setPhotosFilled] = useState(initialPhotoState ? 3 : 0);
+  const [photosFilled, setPhotosFilled] = useState(
+    initialPhotoState ? slotCount : 0,
+  );
   const buyRef = useRef<HTMLDivElement>(null);
   const colorValue =
     selectedVariant?.selectedOptions.find((o) => o.name === 'Color')?.value ??
@@ -343,11 +372,22 @@ export default function Product() {
     requiresPhotos &&
     !isEditing &&
     !photoAttributes &&
-    photosFilled >= PHOTO_SLOTS;
+    photosFilled >= slotCount;
   const available = Boolean(selectedVariant?.availableForSale);
   const usps = (
     (dict.usp?.items ?? []) as Array<{icon: string; label: string}>
   ).slice(0, 3);
+  // Specs: the product's `marketing.specs` metaobjects when set in Shopify,
+  // else (Printboard) the i18n fallback.
+  const specs =
+    marketing.specs.length > 0 || !isPrint
+      ? marketing.specs
+      : (
+          (dict.printboard?.specs ?? []) as Array<{
+            label: string;
+            value: string;
+          }>
+        ).map((spec, i) => ({id: `pb-spec-${i}`, ...spec}));
 
   // ATC tapped while photos are missing: bring the customizer into view and
   // put focus on the first empty slot so the next action is obvious.
@@ -360,6 +400,7 @@ export default function Product() {
     root.scrollIntoView({block: 'start', behavior: reduce ? 'auto' : 'smooth'});
     const target =
       root.querySelector<HTMLElement>('.board-slots__pick:not([disabled])') ??
+      root.querySelector<HTMLElement>('.pb-own__btn:not([disabled])') ??
       root.querySelector<HTMLElement>(
         '.photo-customizer__approve:not([disabled])',
       );
@@ -384,7 +425,13 @@ export default function Product() {
           />
         ) : (
           <h1 className="pdp-title">
-            <AutoLang text={title} />
+            {/* No marketing headline yet: the Printboard reads by its
+                localized name (פרינטבורד) rather than the Latin title. */}
+            {isPrint && dict.printboard?.title ? (
+              dict.printboard.title
+            ) : (
+              <AutoLang text={title} />
+            )}
           </h1>
         )}
         <div className="pdp-price">
@@ -411,6 +458,7 @@ export default function Product() {
       {requiresPhotos ? (
         <div className="product-media" id={CUSTOMIZER_ID}>
           <PhotoCustomizer
+            kind={customizerKind ?? 'lightboard'}
             cartId={cartId}
             initialState={initialPhotoState}
             isEditing={isEditing}
@@ -436,16 +484,18 @@ export default function Product() {
           editLineId={editLineId}
           photoAttributes={photoAttributes}
           photosFilled={photosFilled}
+          slotCount={slotCount}
+          kind={customizerKind}
           onNeedPhotos={goToCustomizer}
         />
       </div>
-      {marketing.specs.length > 0 ? (
+      {specs.length > 0 ? (
         <section className="pdp-specs" aria-labelledby="pdp-specs-title">
           <h2 id="pdp-specs-title" className="pdp-h2">
             {dict.product.specsTitle}
           </h2>
           <dl className="feat3-ticker">
-            {marketing.specs.map((spec) => (
+            {specs.map((spec) => (
               <div className="feat3-tick" key={spec.id}>
                 <dt className="k">{spec.label}</dt>
                 <dd className="v">{spec.value}</dd>
@@ -460,7 +510,11 @@ export default function Product() {
           dangerouslySetInnerHTML={{__html: descriptionHtml}}
         />
       ) : null}
-      <InYourHome lifestyle={marketing.lifestyle} />
+      {isPrint ? (
+        <PrintboardOnTheWall images={product.images.nodes} />
+      ) : (
+        <InYourHome lifestyle={marketing.lifestyle} />
+      )}
       {!isEditing ? (
         <StickyBuyBar
           buyRef={buyRef}
@@ -471,6 +525,13 @@ export default function Product() {
           }
           ready={ready}
           available={available}
+          pendingLabel={
+            isPrint
+              ? photosFilled > 0
+                ? dict.printboard?.approve
+                : dict.printboard?.chooseDesign
+              : undefined
+          }
         />
       ) : null}
       <Analytics.ProductView
@@ -550,6 +611,55 @@ function InYourHome({lifestyle}: {lifestyle: LifestyleImage | null}) {
           />
           <figcaption>{t.caption}</figcaption>
         </figure>
+      </div>
+    </section>
+  );
+}
+
+/**
+ * Printboard "in your home" strip: the product's own photos of finished
+ * boards on real walls (Shopify product images), one large and the rest in
+ * a scrolling row on phones / a grid on desktop.
+ */
+function PrintboardOnTheWall({images}: {images: Array<LifestyleImage>}) {
+  const {dict} = useI18n();
+  const t = dict.printboard?.inYourHome;
+  if (!t?.title || images.length === 0) return null;
+  const [main, ...rest] = images;
+  return (
+    <section className="pdp-home pb-home" aria-labelledby="pdp-home-title">
+      <div className="pdp-home-head">
+        <p className="pdp-eyebrow">{t.eyebrow}</p>
+        <h2 id="pdp-home-title" className="pdp-home-title">
+          {t.title}
+        </h2>
+        <p className="pb-home-caption">{t.caption}</p>
+      </div>
+      <div className="pb-home-grid">
+        <figure className="pb-home-main">
+          <Image
+            data={main}
+            alt={main.altText ?? ''}
+            sizes="(min-width: 900px) 50vw, 92vw"
+            aspectRatio="1/1"
+            loading="lazy"
+          />
+        </figure>
+        {rest.length > 0 ? (
+          <ul className="pb-home-row" role="list">
+            {rest.map((img) => (
+              <li key={img.id ?? img.url}>
+                <Image
+                  data={img}
+                  alt={img.altText ?? ''}
+                  sizes="(min-width: 900px) 22vw, 44vw"
+                  aspectRatio="1/1"
+                  loading="lazy"
+                />
+              </li>
+            ))}
+          </ul>
+        ) : null}
       </div>
     </section>
   );

@@ -85,7 +85,15 @@
       "caption": "Warm light, solid wood and the three photos you chose."
     },
     "stickyLabel": "Quick buy",
-    "choosePhotos": "Choose photos"
+    "choosePhotos": "Choose photos",
+    "names": {
+      "lightboard": "Lightboard",
+      "printboard": "Printboard"
+    },
+    "taglines": {
+      "lightboard": "A lit wall surfboard with three photos",
+      "printboard": "A wooden board with your photo printed on it"
+    }
   },
   "photoCustomizer": {
     "heading": "Your photos",
@@ -208,7 +216,11 @@
     "indexMeta": "Lightboard | Collections",
     "allTitle": "All products",
     "allMeta": "Lightboard | All products",
-    "collectionMetaSuffix": "Collection"
+    "collectionMetaSuffix": "Collection",
+    "shopTitle": "Shop",
+    "shopIntro": "Handmade surfboards for your wall, with your photos. Free shipping across Israel.",
+    "shopMeta": "Handmade wall surfboards with your photos: the lit Lightboard and the wood-printed Printboard. Free shipping across Israel.",
+    "shopCta": "Personalize"
   },
   "blogs": {
     "indexTitle": "Journal",
@@ -392,5 +404,61 @@
   },
   "hand": {
     "customizer": "Your photos go here ↓"
+  },
+  "printboard": {
+    "title": "Printboard",
+    "heading": "Your design",
+    "subheading": "Pick one of our designs or upload your own photo. It's printed across the whole board.",
+    "previewLabel": "Printboard preview",
+    "previewEmpty": "Pick a design to see it on the board",
+    "sourcesLabel": "Choose a design",
+    "presetsTitle": "Our designs",
+    "ownPhoto": "Your photo",
+    "upload": "Upload a photo",
+    "replace": "Replace photo",
+    "adjust": "Adjust framing",
+    "remove": "Remove",
+    "approve": "Approve design",
+    "ready": "Design ready",
+    "needDesign": "Pick a design or photo to continue",
+    "needApprove": "Approve the design to continue",
+    "hint": "One photo, printed straight on the wood",
+    "cropTitle": "Frame your photo on the board",
+    "cropHint": "Drag and zoom until it looks right. Everything inside the board outline is printed.",
+    "livePreview": "How it will look",
+    "lowRes": "This photo is small for a 50 cm board, so the print may come out less sharp.",
+    "editFromCart": "Edit design",
+    "cartDesign": "Design",
+    "presets": {
+      "golden-wave": "Golden-hour wave",
+      "surfer-dusk": "Surfer at sunset",
+      "surfer-walk": "Down to the water",
+      "van-bluff": "Van on the bluff",
+      "camper-cliff": "Camper by the sea"
+    },
+    "specs": [
+      {
+        "label": "Size",
+        "value": "20×50 cm"
+      },
+      {
+        "label": "Material",
+        "value": "Wood"
+      },
+      {
+        "label": "Print",
+        "value": "Straight on the wood"
+      },
+      {
+        "label": "Photos",
+        "value": "One photo"
+      }
+    ],
+    "inYourHome": {
+      "eyebrow": "— In your home",
+      "title": "Real boards, on real walls",
+      "caption": "Every Printboard is printed straight on the wood, so the grain still breathes through the photo."
+    },
+    "chooseDesign": "Choose a design"
   }
 }

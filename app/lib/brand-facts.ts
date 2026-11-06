@@ -57,10 +57,24 @@ export const DELIVERY_SPLIT = {
  *  the window if stock items are added. */
 export const RETURN_WINDOW_DAYS = 14;
 
-/** Products tagged with this in Shopify are personalized (made from the
- *  buyer's photos), so they use the "returns not permitted" policy. Keep in
- *  sync with REQUIRES_PHOTOS_TAG in the product route. */
-export const PERSONALIZED_TAG = 'requires-photos';
+/** Shopify product tags that switch on a photo customizer on the PDP.
+ *  `requires-photos` = Lightboard (three square photos);
+ *  `requires-print-photo` = Printboard (one photo printed on the board). */
+export const REQUIRES_PHOTOS_TAG = 'requires-photos';
+export const REQUIRES_PRINT_PHOTO_TAG = 'requires-print-photo';
+
+/** Products tagged with either customizer tag are personalized (made from
+ *  the buyer's photos), so they use the "returns not permitted" policy. */
+export const PERSONALIZED_TAGS: ReadonlyArray<string> = [
+  REQUIRES_PHOTOS_TAG,
+  REQUIRES_PRINT_PHOTO_TAG,
+];
+
+export function isPersonalized(
+  tags: ReadonlyArray<string> | null | undefined,
+): boolean {
+  return Boolean(tags?.some((t) => PERSONALIZED_TAGS.includes(t)));
+}
 
 /** How many photos the buyer uploads. Matches the PhotoCustomizer slots. */
 export const PHOTOS_PER_BOARD = 3;

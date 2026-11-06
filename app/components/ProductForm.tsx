@@ -7,6 +7,7 @@ import {AddToCartButton} from './AddToCartButton';
 import {useAside} from './Aside';
 import {useI18n} from '~/lib/useI18n';
 import {formatMoney} from './ProductPrice';
+import type {CustomizerKind} from '~/lib/customizer-config';
 import {
   translateOptionName,
   translateOptionValue,
@@ -128,8 +129,11 @@ type ProductCartActionProps = {
   isEditing?: boolean;
   editLineId?: string | null;
   photoAttributes?: PhotoAttribute[] | null;
-  /** How many of the 3 photo slots are filled (customizer progress). */
+  /** How many of the photo slots are filled (customizer progress). */
   photosFilled?: number;
+  /** Photo slots the product needs (Lightboard 3, Printboard 1). */
+  slotCount?: number;
+  kind?: CustomizerKind | null;
   /** Scroll/focus the customizer — used while photos are still missing. */
   onNeedPhotos?: () => void;
 };
@@ -152,6 +156,8 @@ export function ProductCartAction({
   editLineId = null,
   photoAttributes = null,
   photosFilled = 0,
+  slotCount = PHOTO_SLOTS,
+  kind = null,
   onNeedPhotos,
 }: ProductCartActionProps) {
   const {open} = useAside();
@@ -191,8 +197,29 @@ export function ProductCartAction({
   const available = Boolean(selectedVariant?.availableForSale);
   const priceText = formatMoney(selectedVariant?.price, locale);
 
+  if (available && !ready && kind === 'printboard') {
+    // One photo: no "n of 3" counter, just what to do next.
+    const pt = dict.printboard;
+    return (
+      <div className="atc">
+        <button
+          ref={buttonRef}
+          type="button"
+          className="atc-btn atc-btn--pending"
+          aria-describedby={hintId}
+          onClick={onNeedPhotos}
+        >
+          <span>{photosFilled > 0 ? pt.needApprove : pt.needDesign}</span>
+        </button>
+        <p id={hintId} className="atc-hint">
+          {pt.hint}
+        </p>
+      </div>
+    );
+  }
+
   if (available && !ready) {
-    const missing = Math.max(0, PHOTO_SLOTS - photosFilled);
+    const missing = Math.max(0, slotCount - photosFilled);
     const label =
       missing === 0
         ? t.needApprove
@@ -212,7 +239,7 @@ export function ProductCartAction({
         </button>
         <p id={hintId} className="atc-hint">
           <span className="atc-progress" aria-hidden="true">
-            {Array.from({length: PHOTO_SLOTS}, (_, i) => (
+            {Array.from({length: slotCount}, (_, i) => (
               <span key={i} className={i < photosFilled ? 'on' : ''} />
             ))}
           </span>

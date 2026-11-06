@@ -35,7 +35,7 @@ import {
   FOUNDING_YEAR,
   KNOWS_ABOUT,
   LEAD_TIME_BUSINESS_DAYS,
-  PERSONALIZED_TAG,
+  isPersonalized,
   RETURN_WINDOW_DAYS,
   SHIPPING_FACTS,
 } from '~/lib/brand-facts';
@@ -423,7 +423,7 @@ function productNodes(
   const productUrl = absoluteUrl(`/products/${product.handle}`, locale);
   const groupId = `${productUrl}#product`;
   const brand = {'@type': 'Brand', name: brandName(product.vendor)};
-  const personalized = product.tags.includes(PERSONALIZED_TAG);
+  const personalized = isPersonalized(product.tags);
   const facts = readShippingFacts(shop);
   const images = product.images.nodes.map((i) => i.url);
   const variants = product.variants.nodes;
