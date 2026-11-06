@@ -163,6 +163,21 @@ type SimpleMetaobjectQueryResponse = {
   metaobjects?: {nodes?: Array<SimpleMetaobjectNode>} | null;
 } | null;
 
+/**
+ * Merchant-edited homepage content (hero, story, FAQ, testimonials, slides).
+ * Short cache so edits in Shopify Admin show up within about a minute,
+ * instead of CacheLong's hour (+ day of stale-while-revalidate).
+ */
+function merchantContentCache(
+  storefront: Route.LoaderArgs['context']['storefront'],
+) {
+  return storefront.CacheCustom({
+    mode: 'public',
+    maxAge: 60,
+    staleWhileRevalidate: 300,
+  });
+}
+
 export async function loader(args: Route.LoaderArgs) {
   // Launch-gate: do not fetch products/collections when the public site is
   // closed; the root layout renders <ComingSoon /> instead.
@@ -229,13 +244,17 @@ async function loadCriticalData({context, request}: Route.LoaderArgs) {
         return null;
       }),
     storefront
-      .query(HERO_SLIDES_QUERY, {cache: storefront.CacheLong()})
+      .query(HERO_SLIDES_QUERY, {
+        cache: merchantContentCache(storefront),
+      })
       .catch((error) => {
         console.error(error);
         return null;
       }),
     storefront
-      .query(HOMEPAGE_SECTIONS_QUERY, {cache: storefront.CacheLong()})
+      .query(HOMEPAGE_SECTIONS_QUERY, {
+        cache: merchantContentCache(storefront),
+      })
       .catch((error) => {
         console.error(error);
         return null;
@@ -281,13 +300,17 @@ async function loadCriticalData({context, request}: Route.LoaderArgs) {
 function loadDeferredData({context}: Route.LoaderArgs) {
   const {storefront} = context;
   const faqs = storefront
-    .query(FAQS_QUERY, {cache: storefront.CacheLong()})
+    .query(FAQS_QUERY, {
+      cache: merchantContentCache(storefront),
+    })
     .catch((error: Error) => {
       console.error(error);
       return null;
     });
   const testimonials = storefront
-    .query(TESTIMONIALS_QUERY, {cache: storefront.CacheLong()})
+    .query(TESTIMONIALS_QUERY, {
+      cache: merchantContentCache(storefront),
+    })
     .catch((error: Error) => {
       console.error(error);
       return null;
