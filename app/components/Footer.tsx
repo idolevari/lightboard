@@ -23,9 +23,6 @@ export function Footer() {
             height="33"
             decoding="async"
           />
-          <span className="footer-tagline" lang="en">
-            living · design · surfing
-          </span>
           <p className="footer-desc">{f.brandDesc}</p>
           {(b?.instagram || whatsapp) && (
             <div className="footer-social">
