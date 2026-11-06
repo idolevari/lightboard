@@ -29,7 +29,8 @@ export function Footer() {
               href={b.instagram}
               target="_blank"
               rel="noreferrer"
-              aria-label="Instagram"
+              // The accessible name must contain the visible handle (WCAG 2.5.3).
+              aria-label={`Instagram @${instagramHandle(b.instagram)}`}
             >
               <InstagramIcon />
               <span lang="en" dir="ltr">
