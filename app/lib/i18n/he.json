@@ -50,7 +50,7 @@
     "pause": "עצירת המצגת",
     "play": "הפעלת המצגת",
     "regionLabel": "תמונות פתיחה",
-    "srTitle": "לייטבורד · גלשן קיר עם התמונות שלכם"
+    "srTitle": "Lightboard · גלשן קיר עם התמונות שלכם"
   },
   "featured": {
     "finishLabel": "צבע",
@@ -93,8 +93,8 @@
     "stickyLabel": "קנייה מהירה",
     "choosePhotos": "בחירת תמונות",
     "names": {
-      "lightboard": "לייטבורד",
-      "printboard": "פרינטבורד"
+      "lightboard": "Lightboard",
+      "printboard": "Printboard"
     },
     "taglines": {
       "lightboard": "גלשן קיר מואר עם שלוש תמונות",
@@ -225,7 +225,7 @@
     "collectionMetaSuffix": "קולקציה",
     "shopTitle": "החנות",
     "shopIntro": "גלשני קיר בעבודת יד, עם התמונות שלכם. משלוח חינם לכל הארץ.",
-    "shopMeta": "גלשני קיר בעבודת יד עם התמונות שלכם: לייטבורד מואר ופרינטבורד מודפס על עץ. משלוח חינם לכל הארץ.",
+    "shopMeta": "גלשני קיר בעבודת יד עם התמונות שלכם: Lightboard מואר ו־Printboard מודפס על עץ. משלוח חינם לכל הארץ.",
     "shopCta": "להתאמה אישית ←"
   },
   "blogs": {
@@ -336,7 +336,7 @@
   },
   "whatsapp": {
     "label": "דברו איתנו בוואטסאפ",
-    "prefill": "היי לייטבורד, יש לי שאלה:"
+    "prefill": "היי Lightboard, יש לי שאלה:"
   },
   "footer": {
     "brandDesc": "גלשני קיר מעץ מלא, עם אור חם והתמונות שלכם. עבודת יד, מאז 2019.",
@@ -383,7 +383,7 @@
     "titleAfter": "בדרך."
   },
   "usp": {
-    "label": "למה לייטבורד",
+    "label": "למה Lightboard",
     "items": [
       {
         "icon": "van",
@@ -412,10 +412,10 @@
     "customizer": "התמונות שלכם כאן ↓"
   },
   "printboard": {
-    "title": "פרינטבורד",
+    "title": "Printboard",
     "heading": "העיצוב שלכם",
     "subheading": "בחרו אחד העיצובים שלנו או העלו תמונה משלכם. היא מודפסת על כל הגלשן.",
-    "previewLabel": "תצוגה מקדימה של הפרינטבורד",
+    "previewLabel": "תצוגה מקדימה של ה־Printboard",
     "previewEmpty": "בחרו עיצוב וראו אותו על הגלשן",
     "sourcesLabel": "בחירת עיצוב",
     "presetsTitle": "העיצובים שלנו",
@@ -456,7 +456,7 @@
     "inYourHome": {
       "eyebrow": "— בבית שלכם",
       "title": "גלשנים אמיתיים, על קירות אמיתיים",
-      "caption": "כל פרינטבורד מודפס ישירות על העץ, כך שהטקסטורה שלו נשארת לנשום דרך התמונה."
+      "caption": "כל Printboard מודפס ישירות על העץ, כך שהטקסטורה שלו נשארת לנשום דרך התמונה."
     },
     "chooseDesign": "בחירת עיצוב"
   }

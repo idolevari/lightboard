@@ -95,7 +95,7 @@ export const KNOWS_ABOUT = [
  *  Leaves out anything Shopify already holds (price, colours, contact). */
 export const BRAND_SUMMARY = {
   en: `Lightboard is an Israeli handmade brand. Its main product, the Lightboard, is a solid-pine, surfboard-shaped wall piece with warm LED lights that holds ${PHOTOS_PER_BOARD} of your own photos. Each board is made to order in ${MADE_IN.en} and sold since ${FOUNDING_YEAR}. A popular gift for surfers, ocean lovers and anyone looking for a personal photo gift.`,
-  he: `ליטבורד הוא מותג ישראלי לעיצובי קיר בעבודת יד בהשראת גלישה. המוצר המרכזי: גלשן קיר מעץ אורן מלא, עם נורות לד באור חם ו-${PHOTOS_PER_BOARD} תמונות שאתם בוחרים. כל לוח נבנה בהזמנה אישית ב${MADE_IN.he}, מאז ${FOUNDING_YEAR}. מתנה לגולשים, לחובבי ים ולמי שמחפש מתנה אישית עם תמונות.`,
+  he: `Lightboard הוא מותג ישראלי לעיצובי קיר בעבודת יד בהשראת גלישה. המוצר המרכזי: גלשן קיר מעץ אורן מלא, עם נורות לד באור חם ו-${PHOTOS_PER_BOARD} תמונות שאתם בוחרים. כל לוח נבנה בהזמנה אישית ב${MADE_IN.he}, מאז ${FOUNDING_YEAR}. מתנה לגולשים, לחובבי ים ולמי שמחפש מתנה אישית עם תמונות.`,
 } as const;
 
 /** Gift use cases and search phrases the brand should answer. */

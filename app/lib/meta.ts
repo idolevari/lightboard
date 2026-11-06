@@ -84,7 +84,7 @@ export function homeSeoCopy(locale: Locale): SeoCopy {
     };
   }
   return {
-    title: 'ליטבורד · גלשן קיר עם התמונות שלכם | מתנה לגולשים',
+    title: 'Lightboard · גלשן קיר עם התמונות שלכם | מתנה לגולשים',
     description: `גלשן קיר מאורן מלא, עם אור לד חם ושלוש תמונות שאתם בוחרים. עבודת יד ב${MADE_IN.he}, בהזמנה אישית${FREE_SHIPPING ? ', משלוח חינם לכל הארץ' : ''}. מתנה לגולשים ולחובבי ים.`,
   };
 }
@@ -181,7 +181,7 @@ function printboardSeoCopy(
   return {
     title:
       product.seo?.title?.trim() ||
-      'פרינטבורד · גלשן עץ עם התמונה שלכם | מתנה לגולשים',
+      'Printboard · גלשן עץ עם התמונה שלכם | מתנה לגולשים',
     description:
       product.seo?.description?.trim() ||
       [

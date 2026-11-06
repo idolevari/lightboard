@@ -430,10 +430,11 @@ export default function Product() {
           />
         ) : (
           <h1 className="pdp-title">
-            {/* No marketing headline yet: the Printboard reads by its
-                localized name (פרינטבורד) rather than the Latin title. */}
+            {/* No marketing headline yet: use the i18n product name.
+                Product names stay in English in both locales (owner pref);
+                AutoLang marks Latin text lang="en" for screen readers. */}
             {isPrint && dict.printboard?.title ? (
-              dict.printboard.title
+              <AutoLang text={dict.printboard.title} />
             ) : (
               <AutoLang text={title} />
             )}
