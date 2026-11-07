@@ -245,7 +245,7 @@ export type DoodleName =
   | 'shell'
   | 'sparkle';
 
-/** 24×24 doodle icon from the cached sprite at /illustrations/doodles.svg. */
+/** 24×24 doodle icon from the sprite at /illustrations/doodles.svg, versioned by content hash. */
 export function Doodle({
   name,
   size = 24,
@@ -262,7 +262,7 @@ export function Doodle({
       className={`doodle ${className}`}
       {...hidden}
     >
-      <use href={`/illustrations/doodles.svg#d-${name}`} />
+      <use href={`/illustrations/doodles.svg?v=${__DOODLES_VERSION__}#d-${name}`} />
     </svg>
   );
 }

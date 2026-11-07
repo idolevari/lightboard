@@ -7,6 +7,9 @@
 import '@total-typescript/ts-reset';
 
 declare global {
+  /** Content hash of public/illustrations/doodles.svg (set in vite.config.ts). */
+  const __DOODLES_VERSION__: string;
+
   interface Env {
     SESSION_SECRET: string;
     PUBLIC_STORE_DOMAIN: string;
