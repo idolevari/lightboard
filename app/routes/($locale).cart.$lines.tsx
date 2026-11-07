@@ -1,5 +1,6 @@
 import {redirect} from 'react-router';
 import {RouteError} from '~/components/RouteError';
+import {brandCheckoutUrl} from '~/lib/checkout-url';
 import type {Route} from './+types/($locale).cart.$lines';
 
 /**
@@ -60,7 +61,7 @@ export async function loader({request, context, params}: Route.LoaderArgs) {
 
   // redirect to checkout
   if (cartResult.checkoutUrl) {
-    return redirect(cartResult.checkoutUrl, {headers});
+    return redirect(brandCheckoutUrl(cartResult.checkoutUrl), {headers});
   } else {
     throw new Error('No checkout URL found');
   }
