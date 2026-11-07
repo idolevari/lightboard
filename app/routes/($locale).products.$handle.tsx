@@ -210,7 +210,9 @@ type MarketingSource = {
   } | null;
   options?: Array<{
     optionValues?: Array<{
-      firstSelectableVariant?: {image?: {url?: string | null} | null} | null;
+      firstSelectableVariant?: {
+        image?: {url?: string | null; altText?: string | null} | null;
+      } | null;
     }>;
   }>;
 };
@@ -224,8 +226,8 @@ function pick(he: MetafieldValue, en: MetafieldValue, locale: string): string {
  * Merchant-edited PDP copy from the product's `marketing.*` metafields
  * (Shopify Admin → Products → Lightboard). The headline is HTML, so it is
  * sanitized here on the server like every other Shopify HTML field.
- * `lifestyle` = the first product image that isn't a variant render, i.e.
- * the "on a real wall" shot.
+ * `lifestyle` / `lifestyleSecond` = the first two product images that aren't
+ * variant renders, i.e. the "on a real wall" shots (order set in Shopify).
  */
 function extractMarketing(product: MarketingSource, locale: string) {
   const headline = pick(product.headline_he, product.headline_en, locale);
@@ -238,23 +240,29 @@ function extractMarketing(product: MarketingSource, locale: string) {
     }))
     .filter((n) => n.label && n.value)
     .sort((a, b) => a.position - b.position);
-  const variantImageUrls = new Set(
-    (product.options ?? []).flatMap((o) =>
-      (o.optionValues ?? []).map(
-        (v) => v.firstSelectableVariant?.image?.url?.split('?')[0] ?? '',
-      ),
-    ),
+  // Variant renders are matched by URL, and by alt text too: re-uploaded
+  // copies of a render get a new URL but keep the same alt text.
+  const variantImages = (product.options ?? []).flatMap((o) =>
+    (o.optionValues ?? []).map((v) => v.firstSelectableVariant?.image),
   );
-  const lifestyle =
-    (product.images?.nodes ?? []).find(
-      (img) => !variantImageUrls.has(img.url.split('?')[0]),
-    ) ?? null;
+  const variantUrls = new Set(
+    variantImages.map((im) => im?.url?.split('?')[0]).filter(Boolean),
+  );
+  const variantAlts = new Set(
+    variantImages.map((im) => im?.altText?.trim()).filter(Boolean),
+  );
+  const lifestyleImages = (product.images?.nodes ?? []).filter(
+    (img) =>
+      !variantUrls.has(img.url.split('?')[0]) &&
+      !(img.altText && variantAlts.has(img.altText.trim())),
+  );
   return {
     eyebrow: pick(product.eyebrow_he, product.eyebrow_en, locale),
     headlineHtml: headline ? sanitizeShopifyHtml(headline) : '',
     shipNote: pick(product.ship_note_he, product.ship_note_en, locale),
     specs,
-    lifestyle,
+    lifestyle: lifestyleImages[0] ?? null,
+    lifestyleSecond: lifestyleImages[1] ?? null,
   };
 }
 
@@ -470,7 +478,10 @@ export default function Product() {
       {isPrint ? (
         <PrintboardOnTheWall images={product.images.nodes} />
       ) : (
-        <InYourHome lifestyle={marketing.lifestyle} />
+        <InYourHome
+          lifestyle={marketing.lifestyle}
+          second={marketing.lifestyleSecond}
+        />
       )}
       {!isEditing ? (
         <StickyBuyBar

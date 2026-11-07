@@ -1,6 +1,5 @@
 import {Image} from '@shopify/hydrogen';
 import {useI18n} from '~/lib/useI18n';
-import {PHOTOS, cropSrcSet, withParams} from '~/lib/photos';
 
 export type LifestyleImage = {
   id?: string | null;
@@ -11,15 +10,23 @@ export type LifestyleImage = {
 };
 
 /**
- * "In your home" strip: the product's own on-the-wall shot (first product
- * image that isn't a variant render, managed in Shopify) next to a sunlit
- * room from the brand photo set.
+ * "In your home" strip: the product's own on-the-wall shots (the first two
+ * product images that aren't variant renders, managed and ordered in
+ * Shopify). The second one is shown as a tilted polaroid with a caption;
+ * with only one photo it takes the polaroid slot on its own.
  */
-export function InYourHome({lifestyle}: {lifestyle: LifestyleImage | null}) {
+export function InYourHome({
+  lifestyle,
+  second,
+}: {
+  lifestyle: LifestyleImage | null;
+  second?: LifestyleImage | null;
+}) {
   const {dict} = useI18n();
   const t = dict.product.inYourHome;
-  const room = PHOTOS.sunlitRoom;
-  if (!t?.title) return null;
+  const main = second ? lifestyle : null;
+  const polaroid = second ?? lifestyle;
+  if (!t?.title || !polaroid) return null;
   return (
     <section className="pdp-home" aria-labelledby="pdp-home-title">
       <div className="pdp-home-head">
@@ -28,12 +35,12 @@ export function InYourHome({lifestyle}: {lifestyle: LifestyleImage | null}) {
           {t.title}
         </h2>
       </div>
-      <div className={`pdp-home-grid${lifestyle ? '' : ' is-single'}`}>
-        {lifestyle ? (
+      <div className={`pdp-home-grid${main ? '' : ' is-single'}`}>
+        {main ? (
           <figure className="pdp-home-main">
             <Image
-              data={lifestyle}
-              alt={lifestyle.altText ?? ''}
+              data={main}
+              alt={main.altText ?? ''}
               sizes="(min-width: 900px) 55vw, 92vw"
               aspectRatio="4/5"
               crop="center"
@@ -42,21 +49,13 @@ export function InYourHome({lifestyle}: {lifestyle: LifestyleImage | null}) {
           </figure>
         ) : null}
         <figure className="pdp-home-room">
-          <img
-            src={withParams(room.url, 'width=900')}
-            srcSet={cropSrcSet(room.url, {
-              ratio: 4 / 5,
-              focalX: '30%',
-              srcW: room.w,
-              srcH: room.h,
-              widths: [480, 720, 960, 1280],
-            })}
+          <Image
+            data={polaroid}
+            alt={polaroid.altText ?? ''}
             sizes="(min-width: 900px) 38vw, 92vw"
-            alt=""
-            width={960}
-            height={1200}
+            aspectRatio="4/5"
+            crop="center"
             loading="lazy"
-            decoding="async"
           />
           <figcaption>{t.caption}</figcaption>
         </figure>

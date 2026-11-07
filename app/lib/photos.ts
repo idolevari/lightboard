@@ -12,7 +12,6 @@
  *  - lightboard-05-camper-cliff-coast.jpg        Toms               unsplash.com/photos/ryfptJi3fAM
  *  - lightboard-06-surfer-walk-golden.jpg        James Watson       unsplash.com/photos/kOrxc278PeQ
  *  - lightboard-07-surfer-silhouette-dusk.jpg    Lucas Davies       unsplash.com/photos/M84BX9RmcZA
- *  - lightboard-08-surfboard-sunlit-interior.jpg Filios Sazeides    unsplash.com/photos/FrKWsEbOYU0
  */
 export const SHOPIFY_FILES_CDN =
   'https://cdn.shopify.com/s/files/1/0982/9325/2392/files';
@@ -29,7 +28,6 @@ export const PHOTOS = {
   camperCliff: {url: `${CDN}/lightboard-05-camper-cliff-coast.jpg?v=1793910804`, w: 1600, h: 2400},
   surferWalk: {url: `${CDN}/lightboard-06-surfer-walk-golden.jpg?v=1793910804`, w: 2400, h: 1263},
   surferDusk: {url: `${CDN}/lightboard-07-surfer-silhouette-dusk.jpg?v=1793910803`, w: 2400, h: 1600},
-  sunlitRoom: {url: `${CDN}/lightboard-08-surfboard-sunlit-interior.jpg?v=1793910803`, w: 2400, h: 1602},
 } satisfies Record<string, BrandPhoto>;
 
 export function withParams(url: string, params: string): string {
