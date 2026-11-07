@@ -6,6 +6,7 @@ import {useEffect, useId, useRef, useState} from 'react';
 import type {ReactNode, Ref} from 'react';
 import {useFetcher} from 'react-router';
 import {useI18n} from '~/lib/useI18n';
+import {brandCheckoutUrl} from '~/lib/checkout-url';
 import {Doodle} from '~/components/illustrations';
 import type {DoodleName} from '~/components/illustrations';
 import type {CartApiQueryFragment} from 'storefrontapi.generated';
@@ -42,7 +43,7 @@ export function CartSummary({cart, layout}: CartSummaryProps) {
   const {dict} = useI18n();
   const hasCodes = Boolean(
     cart?.discountCodes?.some((d) => d.applicable) ||
-      cart?.appliedGiftCards?.length,
+    cart?.appliedGiftCards?.length,
   );
 
   return (
@@ -89,7 +90,9 @@ export function CartSummary({cart, layout}: CartSummaryProps) {
       <details className="cart-codes" open={hasCodes || undefined}>
         <summary>{dict.cart.discountToggle}</summary>
         <CartDiscounts
-          discountCodes={cart?.discountCodes as DiscountCodeApplication[] | undefined}
+          discountCodes={
+            cart?.discountCodes as DiscountCodeApplication[] | undefined
+          }
           discountsHeadingId={discountsHeadingId}
           discountCodeInputId={discountCodeInputId}
         />
@@ -151,8 +154,13 @@ function TermsAgreement({
         </span>
       </label>
       {showHint ? (
-        <p id={hintId} className="cart-terms-hint" role={nudge ? 'alert' : undefined}>
-          {t.requiredHint ?? 'Please agree to the terms to continue to checkout'}
+        <p
+          id={hintId}
+          className="cart-terms-hint"
+          role={nudge ? 'alert' : undefined}
+        >
+          {t.requiredHint ??
+            'Please agree to the terms to continue to checkout'}
         </p>
       ) : null}
     </div>
@@ -194,7 +202,11 @@ function CartCheckoutActions({
   return (
     <div className="cart-checkout">
       {agreed ? (
-        <a href={checkoutUrl} target="_self" className="cart-checkout-btn">
+        <a
+          href={brandCheckoutUrl(checkoutUrl)}
+          target="_self"
+          className="cart-checkout-btn"
+        >
           {content}
         </a>
       ) : (
@@ -233,7 +245,17 @@ function CartTrust() {
 
 function LockIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <rect x="5" y="11" width="14" height="10" rx="2" />
       <path d="M8 11V8a4 4 0 0 1 8 0v3" />
     </svg>
