@@ -93,11 +93,8 @@ aside li { margin-bottom: 0.125rem; }
   background: transparent;
   border: none;
   color: transparent;
-  height: 100%;
-  left: 0;
+  inset: 0;
   position: absolute;
-  top: 0;
-  width: calc(100% - var(--aside-width));
 }
 .overlay .light { background: rgba(255, 255, 255, 0.5); }
 .overlay .cancel {
@@ -116,6 +113,22 @@ aside li { margin-bottom: 0.125rem; }
 }
 [dir="rtl"] .overlay.expanded aside {
   transform: translateX(var(--aside-width));
+}
+
+/* Each drawer slides in from its trigger's side: cart and search sit at the
+   inline end of the header, the menu toggle at the inline start (right in
+   Hebrew, left in English). */
+#aside-mobile aside {
+  right: auto;
+  left: calc(-1 * var(--aside-width));
+}
+#aside-mobile.expanded aside { transform: translateX(var(--aside-width)); }
+[dir="rtl"] #aside-mobile aside {
+  left: auto;
+  right: calc(-1 * var(--aside-width));
+}
+[dir="rtl"] #aside-mobile.expanded aside {
+  transform: translateX(calc(var(--aside-width) * -1));
 }
 
 button.reset {
