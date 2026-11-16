@@ -28,14 +28,14 @@
   "prettier": "@shopify/prettier-config",
   "dependencies": {
     "@shopify/hydrogen": "2026.4.8",
-    "graphql": "^16.14.2",
+    "graphql": "^16.15.0",
     "graphql-tag": "^2.12.7",
-    "isbot": "^5.2.2",
+    "isbot": "^5.2.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-easy-crop": "^5.5.7",
     "react-router": "7.18.5",
-    "sanitize-html": "^2.18.1"
+    "sanitize-html": "^2.18.2"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",
@@ -43,12 +43,12 @@
     "@eslint/eslintrc": "^3.3.7",
     "@eslint/js": "^9.39.5",
     "@graphql-codegen/cli": "5.0.7",
-    "@playwright/test": "1.64.1",
+    "@playwright/test": "1.65.0",
     "@react-router/dev": "7.18.5",
     "@react-router/fs-routes": "7.18.5",
     "@shopify/cli": "3.94.3",
     "@shopify/hydrogen-codegen": "0.3.3",
-    "@shopify/mini-oxygen": "4.2.3",
+    "@shopify/mini-oxygen": "4.3.0",
     "@shopify/oxygen-workers-types": "^4.1.6",
     "@shopify/prettier-config": "^1.1.2",
     "@total-typescript/ts-reset": "^0.6.1",
@@ -56,9 +56,9 @@
     "@types/react": "^18.3.28",
     "@types/react-dom": "^18.3.7",
     "@types/sanitize-html": "^2.16.2",
-    "@typescript-eslint/eslint-plugin": "^8.21.0",
+    "@typescript-eslint/eslint-plugin": "^8.72.2",
     "@typescript-eslint/parser": "^8.21.0",
-    "@vitest/coverage-v8": "3.2.4",
+    "@vitest/coverage-v8": "3.2.7",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-import-resolver-typescript": "^3.7.0",
@@ -71,12 +71,12 @@
     "globals": "^15.14.0",
     "graphql-config": "^5.0.3",
     "jiti": "^2.6.1",
-    "prettier": "^3.9.10",
+    "prettier": "^3.10.1",
     "schema-dts": "^1.1.5",
     "typescript": "^5.9.2",
-    "vite": "^6.4.2",
+    "vite": "^6.4.6",
     "vite-tsconfig-paths": "^4.3.1",
-    "vitest": "3.2.4"
+    "vitest": "3.2.7"
   },
   "engines": {
     "node": "^22 || ^24"
