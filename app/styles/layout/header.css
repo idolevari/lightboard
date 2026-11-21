@@ -200,6 +200,8 @@
     height: var(--tap-min);
     border-radius: 50%;
     gap: 0;
+    /* Plain bag, no ring: the same look as the bag in checkout. */
+    border-color: transparent;
   }
   /* Label stays in the accessibility tree (sr-only), never display:none. */
   .lb-cart-label {
