@@ -26,6 +26,7 @@ import {detectLocaleFromRequest} from '~/lib/i18n';
 import {sanitizeShopifyHtml} from '~/lib/.server/sanitize.server';
 import {grantPhotoUploads} from '~/lib/.server/photo-upload.server';
 import {JsonLd} from '~/components/JsonLd';
+import {CustomerWalls} from '~/components/home/CustomerWalls';
 import {RouteError} from '~/components/RouteError';
 import {absoluteUrl, productSeo} from '~/lib/.server/seo.server';
 import {metaLocale, routeMeta} from '~/lib/seo-urls';
@@ -483,6 +484,7 @@ export default function Product() {
           second={marketing.lifestyleSecond}
         />
       )}
+      {!isPrint ? <CustomerWalls /> : null}
       {!isEditing ? (
         <StickyBuyBar
           buyRef={buyRef}

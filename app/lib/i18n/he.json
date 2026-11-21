@@ -360,6 +360,12 @@
     "titleEm": "חדש",
     "titleAfter": "בדרך."
   },
+  "customerWalls": {
+    "eyebrow": "— מהקירות שלכם",
+    "title": "ככה זה נראה אצל הלקוחות",
+    "photoAlt": "Lightboard בבית של",
+    "source": "תמונות שלקוחות שיתפו באינסטגרם ‎@lightboardshop"
+  },
   "usp": {
     "label": "למה Lightboard",
     "items": [
