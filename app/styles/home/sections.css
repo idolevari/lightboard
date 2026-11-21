@@ -497,11 +497,36 @@ section { position: relative; }
   font-size: 13px;
   color: var(--ink-soft);
 }
+.walls-list:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
+/* Arrows: desktop only; phones swipe. */
+.walls-nav { display: none; }
+.walls-arrow {
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--rule);
+  border-radius: 50%;
+  background: var(--cream-2);
+  color: var(--ink);
+  cursor: pointer;
+  transition: background var(--dur-ui, .2s) ease;
+}
+.walls-arrow:hover { background: var(--cream-3); }
+.walls-chevron.is-back { transform: scaleX(-1); }
+[dir="rtl"] .walls-chevron { transform: scaleX(-1); }
+[dir="rtl"] .walls-chevron.is-back { transform: none; }
 @media (min-width: 900px) {
   .walls { padding: 72px 0 80px; }
-  .walls-list {
-    grid-auto-flow: row;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    overflow: visible;
+  .walls .container { position: relative; }
+  .walls-nav {
+    display: flex;
+    gap: 8px;
+    position: absolute;
+    inset-inline-end: var(--container-px, 24px);
+    top: 8px;
   }
+  /* Four cards in view, the rest scroll. */
+  .walls-list { grid-auto-columns: calc((100% - 3 * 14px) / 4); }
 }
