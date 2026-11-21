@@ -29,6 +29,9 @@ export function Footer() {
               href={b.instagram}
               target="_blank"
               rel="noreferrer"
+              // Icon first, then the handle, in both languages: the handle is
+              // Latin text, so the pair reads left to right even in Hebrew.
+              dir="ltr"
               // The accessible name must contain the visible handle (WCAG 2.5.3).
               aria-label={`Instagram @${instagramHandle(b.instagram)}`}
             >
