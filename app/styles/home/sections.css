@@ -418,3 +418,115 @@ section { position: relative; }
 
 /* Story sun stays still (owner preference). */
 .story-sun .sun-rays__rays { animation: none !important; transform: none; }
+
+/* ============================================
+   CUSTOMER WALLS (real photos from Instagram stories)
+   ============================================ */
+.walls { padding: 48px 0 56px; }
+.walls-title {
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: clamp(30px, 4vw, 48px);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin: 10px 0 24px;
+}
+/* Phones: a swipeable row. Desktop: four across. */
+.walls-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 8px;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: min(72vw, 280px);
+  gap: 14px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.walls-list::-webkit-scrollbar { display: none; }
+.walls-item { margin: 0; scroll-snap-align: start; }
+/* Equal-height cards: the reveal wrapper sits between the grid item and the
+   card, so it has to pass the row height down. */
+.walls-item > * { height: 100%; }
+.walls-card {
+  margin: 0;
+  background: var(--cream-2);
+  border: 1px solid var(--rule);
+  border-radius: 18px;
+  overflow: hidden;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.walls-card img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  height: auto;
+  object-fit: cover;
+}
+.walls-card figcaption {
+  padding: 14px 16px 16px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.walls-card blockquote {
+  margin: 0 0 8px;
+  font-family: var(--serif);
+  font-size: 18px;
+  line-height: 1.3;
+  color: var(--ink);
+}
+.walls-card cite {
+  display: block;
+  font-family: var(--mono);
+  font-style: normal;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+  /* Handle sits on the same line at the bottom of every card. */
+  margin-top: auto;
+}
+[dir="rtl"] .walls-card cite { text-align: right; }
+.walls-source {
+  margin: 14px 0 0;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+.walls-list:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
+/* Arrows: desktop only; phones swipe. */
+.walls-nav { display: none; }
+.walls-arrow {
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--rule);
+  border-radius: 50%;
+  background: var(--cream-2);
+  color: var(--ink);
+  cursor: pointer;
+  transition: background var(--dur-ui, .2s) ease;
+}
+.walls-arrow:hover { background: var(--cream-3); }
+.walls-chevron.is-back { transform: scaleX(-1); }
+[dir="rtl"] .walls-chevron { transform: scaleX(-1); }
+[dir="rtl"] .walls-chevron.is-back { transform: none; }
+@media (min-width: 900px) {
+  .walls { padding: 72px 0 80px; }
+  .walls .container { position: relative; }
+  .walls-nav {
+    display: flex;
+    gap: 8px;
+    position: absolute;
+    inset-inline-end: var(--container-px, 24px);
+    top: 8px;
+  }
+  /* Four cards in view, the rest scroll. */
+  .walls-list { grid-auto-columns: calc((100% - 3 * 14px) / 4); }
+}

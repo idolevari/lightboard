@@ -11,10 +11,7 @@ import {
   swapLocaleInPath,
 } from '~/lib/i18n';
 import {useBusiness, whatsappHref} from '~/lib/brand';
-import type {
-  CartApiQueryFragment,
-  HeaderQuery,
-} from 'storefrontapi.generated';
+import type {CartApiQueryFragment, HeaderQuery} from 'storefrontapi.generated';
 
 const HOME_PATH_RE = /^\/([a-z]{2}\/?)?$/;
 
@@ -300,7 +297,16 @@ function MenuToggle({label}: {label: string}) {
 
 function SearchIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      aria-hidden="true"
+    >
       <circle cx="11" cy="11" r="7" />
       <path d="m21 21-4.3-4.3" />
     </svg>
@@ -309,7 +315,16 @@ function SearchIcon() {
 
 function AccountIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      aria-hidden="true"
+    >
       <circle cx="12" cy="8" r="4" />
       <path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8" />
     </svg>
@@ -378,11 +393,7 @@ function CartBadge({count, label}: {count: number; label: string}) {
       aria-haspopup="dialog"
       type="button"
     >
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <path d="M5 8h14v10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z" />
-        <path d="M8 8V6a1.5 1.5 0 0 1 3 0v2" />
-        <path d="M13 8V6a1.5 1.5 0 0 1 3 0v2" />
-      </svg>
+      <BagIcon />
       {/* Visible on desktop, visually hidden on phones — never display:none,
           so the accessible name always reads "סל, 2 פריטים". */}
       <span className="lb-cart-label">{label}</span>
@@ -415,4 +426,30 @@ function CartBanner({label}: {label: string}) {
   const originalCart = useAsyncValue() as ResolvedCart;
   const cart = useOptimisticCart(originalCart);
   return <CartBadge count={cart?.totalQuantity ?? 0} label={label} />;
+}
+
+/**
+ * Shopping bag drawn like the one in Shopify checkout (rounded bag, one
+ * handle, a curve inside), so the cart looks the same before and after the
+ * jump to checkout.lightboard.co.il.
+ */
+export function BagIcon({size = 22}: {size?: number}) {
+  return (
+    <svg
+      className="lb-bag-icon"
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M6.3 8h11.4a1.6 1.6 0 0 1 1.6 1.5l.6 8.4a2.6 2.6 0 0 1-2.6 2.8H6.7a2.6 2.6 0 0 1-2.6-2.8l.6-8.4A1.6 1.6 0 0 1 6.3 8z" />
+      <path d="M9 8V6.6a3 3 0 0 1 6 0V8" />
+      <path d="M9.2 11.6a2.9 2.9 0 0 0 5.6 0" />
+    </svg>
+  );
 }

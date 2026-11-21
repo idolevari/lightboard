@@ -33,6 +33,7 @@ import {
   FeaturedProduct,
 } from '~/components/home/FeaturedProduct';
 import {UspStrip} from '~/components/home/UspStrip';
+import {CustomerWalls} from '~/components/home/CustomerWalls';
 import {Story} from '~/components/home/Story';
 import {Faq} from '~/components/home/Faq';
 import {FinalCta} from '~/components/home/FinalCta';
@@ -204,6 +205,7 @@ export default function Homepage() {
       />
       <FeaturedPrintboard product={data.printboard} />
       <UspStrip />
+      <CustomerWalls />
       <Story content={data.story} />
       <Suspense fallback={<DeferredSectionFallback />}>
         <Await resolve={data.faqs}>

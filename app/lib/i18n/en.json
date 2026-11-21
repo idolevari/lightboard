@@ -354,6 +354,12 @@
     "titleEm": "new",
     "titleAfter": "is coming."
   },
+  "customerWalls": {
+    "eyebrow": "— From your walls",
+    "title": "How it looks at our customers' homes",
+    "photoAlt": "Lightboard at the home of",
+    "source": "Photos customers shared on Instagram @lightboardshop"
+  },
   "usp": {
     "label": "Why Lightboard",
     "items": [

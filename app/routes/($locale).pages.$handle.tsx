@@ -4,7 +4,7 @@ import {mailtoHref, telHref, useBusiness, whatsappHref} from '~/lib/brand';
 import {redirectIfHandleIsLocalized} from '~/lib/.server/redirect.server';
 import {checkForTrailingEncodedSpaces} from '~/lib/.server/url.server';
 import {sanitizeShopifyHtml} from '~/lib/.server/sanitize.server';
-import {detectLocaleFromRequest} from '~/lib/i18n';
+import {detectLocaleFromRequest, getDictionary} from '~/lib/i18n';
 import {absoluteUrl, simpleSeo} from '~/lib/.server/seo.server';
 import {routeMeta} from '~/lib/seo-urls';
 import {RouteError} from '~/components/RouteError';
@@ -53,7 +53,12 @@ async function loadCriticalData({context, request, params}: Route.LoaderArgs) {
 
   const locale = detectLocaleFromRequest(request);
   const {seo} = simpleSeo({
-    title: page.seo?.title || page.title,
+    // The Shopify page is titled "Contact" in both languages; the tab title
+    // follows the on-page heading instead.
+    title:
+      page.handle === CONTACT_HANDLE
+        ? getDictionary(locale).contact.title
+        : page.seo?.title || page.title,
     description: page.seo?.description || undefined,
     url: absoluteUrl(`/pages/${page.handle}`, locale),
   });
@@ -162,7 +167,9 @@ function ContactBlock() {
             >
               <span className="contact-btn__label">{c.instagram}</span>
               <bdi dir="ltr">
-                {b.instagram.replace(/^https?:\/\/(www\.)?instagram\.com\//, '@').replace(/\/$/, '')}
+                {b.instagram
+                  .replace(/^https?:\/\/(www\.)?instagram\.com\//, '@')
+                  .replace(/\/$/, '')}
               </bdi>
             </a>
           </li>
