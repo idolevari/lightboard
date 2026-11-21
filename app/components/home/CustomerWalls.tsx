@@ -42,25 +42,6 @@ const CUSTOMER_WALLS: CustomerWall[] = [
     quote: {text: 'Shout out to @lightboardshop. Amazing work', lang: 'en'},
   },
   {
-    handle: 'shelly_safit',
-    src: '/customers/shelly-safit.webp',
-    width: 321,
-    height: 240,
-    quote: {text: 'Tnx @lightboardshop 🤍', lang: 'en'},
-  },
-  {
-    handle: 'rotemschwartz_',
-    src: '/customers/rotemschwartz.webp',
-    width: 335,
-    height: 250,
-  },
-  {
-    handle: 'yuvalita',
-    src: '/customers/yuvalita.webp',
-    width: 264,
-    height: 198,
-  },
-  {
     handle: 'noam_zilber',
     src: '/customers/noam-zilber.webp',
     width: 262,
